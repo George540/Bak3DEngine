@@ -30,6 +30,9 @@ THE SOFTWARE.
 #include <iostream>
 
 #include "event_manager.h"
+
+#include <imgui_impl_glfw.h>
+
 #include "imgui.h"
 #include "Core/logger.h"
 
@@ -292,9 +295,10 @@ float EventManager::get_random_float(float min, float max)
  */
 void EventManager::on_scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 {
-	ImGuiIO& io = ImGui::GetIO();
+	// Forward to ImGui first so it can update MouseWheel
+	ImGui_ImplGlfw_ScrollCallback(window, xoffset, yoffset);
 
-	if (io.WantCaptureMouse && is_scrolling_enabled)
+	if (ImGui::GetIO().WantCaptureMouse && is_scrolling_enabled)
 	{
 		if (yoffset > 0)
 		{

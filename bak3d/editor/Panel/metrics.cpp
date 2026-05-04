@@ -24,6 +24,7 @@ THE SOFTWARE.
 
 #include "metrics.h"
 
+#include <algorithm>
 #include <imgui_impl_opengl3_loader.h>
 #include <implot.h>
 #include <vector>
@@ -34,13 +35,23 @@ THE SOFTWARE.
 
 using namespace std;
 
+struct FrameSample
+{
+    float time;  // editor lifetime timestamp in seconds
+    float value; // frame time in ms
+};
+
 namespace
 {
     ImPlotSpec plot_specs_ms;
-    vector<float> frame_time_stamps_plotted;
+    vector<FrameSample> frame_time_stamps_plotted;
 
     constexpr double SOFT_MS_THRESHOLD = 16.66;
     constexpr int MAX_PLOTS_COUNT = 100;
+    constexpr float ZOOM_FACTOR = 0.1f; // percentage per scroll tick
+
+    float history = 10.0f;
+    float y_max   = 33.33f; // start at your current 30 FPS limit
 }
 
 Metrics::Metrics() : EditorPanel("Metrics")
@@ -79,6 +90,8 @@ void Metrics::end_frame()
 
 void Metrics::update_metrics()
 {
+    float mouse_wheel = ImGui::GetIO().MouseWheel;
+
     int fps_count = EventManager::get_frames_per_second();
     float frame_time_ms = 1000.0f * EventManager::get_frame_time();
     float imgui_frame_time_ms = ImGui::GetIO().Framerate;
@@ -89,36 +102,60 @@ void Metrics::update_metrics()
 
     // Stats Plot
     {
-        static float history = 10.0f;
-        ImGui::SliderFloat("History",&history,10,60,"%.1f s");
+        ImGui::SliderFloat("History", &history, 10, 60, "%.1f s");
 
-        frame_time_stamps_plotted.push_back(frame_time_ms);
-        if (frame_time_stamps_plotted.size() > MAX_PLOTS_COUNT)
+        float time_elapsed = Bak3DEditor::get_editor_lifetime();
+
+        // Store timestamped samples
+        frame_time_stamps_plotted.push_back({ time_elapsed, frame_time_ms });
+
+        // Cull samples older than the history window
+        while (!frame_time_stamps_plotted.empty() &&
+               frame_time_stamps_plotted.front().time < time_elapsed - history)
         {
             frame_time_stamps_plotted.erase(frame_time_stamps_plotted.begin());
         }
 
-        float time_elapsed = Bak3DEditor::get_editor_lifetime();
-        
-        if (ImPlot::BeginPlot("##UnitGraph", ImVec2(-1,ImGui::GetTextLineHeight() * 11)))
+        // Split into parallel arrays for ImPlot
+        static std::vector<float> xs, ys;
+        xs.clear();
+        ys.clear();
+        xs.reserve(frame_time_stamps_plotted.size());
+        ys.reserve(frame_time_stamps_plotted.size());
+        for (const auto& s : frame_time_stamps_plotted)
         {
-            ImPlot::SetupAxes("Stat Time (ms)", "Time (ms)", ImPlotAxisFlags_NoTickLabels, 0);
-            ImPlot::SetupAxisLimits(ImAxis_X1,time_elapsed - history, time_elapsed, ImGuiCond_Always);
-            ImPlot::SetupAxisLimits(ImAxis_Y1,0,33.33); // 33.33 ms = 30 FPS, lowest visible limit
-            
-            ImPlot::PlotLine("Frame Time",
-                frame_time_stamps_plotted.data(),
-                static_cast<int>(frame_time_stamps_plotted.size()),
-                1.0f, 0.0f, plot_specs_ms);
+            xs.push_back(s.time);
+            ys.push_back(s.value);
+        }
 
-            // 60 FPS warning threshold at 16.66ms
+        if (ImPlot::BeginPlot("##UnitGraph", ImVec2(-1, ImGui::GetTextLineHeight() * 11)))
+        {
+            ImPlot::SetupAxes("Time (s)", "Stat Time (ms)", ImPlotAxisFlags_NoTickLabels, 0);
+            ImPlot::SetupAxisLimits(ImAxis_X1, time_elapsed - history, time_elapsed, ImGuiCond_Always);
+            ImPlot::SetupAxisLimits(ImAxis_Y1, 0, y_max, ImGuiCond_Always);
+
+            ImPlot::PlotLine("Frame Time",
+                xs.data(), ys.data(),
+                static_cast<int>(xs.size()),
+                plot_specs_ms);
+
             ImPlot::PlotInfLines("##60 FPS", &SOFT_MS_THRESHOLD, 1,
-       {
+            {
                 ImPlotProp_LineColor, ImVec4(1.0f, 0.4f, 0.1f, 1.0f),
                 ImPlotProp_Flags, ImPlotInfLinesFlags_Horizontal
             });
 
             ImPlot::EndPlot();
+        }
+
+        // Zoom Y axis with mouse wheel when hovering the plot
+        if (ImGui::IsItemHovered())
+        {
+            if (mouse_wheel != 0.0f)
+            {
+                y_max *= (1.0f - mouse_wheel * ZOOM_FACTOR);
+                y_max = clamp(y_max, 1.0f, 500.0f); // sane limits: 1ms to 500ms
+            }
         }
     }
 }
