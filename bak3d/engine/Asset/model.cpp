@@ -97,7 +97,7 @@ void Model::update_material_properties() const
 	m_current_material->set_vec3("camera_position", Scene::instance->get_camera()->get_camera_position());
 
 	// FRAGMENT MATERIAL
-	if (textures_cache.contains(aiTextureType_DIFFUSE))
+	if (has_texture_of_type(aiTextureType_DIFFUSE))
 	{
 		Texture2D* diffuse_texture = textures_cache.at(aiTextureType_DIFFUSE);
 		diffuse_texture->bind(0);
@@ -105,14 +105,14 @@ void Model::update_material_properties() const
 	}
 	
 	
-	if (textures_cache.contains(aiTextureType_SPECULAR))
+	if (has_texture_of_type(aiTextureType_SPECULAR))
 	{
 		Texture2D* specular_texture = textures_cache.at(aiTextureType_SPECULAR);
 		specular_texture->bind(1);
 		m_current_material->set_int("material.specular", 1);
 	}
 	
-	if (textures_cache.contains(aiTextureType_HEIGHT))
+	if (has_texture_of_type(aiTextureType_HEIGHT))
 	{
 		Texture2D* normal_texture = textures_cache.at(aiTextureType_HEIGHT);
 		normal_texture->bind(2);
@@ -121,9 +121,9 @@ void Model::update_material_properties() const
 	
 	m_current_material->set_float("material.ambient", 0.5f);
 	//m_current_material->set_float("material.shininess", m;
-	m_current_material->set_bool("materialSettings.useDiffuseTexture", EventManager::get_using_diffuse_texture());
-	m_current_material->set_bool("materialSettings.useSpecularTexture", EventManager::get_using_specular_texture());
-	m_current_material->set_bool("materialSettings.useNormalsTexture", EventManager::get_using_normal_maps());
+	m_current_material->set_bool("materialSettings.useDiffuseTexture", has_texture_of_type(aiTextureType_DIFFUSE) && EventManager::get_using_diffuse_texture());
+	m_current_material->set_bool("materialSettings.useSpecularTexture", has_texture_of_type(aiTextureType_SPECULAR) && EventManager::get_using_specular_texture());
+	m_current_material->set_bool("materialSettings.useNormalsTexture", has_texture_of_type(aiTextureType_HEIGHT) && EventManager::get_using_normal_maps());
 	m_current_material->set_bool("material.gamma", gamma_correction);
 }
 
@@ -152,7 +152,13 @@ void Model::load_model(string const& path)
 {
 	// read file via ASSIMP
 	Assimp::Importer importer;
-	const aiScene* scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_FlipUVs | aiProcess_CalcTangentSpace);
+	const aiScene* scene = importer.ReadFile(path, aiProcess_Triangulate
+														| aiProcess_GenSmoothNormals
+														| aiProcess_FlipUVs
+														| aiProcess_CalcTangentSpace
+														| aiProcess_JoinIdenticalVertices
+														| aiProcess_SortByPType
+														| aiProcess_FindInvalidData);
 
 	// check for errors
 	if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) //if it's not zero
@@ -177,9 +183,6 @@ void Model::process_node(aiNode* node, const aiScene* scene)
 		// the node object only contains indices to index the actual objects in the scene.
 		// the scene contains all the data, node is just to keep stuff organized (like relations between nodes).
 		aiMesh * mesh = scene->mMeshes[node->mMeshes[i]];
-
-		m_num_vertices += mesh->mNumVertices;
-		m_num_faces += mesh->mNumFaces;
 
 		auto mesh_object = process_mesh(mesh, scene);
 		meshes.push_back(mesh_object);
@@ -272,6 +275,7 @@ Mesh* Model::process_mesh(aiMesh* mesh, const aiScene* scene)
 			}
 		}
 
+		m_unique_vertices.insert(vertex);
 		vertices.push_back(vertex);
 	}
 
@@ -279,12 +283,16 @@ Mesh* Model::process_mesh(aiMesh* mesh, const aiScene* scene)
 	for (unsigned int i = 0; i < mesh->mNumFaces; ++i)
 	{
 		auto face = mesh->mFaces[i];
-		// If the face is made up of three vertices only, it's a triangle
-		m_num_triangles += face.mNumIndices == 3 ? 1 : 0;
 
-		// retrieve all indices of the face and store them in the indices vector
+		Face unique_face(face);
+
+		// Insert into set (returns a pair; second is true if newly inserted)
+		auto result = m_num_faces.insert(unique_face);
+
+		// Retrieve all indices of the face and store them in the indices vector
 		for (unsigned int j = 0; j < face.mNumIndices; ++j)
 		{
+			assert(face.mIndices[j] < mesh->mNumVertices);
 			indices.push_back(face.mIndices[j]);
 			GLuint v1 = face.mIndices[j];
 			GLuint v2 = face.mIndices[(j + 1) % face.mNumIndices];
@@ -292,7 +300,7 @@ Mesh* Model::process_mesh(aiMesh* mesh, const aiScene* scene)
 		}
 	}
 
-	// process materials
+	// Process materials
 	auto material = scene->mMaterials[mesh->mMaterialIndex];
 
 	// 1. diffuse maps
@@ -302,7 +310,7 @@ Mesh* Model::process_mesh(aiMesh* mesh, const aiScene* scene)
 	// 3. normal maps
 	load_material_textures(material, aiTextureType_HEIGHT);
 
-	// return a mesh object created from the extracted mesh data
+	// Return a mesh object created from the extracted mesh data
 	const int mesh_index = meshes.size();
 	string mesh_name = "ChildMesh_" + to_string(mesh_index);
 	return new Mesh(vertices, indices, mesh_name);
@@ -310,8 +318,6 @@ Mesh* Model::process_mesh(aiMesh* mesh, const aiScene* scene)
 
 void Model::load_material_textures(aiMaterial* mat, aiTextureType type)
 {
-	//vector<string> textures;
-	
 	for (unsigned int i = 0; i < mat->GetTextureCount(type); ++i)
 	{
 		aiString filename;

@@ -27,6 +27,7 @@ THE SOFTWARE.
 #include <array>
 #include <vector>
 #include <variant>
+#include <assimp/mesh.h>
 
 #include <glad/glad.h>
 #include <glm/glm.hpp>
@@ -135,6 +136,20 @@ struct Vertex
     int m_BoneIDs[MAX_BONE_INFLUENCE];
     //weights from each bone
     float m_Weights[MAX_BONE_INFLUENCE];
+
+    bool operator<(const Vertex& other) const
+    {
+        // This is tedious but necessary for std::set
+        if (position != other.position) return position.x < other.position.x; // Simplified
+        if (normal != other.normal) return normal.x < other.normal.x;
+        if (tex_coords != other.tex_coords) return tex_coords.x < other.tex_coords.x;
+        if (tangent != other.tangent) return tangent.x < other.tangent.x;
+        if (bitangent != other.bitangent) return bitangent.x < bitangent.x;
+        if (color != other.color) return color.x < other.color.x;
+        // No need for the rest
+        return false;
+    }
+
 };
 
 struct Edge
@@ -150,12 +165,32 @@ struct Edge
         }
     }
 
-    // Comparison operator for set uniqueness
     bool operator<(const Edge& other) const
     {
         return v1_index < other.v1_index || (v1_index == other.v1_index && v2_index < other.v2_index);
     }
 };
+
+struct Face
+{
+    std::vector<GLuint> indices;
+
+    explicit Face(const aiFace& face)
+    {
+        for (unsigned int i = 0; i < face.mNumIndices; ++i)
+        {
+            indices.push_back(face.mIndices[i]);
+        }
+        // Sort to ensure {1, 2, 3} and {3, 1, 2} are treated as the same face
+        std::ranges::sort(indices);
+    }
+
+    bool operator<(const Face& other) const
+    {
+        return indices < other.indices;
+    }
+};
+
 
 // Unique cube vertices (8 total)
 static const std::vector<glm::vec3> CUBE_VERTICES_SOLID =

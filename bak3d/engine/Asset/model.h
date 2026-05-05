@@ -49,10 +49,9 @@ public:
 	bool gamma_correction{};
 
 	// model stats
-	int m_num_vertices;
+	std::set<Vertex> m_unique_vertices;
 	std::set<Edge> m_unique_edges; // with a set, an edge is ensured to be stored only once
-	int m_num_faces;
-	int m_num_triangles;
+	std::set<Face> m_num_faces;
 
 	// constructor, expects a filepath to a 3D model.
 
@@ -68,10 +67,9 @@ public:
 
 	// Model stats
 	std::vector<Mesh*> get_all_meshes() const { return meshes; }
-	int get_num_vertices() const { return m_num_vertices; }
+	GLuint get_vertices() const { return m_unique_vertices.size(); }
 	std::set<Edge> get_unique_edges() const { return m_unique_edges; }
-	int get_num_faces() const { return m_num_faces; }
-	int get_num_triangles() const { return m_num_triangles; }
+	GLuint get_faces() const { return m_num_faces.size(); }
 
 	bool has_texture_of_type(const aiTextureType& texture_type) const { return textures_cache.contains(texture_type); }
 private:

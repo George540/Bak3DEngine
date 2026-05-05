@@ -35,6 +35,7 @@ using namespace std;
 
 namespace
 {
+    constexpr ImVec2 IMAGE_BUTTON_PROPERTY_SIZE = ImVec2(40.0f, 40.0f);
     int object_selection_index = 0;
     vector<const char*> m_object_items = { "None", "Model", "Particle System", "Advanced Particles" };
     int model_selection_index = 0;
@@ -115,10 +116,9 @@ void Details::draw_model_section()
 
         if (m_current_model)
         {
-            ImGui::Text("Vertices:  %d", m_current_model->get_num_vertices());
+            ImGui::Text("Vertices:  %zu", m_current_model->get_vertices());
             ImGui::Text("Edges:     %zu",m_current_model->get_unique_edges().size());
-            ImGui::Text("Triangles: %d", m_current_model->get_num_triangles());
-            ImGui::Text("Faces:     %d", m_current_model->get_num_faces());
+            ImGui::Text("Faces:     %zu", m_current_model->get_faces());
         }
 
         ImGui::TreePop();
@@ -130,16 +130,37 @@ void Details::draw_model_section()
         if (m_current_model)
         {
             // Albedo
-            auto albedo = static_cast<int>(m_current_model->textures_cache[aiTextureType_DIFFUSE] ? m_current_model->textures_cache[aiTextureType_DIFFUSE]->get_object_id() : ResourceManager::get_texture("Checkerboard.jpg")->get_object_id());
-            ImGuiB3D::PropertyImageButton("Albedo", nullptr, &albedo, ImVec2(40.0f, 40.0f));
+            if (m_current_model->has_texture_of_type(aiTextureType_DIFFUSE))
+            {
+                const ImTextureID albedo = m_current_model->textures_cache[aiTextureType_DIFFUSE]->get_texture_id();
+                ImGuiB3D::PropertyImageButton("Albedo", nullptr, albedo, ImVec2(40.0f, 40.0f));
+            }
+            else
+            {
+                ImGuiB3D::PropertyButton("Albedo", "None", nullptr, ImVec2(50.0f, 50.0f));
+            }
 
             // Specular
-            auto specular = static_cast<int>(m_current_model->textures_cache[aiTextureType_SPECULAR] ? m_current_model->textures_cache[aiTextureType_SPECULAR]->get_object_id() : ResourceManager::get_texture("Checkerboard.jpg")->get_object_id());
-            ImGuiB3D::PropertyImageButton("Specular", nullptr, &specular, ImVec2(40.0f, 40.0f));
+            if (m_current_model->has_texture_of_type(aiTextureType_SPECULAR))
+            {
+                const ImTextureID specular = m_current_model->textures_cache[aiTextureType_SPECULAR]->get_texture_id();
+                ImGuiB3D::PropertyImageButton("Specular", nullptr, specular, ImVec2(40.0f, 40.0f));
+            }
+            else
+            {
+                ImGuiB3D::PropertyButton("Specular", "None", nullptr, ImVec2(50.0f, 50.0f));
+            }
 
             // Normal
-            auto normal = static_cast<int>(m_current_model->textures_cache[aiTextureType_HEIGHT] ? m_current_model->textures_cache[aiTextureType_HEIGHT]->get_object_id() : ResourceManager::get_texture("Checkerboard.jpg")->get_object_id());
-            ImGuiB3D::PropertyImageButton("Normal", nullptr, &normal, ImVec2(40.0f, 40.0f));
+            if (m_current_model->has_texture_of_type(aiTextureType_HEIGHT))
+            {
+                const ImTextureID normals = m_current_model->textures_cache[aiTextureType_HEIGHT]->get_texture_id();
+                ImGuiB3D::PropertyImageButton("Normals", nullptr, normals, ImVec2(40.0f, 40.0f));
+            }
+            else
+            {
+                ImGuiB3D::PropertyButton("Normals", "None", nullptr, ImVec2(50.0f, 50.0f));
+            }
 
             // Gamma Correction
             bool gamma_correction = m_current_model->gamma_correction;

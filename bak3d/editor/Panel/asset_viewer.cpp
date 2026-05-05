@@ -219,10 +219,9 @@ void AssetPanel::draw_asset_tile(const string& name, Asset* asset)
         }
         else if (const Model* model = dynamic_cast<Model*>(asset))
         {
-            ImGui::Text("Vertices:   %d", model->get_num_vertices());
-            ImGui::Text("Edges:      %d", model->get_unique_edges().size());
-            ImGui::Text("Triangles:  %d", model->get_num_triangles());
-            ImGui::Text("Faces:      %d", model->get_num_faces());
+            ImGui::Text("Vertices:   %u", model->get_vertices());
+            ImGui::Text("Edges:      %u", model->get_unique_edges().size());
+            ImGui::Text("Faces:      %u", model->get_faces());
         }
         ImGui::Text("GL ID:      %u", asset->get_object_id());
         ImGui::EndTooltip();

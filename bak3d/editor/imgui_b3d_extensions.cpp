@@ -103,19 +103,23 @@ bool ImGuiB3D::PropertySliderFloat(const char* label, float* value, float v_min,
     return ImGui::SliderFloat(label_str.c_str(), value, v_min, v_max, format);
 }
 
-bool ImGuiB3D::PropertyButton(const char* label, const char* button_label, const char* tooltip_desc, const ImVec2 size)
+bool ImGuiB3D::PropertyButton(const char* property_label, const char* button_label, const char* tooltip_desc, const ImVec2 size)
 {
-    ImGui::TextUnformatted(label);
+    ImGui::TextUnformatted(property_label);
     if (tooltip_desc && ImGui::IsItemHovered())
     {
         ToolTipExtendedText(tooltip_desc, TOOL_TIP_WIDTH);
     }
     ImGui::SameLine(ImGui::GetContentRegionAvail().x * LABEL_HORIZONTAL_WIDTH_RATIO);
     ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x * (1.0f - VALUE_HORIZONTAL_WIDTH_RATIO) - VALUE_INNER_PADDING);
-    return ImGui::Button(button_label ? button_label : label, size);
+
+    const char* display_text = button_label ? button_label : property_label;
+    char display_text_buffer[128];
+    auto result = snprintf(display_text_buffer, sizeof(display_text_buffer), "%s##%s", display_text, property_label);
+    return ImGui::Button(display_text_buffer, size);
 }
 
-bool ImGuiB3D::PropertyImageButton(const char* label, const char* tooltip_desc, int* texture_id, const ImVec2 size,
+bool ImGuiB3D::PropertyImageButton(const char* label, const char* tooltip_desc, const ImTextureID texture_id, const ImVec2 size,
                                    const ImVec2 uv0, const ImVec2 uv1, const ImVec4 bg_col, const ImVec4 tint_col)
 {
     ImGui::TextUnformatted(label);
@@ -126,7 +130,13 @@ bool ImGuiB3D::PropertyImageButton(const char* label, const char* tooltip_desc, 
     ImGui::SameLine(ImGui::GetContentRegionAvail().x * LABEL_HORIZONTAL_WIDTH_RATIO);
     ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x * (1.0f - VALUE_HORIZONTAL_WIDTH_RATIO) - VALUE_INNER_PADDING);
     const auto label_str = "##" + string(label);
-    return ImGui::ImageButton(label_str.c_str(), texture_id, size, uv0, uv1, bg_col, tint_col);
+    return ImGui::ImageButton(
+            label,
+            texture_id,
+            size,
+            uv0, uv1, // (0,0) and (1,1), flip pairs if needed (most of the time)
+            bg_col,
+            tint_col);
 }
 
 bool ImGuiB3D::ToolTipExtendedText(const char* tooltip_desc, float text_wrap_size)
