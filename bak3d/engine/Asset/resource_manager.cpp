@@ -181,7 +181,7 @@ void ResourceManager::initialize_models()
     int index = 1;
     for (const auto& [file_name, file_path] : model_files)
     {
-        add_model(file_name, new Model(file_path, file_name, index++));
+        add_model(file_name, new Model(file_path, file_name));
     }
 }
 

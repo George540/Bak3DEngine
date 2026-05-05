@@ -38,9 +38,15 @@ THE SOFTWARE.
 
 using namespace std;
 
-Model::Model(const string& path, const std::string& file_name, int index) :
-	Asset(path, file_name),
-	m_combo_index(index)
+namespace
+{
+	std::set<Vertex> m_unique_vertices;
+	std::set<Edge> m_unique_edges;
+	std::set<Face> m_unique_faces;
+}
+
+Model::Model(const string& path, const std::string& file_name) :
+	Asset(path, file_name)
 {
 	m_path = path;
 	m_directory = m_path.substr(0, m_path.find_last_of('/'));
@@ -48,6 +54,14 @@ Model::Model(const string& path, const std::string& file_name, int index) :
 	m_object_name = m_file_name.substr(0, m_file_name.find('.'));
 	
 	load_model(path);
+
+	// Gather number of vertices but discard set storages to save on space.
+	m_num_vertices = m_unique_vertices.size();
+	m_num_edges = m_unique_edges.size();
+	m_num_faces = m_unique_faces.size();
+	m_unique_vertices.clear();
+	m_unique_edges.clear();
+	m_unique_faces.clear();
 
 	ResourceManager::add_material(m_object_name + ".model", new Material(m_object_name + ".model", ResourceManager::get_shader("ModelShader")));
 	ResourceManager::add_material(m_object_name + ".dissect", new Material(m_object_name + ".dissect", ResourceManager::get_shader("DissectShader")));
@@ -287,7 +301,7 @@ Mesh* Model::process_mesh(aiMesh* mesh, const aiScene* scene)
 		Face unique_face(face);
 
 		// Insert into set (returns a pair; second is true if newly inserted)
-		auto result = m_num_faces.insert(unique_face);
+		auto result = m_unique_faces.insert(unique_face);
 
 		// Retrieve all indices of the face and store them in the indices vector
 		for (unsigned int j = 0; j < face.mNumIndices; ++j)

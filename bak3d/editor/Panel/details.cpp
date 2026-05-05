@@ -117,7 +117,7 @@ void Details::draw_model_section()
         if (m_current_model)
         {
             ImGui::Text("Vertices:  %zu", m_current_model->get_vertices());
-            ImGui::Text("Edges:     %zu",m_current_model->get_unique_edges().size());
+            ImGui::Text("Edges:     %zu", m_current_model->get_unique_edges());
             ImGui::Text("Faces:     %zu", m_current_model->get_faces());
         }
 

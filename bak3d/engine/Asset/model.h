@@ -45,18 +45,17 @@ public:
 	// model data
 	std::unordered_map<aiTextureType, Texture2D*> textures_cache;
 	std::vector<Mesh*> meshes; // a model is made out of one or more meshes
-	int m_combo_index;
 	bool gamma_correction{};
 
 	// model stats
-	std::set<Vertex> m_unique_vertices;
-	std::set<Edge> m_unique_edges; // with a set, an edge is ensured to be stored only once
-	std::set<Face> m_num_faces;
+	GLuint m_num_vertices;
+	GLuint m_num_edges;
+	GLuint m_num_faces;
 
 	// constructor, expects a filepath to a 3D model.
 
 	Model() = default;
-	Model(const std::string& path, const std::string& file_name, int index);
+	Model(const std::string& path, const std::string& file_name);
 	~Model() override;
 
 	void draw() const; // draws the model, and thus all its meshes
@@ -67,9 +66,9 @@ public:
 
 	// Model stats
 	std::vector<Mesh*> get_all_meshes() const { return meshes; }
-	GLuint get_vertices() const { return m_unique_vertices.size(); }
-	std::set<Edge> get_unique_edges() const { return m_unique_edges; }
-	GLuint get_faces() const { return m_num_faces.size(); }
+	GLuint get_vertices() const { return m_num_vertices; }
+	GLuint get_unique_edges() const { return m_num_edges; }
+	GLuint get_faces() const { return m_num_faces; }
 
 	bool has_texture_of_type(const aiTextureType& texture_type) const { return textures_cache.contains(texture_type); }
 private:
