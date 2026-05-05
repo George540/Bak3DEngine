@@ -178,7 +178,6 @@ void ResourceManager::initialize_predefined_textures()
 void ResourceManager::initialize_models()
 {
     const auto model_files = FileLoader::get_files_by_type_with_path(string(BAK3D_ASSETS_DIR) + "/models", obj);
-    int index = 1;
     for (const auto& [file_name, file_path] : model_files)
     {
         add_model(file_name, new Model(file_path, file_name));

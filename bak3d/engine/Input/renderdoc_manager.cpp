@@ -34,7 +34,6 @@ namespace
 {
     RENDERDOC_Version rdc_version = eRENDERDOC_API_Version_1_4_0;
     RENDERDOC_API_1_4_0* rdc_api  = nullptr;
-    int frames_to_wait = 0;
     bool pending_capture = false;
 }
 
@@ -45,7 +44,7 @@ void RenderDocManager::initialize()
 
     if (!mod)
     {
-        // Fallback: Manually load if you want the API available without launching from RD
+        // Fallback: Manually load from default installation path
         mod = LoadLibraryA("C:\\Program Files\\RenderDoc\\renderdoc.dll");
     }
 
@@ -78,16 +77,6 @@ void RenderDocManager::initialize()
 
 void RenderDocManager::begin_frame()
 {
-    if (frames_to_wait > 0)
-    {
-        frames_to_wait--;
-
-        if (frames_to_wait == 0)
-        {
-            launch_renderdoc_ui();
-        }
-    }
-
     if (pending_capture)
     {
         rdc_api->StartFrameCapture(nullptr, nullptr);
@@ -101,6 +90,7 @@ void RenderDocManager::end_frame()
     {
         rdc_api->EndFrameCapture(nullptr, nullptr);
         B3D_LOG_INFO("GPU frame captured.Launching RenderDoc UI...");
+        launch_renderdoc_ui();
         pending_capture = false;
     }
 }
@@ -120,7 +110,6 @@ void RenderDocManager::trigger_capture()
             return;
         }
         pending_capture = true;
-        frames_to_wait = 600;
         B3D_LOG_INFO("Capture queued for next frame.");
     }
     else

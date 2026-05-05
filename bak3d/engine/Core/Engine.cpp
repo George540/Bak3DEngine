@@ -37,6 +37,7 @@ THE SOFTWARE.
 
 void Bak3DEngine::Initialize()
 {
+    RenderDocManager::initialize();
     Logger::initialize();
     GlobalSettings::initialize();
     EventManager::initialize();
@@ -44,7 +45,6 @@ void Bak3DEngine::Initialize()
     ResourceManager::initialize();
     PostProcessor::initialize();
     Bak3DEditor::initialize();
-    RenderDocManager::initialize();
     SceneManager::initialize();
 
     B3D_LOG_INFO("Engine initialized.");
@@ -82,4 +82,5 @@ void Bak3DEngine::Shutdown()
     EventManager::shutdown();
     GlobalSettings::shutdown();
     Logger::shutdown();
+    RenderDocManager::shutdown();
 }
