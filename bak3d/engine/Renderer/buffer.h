@@ -133,9 +133,36 @@ private:
     GLsizei m_max_samples;
 };
 
-class UniformBuffer : public Buffer
+/*
+ * Abstract buffer class for data-oriented buffer objects, that use binding points.
+ * Accessed via arbitrary user-defined layouts (std140/std430).
+ */
+class DataBuffer : public Buffer
 {
 public:
-    UniformBuffer(GLsizeiptr size, const void* data, GLuint binding_index, GLenum usage = GL_STATIC_DRAW);
-    void bind_to_binding_point(GLint binding_point);
+    DataBuffer(GLenum target, GLsizeiptr size, const void* data, const GLuint index, GLenum usage = GL_STATIC_DRAW) : Buffer(target, size, data, usage) {}
+    virtual void bind_to_binding_point(GLuint index) const = 0;
+};
+
+/*
+ * An extremely fast and lightweight read-only GPU memory buffer for storing constant variables shared across multiple shaders.
+ * Its capacity is small (16-64KB) and data are strictly structured using std140, typically in vec4 format.
+ */
+class UniformBuffer : public DataBuffer
+{
+public:
+    UniformBuffer(GLsizeiptr size, const void* data, GLuint index, GLenum usage = GL_STATIC_DRAW);
+    void bind_to_binding_point(GLuint index) const override;
+};
+
+/*
+ * Shader Storage Buffer Object. No 64KB cap like UBOs and have both read and write access.
+ * Supports arbitrarily large buffers and variable-length arrays (unlike constant vec4 format).
+ * Used for large draw data, such as particles, materials and other.
+ */
+class ShaderStorageBuffer : public DataBuffer
+{
+public:
+    ShaderStorageBuffer(GLsizeiptr size, const void* data, GLuint index, GLenum usage = GL_DYNAMIC_DRAW);
+    void bind_to_binding_point(GLuint index) const override;
 };

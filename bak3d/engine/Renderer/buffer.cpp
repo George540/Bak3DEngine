@@ -254,10 +254,28 @@ void MultisampleFrameBuffer::create_attachments()
     glFramebufferRenderbuffer(m_target, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, m_rbo);
 }
 
-UniformBuffer::UniformBuffer(GLsizeiptr size, const void* data, const GLuint binding_index, GLenum usage)
-    : Buffer(GL_UNIFORM_BUFFER, size, data, usage)
+UniformBuffer::UniformBuffer(GLsizeiptr size, const void* data, const GLuint index, GLenum usage)
+    : DataBuffer(GL_UNIFORM_BUFFER, size, data, usage)
 {
     Buffer::unbind_object();
-    glBindBufferRange(GL_UNIFORM_BUFFER, binding_index, m_ID, 0, m_buffer_size);
+    glBindBufferRange(GL_UNIFORM_BUFFER, index, m_ID, 0, m_buffer_size);
     B3D_LOG_INFO("Uniform Buffer Object enabled...");
+}
+
+void UniformBuffer::bind_to_binding_point(const GLuint index) const
+{
+    glBindBufferRange(GL_UNIFORM_BUFFER, index, m_ID, 0, m_buffer_size);
+}
+
+ShaderStorageBuffer::ShaderStorageBuffer(GLsizeiptr size, const void* data, const GLuint index, GLenum usage)
+    : DataBuffer(GL_SHADER_STORAGE_BUFFER, size, data, usage)
+{
+    Buffer::unbind_object();
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, index, m_ID);
+    B3D_LOG_INFO("Shader Storage Buffer Object enabled: %lld bytes at binding %u", size, index);
+}
+
+void ShaderStorageBuffer::bind_to_binding_point(const GLuint index) const
+{
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, index, m_ID);
 }
