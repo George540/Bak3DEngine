@@ -166,3 +166,18 @@ public:
     ShaderStorageBuffer(GLsizeiptr size, const void* data, GLuint index, GLenum usage = GL_DYNAMIC_DRAW);
     void bind_to_binding_point(GLuint index) const override;
 };
+
+/*
+ * A thread-safe, specialized buffer that is race-free across all GPU cores.
+ * Stores atomic 32-bit integers (uint) that is hardware optimized.
+ * Faster operations than a standard Shader Storage Buffer.
+ */
+class AtomicCounterBuffer : public DataBuffer
+{
+public:
+    AtomicCounterBuffer(GLuint binding_index, GLenum usage = GL_DYNAMIC_DRAW);
+    void bind_to_binding_point(GLuint binding_index) const override;
+
+    void set_counter(GLuint value = 0) const;
+    GLuint read_counter() const;
+};

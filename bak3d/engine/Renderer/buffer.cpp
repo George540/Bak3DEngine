@@ -279,3 +279,50 @@ void ShaderStorageBuffer::bind_to_binding_point(const GLuint index) const
 {
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, index, m_ID);
 }
+
+AtomicCounterBuffer::AtomicCounterBuffer(GLuint binding_index, GLenum usage)
+    : DataBuffer(GL_ATOMIC_COUNTER_BUFFER, UINT_SIZE, nullptr, usage)
+{
+    // Initialise counter to 0
+    constexpr GLuint zero = 0;
+    glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, m_ID);
+    glBufferData(GL_ATOMIC_COUNTER_BUFFER, UINT_SIZE, &zero, usage);
+    glBindBufferBase(GL_ATOMIC_COUNTER_BUFFER, binding_index, m_ID);
+    glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, 0);
+    B3D_LOG_INFO("Atomic Counter Buffer created at binding %u", binding_index);
+}
+
+void AtomicCounterBuffer::bind_to_binding_point(GLuint binding_index) const
+{
+    glBindBufferBase(GL_ATOMIC_COUNTER_BUFFER, binding_index, m_ID);
+}
+
+void AtomicCounterBuffer::set_counter(const GLuint value) const
+{
+    bind_object();
+
+    // glMapBufferRange is preferred over glBufferSubData for atomics, because it avoids implicit synchronisation on some drivers
+    if (GLuint* ptr = static_cast<GLuint*>(glMapBufferRange(GL_ATOMIC_COUNTER_BUFFER, 0, UINT_SIZE, GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT)))
+    {
+        *ptr = value;
+        glUnmapBuffer(GL_ATOMIC_COUNTER_BUFFER);
+    }
+
+    unbind_object();
+}
+
+GLuint AtomicCounterBuffer::read_counter() const
+{
+    bind_object();
+
+    GLuint value = 0;
+    if (const GLuint* ptr = static_cast<GLuint*>(glMapBufferRange(GL_ATOMIC_COUNTER_BUFFER, 0, UINT_SIZE, GL_MAP_READ_BIT)))
+    {
+        value = *ptr;
+        glUnmapBuffer(GL_ATOMIC_COUNTER_BUFFER);
+    }
+
+    unbind_object();
+
+    return value;
+}
