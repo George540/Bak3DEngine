@@ -38,6 +38,7 @@ enum FileType
 	vert,
 	fs,
 	frag,
+	comp,
 	obj,
 	mtl,
 	fbx,

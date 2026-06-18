@@ -196,6 +196,7 @@ string FileLoader::enum_to_string(FileType type)
 		case vert: return ".vert";
 		case fs: return ".fs";
 		case frag: return ".frag";
+		case comp: return ".comp";
 		case obj: return ".obj";
 		case mtl: return ".mtl";
 		case fbx: return ".fbx";

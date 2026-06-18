@@ -62,6 +62,7 @@ void ResourceManager::initialize_shaders()
     const auto directory = BAK3D_SHADERS_DIR;
     auto vertex_shader_files = FileLoader::get_files_by_type_with_path(directory, vert);
     auto fragment_shader_files = FileLoader::get_files_by_type_with_path(directory, frag);
+    auto compute_shader_files = FileLoader::get_files_by_type_with_path(directory, comp);
 
     // Map shaders for lookup later
     unordered_map<string, string> vertex_shaders_map;
@@ -86,17 +87,25 @@ void ResourceManager::initialize_shaders()
         string vert_file_name = filename;
         string vert_path = filepath;
 
-        string vert_name = FileLoader::get_name_from_filename(vert_file_name);
+        string shader_name = FileLoader::get_name_from_filename(vert_file_name);
 
         // Combine vert and frag paths in pairs that have the same name
-        if (fragment_shaders_map.contains(vert_name))
+        if (fragment_shaders_map.contains(shader_name))
         {
-            vertex_fragment_sources.emplace_back(vert_path, fragment_shaders_map[vert_name]); // <vertex path, fragment path>
+            string frag_path = fragment_shaders_map[shader_name];
+
+            vertex_fragment_sources.emplace_back(vert_path, fragment_shaders_map[shader_name]); // <vertex path, fragment path>
+
+            ShaderStageMap shader_stage_map;
+            shader_stage_map.emplace(GL_VERTEX_SHADER, vert_path);
+            shader_stage_map.emplace(GL_FRAGMENT_SHADER, frag_path);
+            Shader* new_graphics_shader = new Shader(shader_stage_map, shader_name);
+            add_shader(shader_name, new_graphics_shader);
         }
         else
         {
-            // If they don't match, add vertex shader into a to-be-matched container
-            shaders_to_match.emplace(vert_name, vert_path);
+            // If they don't match to anything, add vertex shader into a manually to-be-matched container
+            shaders_to_match.emplace(shader_name, vert_path);
         }
     }
 
@@ -114,40 +123,31 @@ void ResourceManager::initialize_shaders()
         }
     }
 
-    auto test = shaders_to_match;
-
-    // Create and bind shaders.
-    for (const auto& shader_file_pair : vertex_fragment_sources)
-    {
-        // Use frag name for shader name, since it's possible that vertex shaders are common to others
-        auto shader_path_string = string(shader_file_pair.second);
-        auto shader_name = FileLoader::get_name_from_path(shader_path_string);
-
-        Shader* new_shader = new Shader(
-            shader_file_pair.first.c_str(),
-            shader_file_pair.second.c_str(),
-            shader_name);
-
-        add_shader(shader_name, new_shader);
-    }
-
     // If shaders that did not automatically match are found, manually match them with caution!
     // NOTE: This is used so far to match post process fragment shaders with the post_processing_quad.vert vertex shader.
     //       See shader files for reference.
     if (!shaders_to_match.empty())
     {
-        add_shader("color_grading", new Shader(
-                shaders_to_match["post_processing_quad"].c_str(),
-                shaders_to_match["color_grading"].c_str(),
-                "color_grading"));
+        ShaderStageMap shader_stage_map;
+        shader_stage_map.emplace(GL_VERTEX_SHADER, shaders_to_match["post_processing_quad"].c_str());
+        shader_stage_map.emplace(GL_FRAGMENT_SHADER, shaders_to_match["color_grading"].c_str());
+        add_shader("color_grading", new Shader(shader_stage_map, "color_grading"));
 
-        add_shader("kernel_effect", new Shader(
-                shaders_to_match["post_processing_quad"].c_str(),
-                shaders_to_match["kernel_effect"].c_str(),
-                "kernel_effect"));
+        shader_stage_map.emplace(GL_VERTEX_SHADER, shaders_to_match["post_processing_quad"].c_str());
+        shader_stage_map.emplace(GL_FRAGMENT_SHADER, shaders_to_match["kernel_effect"].c_str());
+        add_shader("kernel_effect", new Shader(shader_stage_map, "kernel_effect"));
+
+        shader_stage_map.clear();
     }
 
-    auto shaders = Shaders;
+    for (const auto& [file_name, file_path] : compute_shader_files)
+    {
+        ShaderStageMap shader_stage_map;
+        shader_stage_map.emplace(GL_COMPUTE_SHADER, file_path);
+        auto shader_name = FileLoader::get_name_from_filename(file_name);
+        add_shader(shader_name, new Shader(shader_stage_map, shader_name));
+    }
+
     if (Shaders.empty())
     {
         B3D_LOG_ERROR("No shaders loaded! Program will crash");

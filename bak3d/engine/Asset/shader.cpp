@@ -32,7 +32,6 @@ THE SOFTWARE.
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-#include "Core/global_definitions.h"
 #include "Core/logger.h"
 
 using namespace std;
@@ -108,107 +107,97 @@ namespace
 
         return result;
     }
+
+    // Read a single source file, resolve #include directives, return the final string
+    string read_source(const string& path)
+    {
+        const ifstream file(path);
+        if (!file.is_open())
+        {
+            B3D_LOG_ERROR("Shader file not found: %s", path.c_str());
+            return {};
+        }
+        ostringstream stream_buffer;
+        stream_buffer << file.rdbuf();
+        const string shader_dir = filesystem::path(path).parent_path().string();
+
+        return resolve_includes(stream_buffer.str(), shader_dir);
+    }
 }
 
-Shader::Shader() :
-    Shader(filesystem::absolute("shaders/LineShader.vert").string().c_str(),
-        filesystem::absolute("shaders/LineShader.frag").string().c_str(),
-        "LineShader")
+Shader::Shader()
+    : Asset(filesystem::absolute("shaders/LineShader.vert").string(), "LineShader")
+    , m_compiled(false)
 {
-    
+    ShaderStageMap shader_stage_sources;
+    shader_stage_sources.emplace(GL_VERTEX_SHADER, filesystem::absolute("shaders/LineShader.vert").string());
+    shader_stage_sources.emplace(GL_FRAGMENT_SHADER, filesystem::absolute("shaders/LineShader.frag").string());
 }
 
-Shader::Shader(const char* vertex_shader_source, const char* fragment_shader_source, const string& shader_name)
-    : Asset(vertex_shader_source, shader_name)
+Shader::Shader(const ShaderStageMap& shader_stage_sources, const std::string& shader_name)
+    : Asset(shader_stage_sources.begin()->second, shader_name)
+    , m_stages(shader_stage_sources)
+    , m_compiled(false)
 {
-    m_vert_path = vertex_shader_source;
-    m_frag_path = fragment_shader_source;
-    
-    // 1. retrieve the vertex/fragment source code from filePath
-	string vertexCode;
-    string fragmentCode;
-    ifstream vShaderFile;
-    ifstream fShaderFile;
-
-    // ensure ifstream objects can throw exceptions:
-    vShaderFile.exceptions(ifstream::failbit | ifstream::badbit);
-    fShaderFile.exceptions(ifstream::failbit | ifstream::badbit);
-
-    try
-    {
-        // open files
-        vShaderFile.open(vertex_shader_source);
-        fShaderFile.open(fragment_shader_source);
-        stringstream vShaderStream, fShaderStream;
-
-        // read file's buffer contents into streams
-        vShaderStream << vShaderFile.rdbuf();
-        fShaderStream << fShaderFile.rdbuf();
-
-        // close file handlers
-        vShaderFile.close();
-        fShaderFile.close();
-
-        string shader_dir = filesystem::path(vertex_shader_source).parent_path().string();
-
-        // convert stream into string
-        vertexCode = resolve_includes(vShaderStream.str(), shader_dir);
-        fragmentCode = resolve_includes(fShaderStream.str(), shader_dir);
-    }
-    catch (ifstream::failure& e)
-    {
-        B3D_LOG_ERROR("Shader file not successfully read: %s", e.what());
-    }
-
-    const char* vShaderCode = vertexCode.c_str();
-    const char* fShaderCode = fragmentCode.c_str();
-
-    // 2. compile shaders
-    GLuint vertex, fragment;
-    bool errors_found = false;
-
-    // vertex shader
-    vertex = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vertex, 1, &vShaderCode, nullptr);
-    glCompileShader(vertex);
-    errors_found |= check_compile_errors(vertex, ".vert", m_object_name);
-
-    // fragment Shader
-    fragment = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragment, 1, &fShaderCode, nullptr);
-    glCompileShader(fragment);
-    errors_found |= check_compile_errors(fragment, ".frag", m_object_name);
-
-    // shader Program
-    m_object_id = glCreateProgram();
-    glAttachShader(m_object_id, vertex);
-    glAttachShader(m_object_id, fragment);
-    glLinkProgram(m_object_id);
-    errors_found |= check_compile_errors(m_object_id, "PROGRAM", m_object_name);
-
-    // delete the shaders as they're linked into our program now and no longer necessary
-    glDeleteShader(vertex);
-    glDeleteShader(fragment);
-
-    m_compiled = errors_found == 0;
-    if (m_compiled)
-    {
-        B3D_LOG_INFO("Shader %s with ID %d has compiled.", m_object_name.c_str(), m_object_id);
-    }
-    else
-    {
-        B3D_LOG_ERROR("Shader %s with ID %d has failed to compile.\nCheck above logs for more info.", m_object_name.c_str(), m_object_id);
-    }
+    build();
 }
 
-Shader::Shader(const Shader& otherShader) : Shader(otherShader.get_vert_path(), otherShader.get_frag_path(), otherShader.get_object_name())
-{
-    
-}
+Shader::Shader(const Shader& other_shader) : Shader(other_shader.m_stages, other_shader.get_object_name()) {}
 
 Shader::~Shader()
 {
     B3D_LOG_INFO("Shader %s has been deleted.", m_object_name.c_str());
+}
+
+void Shader::build()
+{
+    bool any_error = false;
+
+    m_object_id = glCreateProgram();
+
+    // Compile every declared stage and attach it
+    vector<GLuint> shader_stage_ids;
+    shader_stage_ids.reserve(m_stages.size());
+
+    for (const auto& [gl_stage, path] : m_stages)
+    {
+        const string source = read_source(path);
+        if (source.empty())
+        {
+            any_error = true;
+            continue;
+        }
+
+        const char* src_ptr = source.c_str();
+        GLuint id = glCreateShader(gl_stage);
+        glShaderSource(id, 1, &src_ptr, nullptr);
+        glCompileShader(id);
+
+        any_error |= check_compile_errors(id, get_shader_stage_name_file_extension(gl_stage), m_object_name);
+
+        glAttachShader(m_object_id, id);
+        shader_stage_ids.push_back(id);
+    }
+
+    glLinkProgram(m_object_id);
+    any_error |= check_compile_errors(m_object_id, "PROGRAM", m_object_name);
+
+    // Intermediate shader objects are no longer needed after linking
+    for (const GLuint stage_id : shader_stage_ids)
+    {
+        glDeleteShader(stage_id);
+    }
+
+    m_compiled = !any_error;
+
+    if (m_compiled)
+    {
+        B3D_LOG_INFO("Shader '%s' (ID %d) compiled.", m_object_name.c_str(), m_object_id);
+    }
+    else
+    {
+        B3D_LOG_ERROR("Shader '%s' failed. See above.", m_object_name.c_str());
+    }
 }
 
 void Shader::use() const
@@ -219,6 +208,14 @@ void Shader::use() const
 void Shader::unuse() const
 {
     glUseProgram(0);
+}
+
+void Shader::dispatch_compute(const GLuint groups_x, const GLuint groups_y, const GLuint groups_z) const
+{
+    if (m_stages.contains(GL_COMPUTE_SHADER))
+    {
+        glDispatchCompute(groups_x, groups_y, groups_z);
+    }
 }
 
 void Shader::set_bool(const string& name, bool value) const

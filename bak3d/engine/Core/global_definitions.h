@@ -25,6 +25,8 @@ THE SOFTWARE.
 #pragma once
 
 #include <array>
+#include <string>
+#include <unordered_map>
 #include <vector>
 #include <variant>
 #include <assimp/mesh.h>
@@ -194,6 +196,22 @@ struct Face
         return indices < other.indices;
     }
 };
+
+using ShaderStageMap = std::unordered_map<GLenum, std::string>;
+
+inline const char* get_shader_stage_name_file_extension(GLenum stage)
+{
+    switch (stage)
+    {
+    case GL_VERTEX_SHADER:          return ".vert";
+    case GL_FRAGMENT_SHADER:        return ".frag";
+    case GL_COMPUTE_SHADER:         return ".comp";
+    case GL_GEOMETRY_SHADER:        return ".geom";
+    case GL_TESS_CONTROL_SHADER:    return ".tesc";
+    case GL_TESS_EVALUATION_SHADER: return ".tese";
+    default:                        return ".glsl";
+    }
+}
 
 /*
  * Additional indirection layer for referencing MaterialRef's on different scene objects.
