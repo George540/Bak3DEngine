@@ -72,6 +72,7 @@ void Renderer::initialize()
 	B3D_LOG_INFO("Enabling depth test...");
 
 	initialize_buffers();
+	query_gpu_limitations();
 
 	B3D_LOG_INFO("Ending Renderer Initialization....");
 }
@@ -153,4 +154,33 @@ void Renderer::initialize_buffers()
 {
 	r_msaa_fbo = new MultisampleFrameBuffer(0, nullptr, EventManager::get_window_width(), EventManager::get_window_height());
 	r_fbo = new FrameBuffer(0, nullptr, EventManager::get_window_width(), EventManager::get_window_height());
+}
+
+void Renderer::query_gpu_limitations()
+{
+	int max_compute_work_group_count[3];
+	int max_compute_work_group_size[3];
+	int max_compute_work_group_invocations;
+
+	for (int index = 0; index < 3; ++index)
+	{
+		glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, index, &max_compute_work_group_count[index]);
+		glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_SIZE, index, &max_compute_work_group_size[index]);
+	}
+	glGetIntegerv(GL_MAX_COMPUTE_WORK_GROUP_INVOCATIONS, &max_compute_work_group_invocations);
+
+	B3D_LOG_WARNING("----------OpenGL Limitations----------");
+
+	B3D_LOG_WARNING("Maximum number of work groups in X dimension %d", max_compute_work_group_count[0]);
+	B3D_LOG_WARNING("Maximum number of work groups in Y dimension %d", max_compute_work_group_count[1]);
+	B3D_LOG_WARNING("Maximum number of work groups in Z dimension %d", max_compute_work_group_count[2]);
+
+	B3D_LOG_WARNING("Maximum size of a work group in X dimension %d", max_compute_work_group_size[0]);
+	B3D_LOG_WARNING("Maximum size of a work group in Y dimension %d", max_compute_work_group_size[1]);
+	B3D_LOG_WARNING("Maximum size of a work group in Z dimension %d", max_compute_work_group_size[2]);
+
+	B3D_LOG_WARNING("Number of invocations in a single local work group\n"
+			     "that may be dispatched to a compute shader: %d", max_compute_work_group_invocations);
+
+	B3D_LOG_WARNING("----------OpenGL Limitations----------");
 }

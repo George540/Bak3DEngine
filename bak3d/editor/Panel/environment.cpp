@@ -24,8 +24,6 @@ THE SOFTWARE.
 
 #include "environment.h"
 
-#include <glm/vec3.hpp>
-
 #include "imgui_b3d_extensions.h"
 #include "Asset/resource_manager.h"
 #include "Core/global_settings.h"

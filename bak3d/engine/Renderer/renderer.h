@@ -53,4 +53,5 @@ public:
 	static void on_framebuffer_size_callback(GLFWwindow* window, int new_width, int new_height);
 private:
 	static void initialize_buffers();
+	static void query_gpu_limitations();
 };
