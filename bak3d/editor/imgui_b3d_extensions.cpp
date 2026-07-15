@@ -65,6 +65,21 @@ bool ImGuiB3D::PropertyToggle(const char* label, bool* value, const char* toolti
     return ImGui::Checkbox(label_str.c_str(), value);
 }
 
+bool ImGuiB3D::PropertyToggle(const char* label, int* value, const char* tooltip_desc)
+{
+    ImGui::TextUnformatted(label);
+    if (tooltip_desc && ImGui::IsItemHovered())
+    {
+        ToolTipExtendedText(tooltip_desc, TOOL_TIP_WIDTH);
+    }
+    ImGui::SetNextItemWidth(align_to_label_column());
+    const auto label_str = "##" + string(label);
+    bool bool_value = (*value != 0);
+    const bool success = ImGui::Checkbox(label_str.c_str(), &bool_value);
+    *value = static_cast<int>(bool_value);
+    return success;
+}
+
 bool ImGuiB3D::PropertyColorPicker(const char* label, glm::vec4* color, const char* tooltip_desc)
 {
     ImGui::TextUnformatted(label);

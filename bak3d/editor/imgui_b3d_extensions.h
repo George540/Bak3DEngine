@@ -37,6 +37,7 @@ class ImGuiB3D
     static bool ToolTipExtendedText(const char* tooltip_desc, float text_wrap_size);
 public:
     static bool PropertyToggle(const char* label, bool* value, const char* tooltip_desc = nullptr);
+    static bool PropertyToggle(const char* label, int* value, const char* tooltip_desc = nullptr);
     static bool PropertyColorPicker(const char* label, glm::vec4* color, const char* tooltip_desc = nullptr);
     static bool PropertyDropdown(const char* label, const std::vector<const char*>& data, int* selected_index, const char* tooltip_desc = nullptr);
     static bool PropertyBeginDropdown(const char* label, const char* preview_value, const char* tooltip_desc);
