@@ -56,6 +56,7 @@ public:
 	void unuse() const;
 
 	void dispatch_compute(GLuint groups_x, GLuint groups_y, GLuint groups_z) const;
+	void dispatch_compute_1d(GLuint total, GLuint workgroup_size) const;
 
 	// Utility Functions
 	void set_bool(const std::string& name, bool value) const;

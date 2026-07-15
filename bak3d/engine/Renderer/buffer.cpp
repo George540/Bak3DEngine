@@ -268,7 +268,7 @@ void UniformBuffer::bind_to_binding_point(const GLuint index) const
 }
 
 ShaderStorageBuffer::ShaderStorageBuffer(GLsizeiptr size, const void* data, const GLuint index, GLenum usage)
-    : DataBuffer(GL_SHADER_STORAGE_BUFFER, size, data, usage)
+    : DataBuffer(GL_SHADER_STORAGE_BUFFER, size, data, index, usage)
 {
     Buffer::unbind_object();
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, index, m_ID);
@@ -278,6 +278,16 @@ ShaderStorageBuffer::ShaderStorageBuffer(GLsizeiptr size, const void* data, cons
 void ShaderStorageBuffer::bind_to_binding_point(const GLuint index) const
 {
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, index, m_ID);
+}
+
+void ShaderStorageBuffer::reset(const GLenum internal_fmt, const GLenum base_fmt, const GLenum type) const
+{
+    bind_object();
+
+    constexpr GLuint value = 0;
+    glClearBufferData(GL_SHADER_STORAGE_BUFFER, internal_fmt, base_fmt, type, &value);
+
+    unbind_object();
 }
 
 AtomicCounterBuffer::AtomicCounterBuffer(GLuint binding_index, GLenum usage)

@@ -218,6 +218,16 @@ void Shader::dispatch_compute(const GLuint groups_x, const GLuint groups_y, cons
     }
 }
 
+void Shader::dispatch_compute_1d(const GLuint total, const GLuint workgroup_size) const
+{
+    if (m_stages.contains(GL_COMPUTE_SHADER))
+    {
+        auto test = glGetError();
+        const GLuint group_count = (total + workgroup_size - 1) / workgroup_size;
+        glDispatchCompute(group_count, 1, 1);
+    }
+}
+
 void Shader::set_bool(const string& name, bool value) const
 {
     glUniform1i(glGetUniformLocation(m_object_id, name.c_str()), static_cast<int>(value));

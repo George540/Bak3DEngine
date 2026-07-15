@@ -165,6 +165,7 @@ class ShaderStorageBuffer : public DataBuffer
 public:
     ShaderStorageBuffer(GLsizeiptr size, const void* data, GLuint index, GLenum usage = GL_DYNAMIC_DRAW);
     void bind_to_binding_point(GLuint index) const override;
+    void reset(GLenum internal_fmt, GLenum base_fmt, GLenum type) const;
 };
 
 /*
