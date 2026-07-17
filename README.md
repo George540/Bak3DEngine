@@ -84,15 +84,15 @@ Download and extract the latest .zip folder on the *Releases* section onto your 
 Development will start Fall 2026
 | Status | Feature | Description |
 | :---: | :--- | :--- |
-|☐| **Shadows** | With a complex environment scene, implementing shadows (perhaps CSM) will make it even more lively. |
+|☐| **Shadows** | With a complex environment scene, implementing CSM shadows will make it even more lively. |
 |☐| **PBR Lighting** | A fundamental rendering concept I've been looking forward to implement. PBR Materials as well as HDR and IBL. |
 |☐| **Deferred Rendering** | Apply the possibility to integrate rendering features at scale and keep it industry standard. Opens up the possibility for multiple lights in scene. |
-|☐| **Compute Pipeline** | Add compute pipeline and shaders in the Renderer for opening the possibility for more rendering features. Also implement for GPU Particles. |
-|☐| **Polish GPU Particles** | Particle System is barely keeping up. A new and more capable approach is needed. |
+|:ballot_box_with_check:| **Compute Pipeline** | Add compute shaders in the Renderer for opening the possibility for more rendering features. |
+|:gear:| **Advanced GPU Particles** | Particle System is barely keeping up. A new and more capable approach is needed, like compute shaders, new buffer objects, culling, etc. |
 |☐| **Multiple Objects in scene** | Support multiple objects in scene, even from the same type. |
 |☐| **Terrain** | Simple terrain concept for loading a height map into a plane mesh, used for lighting purposes. |
 |☐| **Scene Graph** | Add a scene graph for proper handling of multiple objects using spacial culling. |
-|☐| **GPU Culling** | As the scene grows, we need to handle it at scale with culling unecessary or unseen objects. |
+|☐| **GPU Culling (Frustrum, Occlusion)** | As the scene grows, we need to handle it at scale with culling unecessary or unseen objects. |
 |☐| **Bonus: Rigidbody demo setup** | If time and motivation, add a simple rigidbody structure for fun physics. |
 |☐| **Bonus: FPV movement** | make camera move around the scene without just being restricted in orbit. |
 
