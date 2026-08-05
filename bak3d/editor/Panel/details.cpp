@@ -428,7 +428,7 @@ void Details::draw_particle_emitter_section(ParticleEmitter& emitter)
             ImGuiB3D::PropertyToggle("Randomize Scale", &emitter_config.randomize_scale, "Will particle scale be constant or randomized?\n"
                                                                                                                "Control scale random offset below for more control.");
             // Scale Random Offset
-            ImGui::BeginDisabled(emitter_config.randomize_scale);
+            ImGui::BeginDisabled(!emitter_config.randomize_scale);
             ImGuiB3D::PropertySliderFloat("Scale Random Offset", &emitter_config.scale_rand_offset, 0.01f, emitter_config.scale, "%.2f", "Control the particle's scale random offset when activated.");
             ImGui::EndDisabled();
 
