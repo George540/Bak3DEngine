@@ -22,7 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 =========================================================================== */
 
-#include <glm/glm/ext.hpp>
+#include <glm/ext.hpp>
 #include <filesystem>
 
 #include "scene.h"

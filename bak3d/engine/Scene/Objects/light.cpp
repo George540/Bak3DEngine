@@ -49,7 +49,7 @@ Light::Light(glm::vec3 position, glm::vec3 scaling, const MaterialRef& material)
 	m_vao->set_attrib_pointer(0, 4, GL_FLOAT, GL_FALSE, VEC4_SIZE, nullptr);
 	m_vao->unbind_object();
 
-	m_light_data_ubo = std::make_unique<UniformBuffer>(7 * VEC4_SIZE /*Temporary size*/, nullptr, 1, GL_DYNAMIC_DRAW);
+	m_light_data_ubo = std::make_unique<UniformBuffer>(6 * VEC4_SIZE /*Temporary size*/, nullptr, 1, GL_DYNAMIC_DRAW);
 
 	m_diffuse = glm::vec3(1.0f);
 	m_ambient = glm::vec3(0.3f);

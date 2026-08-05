@@ -27,7 +27,7 @@ THE SOFTWARE.
 #include <chrono>
 #include <string>
 
-#include "glfw/src/internal.h"
+#include <glad/glad.h>
 
 /*
  * Base abstract object class for the entire engine.

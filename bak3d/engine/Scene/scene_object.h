@@ -63,12 +63,13 @@ public:
 
     glm::mat4 get_model_matrix() const { return m_model_matrix; }
     void set_model_matrix(const glm::vec3& position, const glm::vec3& scaling, const glm::vec3& rotation_axis, const float rotation_angle_degrees)
-    { 
+    {
+        m_position = position;
+        m_scaling  = scaling;
         m_model_matrix = glm::mat4(1.0f);
-        m_model_matrix =
-            translate(m_model_matrix, m_position) *
-            rotate(m_model_matrix, glm::radians(rotation_angle_degrees), rotation_axis) *
-            scale(m_model_matrix,m_scaling);
+        m_model_matrix = translate(m_model_matrix, m_position)
+                        * rotate(m_model_matrix, glm::radians(rotation_angle_degrees), rotation_axis)
+                        * scale(m_model_matrix,m_scaling);
     }
 
     virtual void update(float dt) = 0;

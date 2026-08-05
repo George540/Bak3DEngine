@@ -66,7 +66,8 @@ public:
         const auto setting_it = global_settings.find(option);
         if (setting_it == global_settings.end())
         {
-            B3D_LOG_ERROR("Set - Unknown setting: %s.", to_string(option));
+            B3D_LOG_ERROR("Unknown setting: %s.", to_string(option));
+            return;
         }
 
         setting_it->second = value;

@@ -78,7 +78,6 @@ void Bak3DEngine::Shutdown()
     Bak3DEditor::shutdown();
     PostProcessor::shutdown();
     ResourceManager::shutdown();
-    Renderer::shutdown();
     EventManager::shutdown();
     GlobalSettings::shutdown();
     Logger::shutdown();

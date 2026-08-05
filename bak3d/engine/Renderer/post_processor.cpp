@@ -71,7 +71,7 @@ void PostProcessor::shutdown()
 
     m_fbo_a.reset();
     m_fbo_b.reset();
-    delete m_last_written_fbo;
+    m_last_written_fbo = nullptr;
 
     destroy_quad();
 }

@@ -134,6 +134,9 @@ void Renderer::end_frame()
 
 void Renderer::shutdown()
 {
+	delete r_fbo;
+	delete r_msaa_fbo;
+
 	r_window = nullptr;
 	r_fbo = nullptr;
 	r_msaa_fbo = nullptr;

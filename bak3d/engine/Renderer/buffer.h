@@ -43,6 +43,7 @@ public:
 
     void set_buffer_data(const void* buffer_data, size_t buffer_data_size);
     void set_buffer_sub_data(const void* sub_data, size_t sub_data_size, size_t sub_data_offset);
+    void set_memory_barrier(GLbitfield bit_fields);
 protected:
     GLenum m_target;
     GLsizeiptr m_buffer_size;

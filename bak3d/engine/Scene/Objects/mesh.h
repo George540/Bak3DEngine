@@ -46,15 +46,18 @@ public:
     void draw() const override;
 };
 
+/*
+ * Extension of Mesh that handles multiple instances of the same mesh archetype
+ */
 class InstancedMesh : public Mesh
 {
 protected:
     InstanceBuffer* m_ibo;
     int m_num_instances;
 public:
-    InstancedMesh(MaterialRef material);
-    ~InstancedMesh() override;
+    InstancedMesh(std::vector<Vertex> vertices, std::vector<GLuint> indices, const std::string& name, const int initial_num_instances) : Mesh(vertices, indices, name), m_ibo(nullptr), m_num_instances(initial_num_instances) {}
+    ~InstancedMesh() override = default;
 
-    void draw() const override;
+    void draw() const override { RenderableObject::draw(); };
     int get_num_instances() const { return m_num_instances; }
 };

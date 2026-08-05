@@ -42,11 +42,7 @@ public:
 	Scene();
 	~Scene();
 
-	static Scene* get_instance()
-	{
-		static Scene* instance;
-		return instance;
-	}
+	static Scene* get_instance() { return instance; }
 
 	void update(float dt) const;
 

@@ -64,7 +64,7 @@ void Buffer::unbind_object() const
 
 void Buffer::set_buffer_data(const void* buffer_data, const size_t buffer_data_size)
 {
-    if (m_data != buffer_data && cmp_not_equal(m_buffer_size, buffer_data_size))
+    if (m_data != buffer_data || cmp_not_equal(m_buffer_size, buffer_data_size))
     {
         m_data = buffer_data;
         m_buffer_size = buffer_data_size;
@@ -80,6 +80,14 @@ void Buffer::set_buffer_sub_data(const void* sub_data, const size_t sub_data_siz
         throw runtime_error("Buffer overflow: set_buffer_sub_data(...) exceeds allocated size");
     }
     glBufferSubData(m_target, sub_data_offset, sub_data_size, sub_data);
+}
+
+void Buffer::set_memory_barrier(GLbitfield bit_fields)
+{
+    if (bit_fields != 0)
+    {
+        glMemoryBarrier(bit_fields);
+    }
 }
 
 FrameBuffer::FrameBuffer(GLsizeiptr size, const void* data, const GLuint width, const GLuint height, GLenum usage)

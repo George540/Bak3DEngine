@@ -82,7 +82,7 @@ void Bak3DEditor::initialize()
 
     // Setup Platform/Renderer backends
     ImGui_ImplGlfw_InitForOpenGL(Renderer::get_window(), true);
-    const auto glsl_version = "#version 330";
+    const auto glsl_version = "#version 460";
     ImGui_ImplOpenGL3_Init(glsl_version);
 
     m_panels.emplace_back(make_shared<Viewport>());

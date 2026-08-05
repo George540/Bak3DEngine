@@ -425,7 +425,7 @@ void Details::draw_particle_emitter_section(ParticleEmitter& emitter)
             ImGuiB3D::PropertySliderFloat("Scale", &emitter_config.scale, 0.01f, 10.0f, "%.2f", "Control the particle's scale.");
 
             // Randomize Scale?
-            ImGuiB3D::PropertyToggle("Randomize Scale", &emitter_config.randomize_lifetime, "Will particle scale be constant or randomized?\n"
+            ImGuiB3D::PropertyToggle("Randomize Scale", &emitter_config.randomize_scale, "Will particle scale be constant or randomized?\n"
                                                                                                                "Control scale random offset below for more control.");
             // Scale Random Offset
             ImGui::BeginDisabled(emitter_config.randomize_scale);
@@ -462,7 +462,7 @@ void Details::draw_particle_emitter_section(ParticleEmitter& emitter)
             ImGui::EndDisabled();
 
             // Sprite
-            string selected_sprite_name = emitter.get_texture()->get_file_name();
+            string selected_sprite_name =  emitter.get_texture() ? emitter.get_texture()->get_file_name() : "particle_default.png";
 
             draw_property_button_selection_item(&selected_sprite_name, "Sprite", "Select particle sprite for current emitter.");
 
