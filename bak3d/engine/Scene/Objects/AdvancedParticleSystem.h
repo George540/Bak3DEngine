@@ -37,4 +37,10 @@ public:
 
     void update(float dt) override;
     void draw() const override;
+
+private:
+    ShaderRef m_comp_test_shader = nullptr;
+
+    std::unique_ptr<ShaderStorageBuffer> m_ssbo_in;
+    std::unique_ptr<ShaderStorageBuffer> m_ssbo_out;
 };

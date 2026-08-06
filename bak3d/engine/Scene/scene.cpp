@@ -66,6 +66,7 @@ Scene::Scene()
 	// Model setup (empty for now)
 	m_model = nullptr;
 	m_particle_system = nullptr;
+	m_advanced_particle_system = nullptr;
 }
 
 Scene::~Scene()
@@ -73,6 +74,7 @@ Scene::~Scene()
 	delete m_grid;
 	delete m_camera;
 	delete m_particle_system;
+	delete m_advanced_particle_system;
 	delete m_light;
 	delete m_axis;
 	m_scene_objects.clear();
@@ -89,11 +91,15 @@ void Scene::update(float dt) const
 	{
 		m_particle_system->update(dt);
 	}
+	if (m_advanced_particle_system)
+	{
+		m_advanced_particle_system->update(dt);
+	}
 }
 
 ParticleSystem* Scene::spawn_particle_system()
 {
-	m_particle_system = new ParticleSystem("ParticleSystem");
+	m_particle_system = new ParticleSystem();
 	m_scene_objects[SceneObjectType::ParticleSystem] = m_particle_system;
 	return m_particle_system;
 }
@@ -102,4 +108,17 @@ void Scene::despawn_particle_system()
 {
 	delete m_particle_system;
 	m_particle_system = nullptr;
+}
+
+AdvancedParticleSystem* Scene::spawn_advanced_particle_system()
+{
+	m_advanced_particle_system = new AdvancedParticleSystem();
+	m_scene_objects[SceneObjectType::AdvancedParticleSystem] = m_advanced_particle_system;
+	return m_advanced_particle_system;
+}
+
+void Scene::despawn_advanced_particle_system()
+{
+	delete m_advanced_particle_system;
+	m_advanced_particle_system = nullptr;
 }

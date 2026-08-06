@@ -30,12 +30,12 @@ THE SOFTWARE.
 
 BoundingBox::BoundingBox() : RenderableObject(ResourceManager::get_material("grid"), glm::vec3(0.0f), "Bounding Box")
 {
-    m_vao->bind_object();
+    m_vao->bind_buffer();
     m_vbo = new VertexBuffer(VEC3_SIZE * CUBE_VERTICES_WIREFRAME.size(), CUBE_VERTICES_WIREFRAME.data());
     m_ebo = new ElementBuffer(sizeof(GLuint) * CUBE_INDICES_WIREFRAME.size(), CUBE_INDICES_WIREFRAME.data());
 
     m_vao->set_attrib_pointer(0, 3, GL_FLOAT, GL_FALSE, VEC3_SIZE, nullptr);
-    m_vao->unbind_object();
+    m_vao->unbind_buffer();
 }
 
 void BoundingBox::update(float dt)
@@ -50,9 +50,9 @@ void BoundingBox::draw() const
     (*m_material_slot)->set_vec4("color", glm::vec4(1.0f));
     RenderableObject::draw();
 
-    m_vao->bind_object();
+    m_vao->bind_buffer();
     glDrawElements(GL_LINES, 24, GL_UNSIGNED_INT, nullptr);
-    m_vao->unbind_object();
+    m_vao->unbind_buffer();
 
     glDepthFunc(GL_LESS);
 }

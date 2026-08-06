@@ -1,0 +1,41 @@
+﻿#version 460 core
+
+layout(local_size_x = 64, local_size_y = 1, local_size_z = 1) in;
+
+struct Particle
+{
+    vec4 position; // XYZ = position, W = free
+};
+
+layout(std430, binding = 16) buffer ParticleBuffer
+{
+    Particle particles[];
+};
+
+// Simple hash function to generate random floats based on a seed vector
+float rand(vec2 co)
+{
+    return fract(sin(dot(co, vec2(12.9898, 78.233))) * 43758.5453);
+}
+
+void main()
+{
+    uint index = gl_GlobalInvocationID.x;
+
+    // Seed unique to each thread index
+    float seedX = float(index) * 0.152;
+    float seedY = float(index) * 0.734;
+    float seedZ = float(index) * 0.391;
+    float seedW = float(index) * 0.912;
+
+    // Generate random coordinates between -1.0 and 1.0 (Clip space boundaries)
+    float x = rand(vec2(seedX, 1.0)) * 2.0 - 1.0;
+    float y = rand(vec2(seedY, 2.0)) * 2.0 - 1.0;
+    float z = rand(vec2(seedZ, 3.0)) * 2.0 - 1.0;
+
+    // Generate random point size between 2.0 and 12.0 pixels
+    float size = 2.0 + rand(vec2(seedW, 4.0)) * 20.0;
+
+    // Write directly into the buffer
+    particles[index].position = vec4(x, y, z, size);
+}

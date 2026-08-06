@@ -100,6 +100,7 @@ enum class SceneObjectType : uint32_t
     Light,
     Model,
     ParticleSystem,
+    AdvancedParticleSystem,
     Max
 };
 

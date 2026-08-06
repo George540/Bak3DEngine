@@ -49,6 +49,7 @@ namespace
 
     Model* m_current_model = nullptr;
     ParticleSystem* m_current_particle_system = nullptr;
+    AdvancedParticleSystem* m_current_advanced_particle_system = nullptr;
 
     unordered_map<aiTextureType, string> m_pending_texture_selections;
 
@@ -206,10 +207,20 @@ void Details::update()
             m_current_particle_system = nullptr;
             Scene::instance->despawn_particle_system();
         }
+        else if (previous_object_selection_index == 3)
+        {
+            m_current_advanced_particle_system = nullptr;
+            Scene::instance->despawn_advanced_particle_system();
+        }
 
         if (object_selection_index == 2)
         {
             m_current_particle_system = Scene::instance->spawn_particle_system();
+        }
+
+        if (object_selection_index == 3)
+        {
+            m_current_advanced_particle_system = Scene::instance->spawn_advanced_particle_system();
         }
 
         previous_object_selection_index = object_selection_index;

@@ -79,10 +79,10 @@ void Camera::update(float dt)
 	// Set zoom based on camera scroll offset
 	m_position *= EventManager::get_camera_scroll_offset();
 
-	m_camera_data_ubo->bind_object();
+	m_camera_data_ubo->bind_buffer();
 	m_camera_data_ubo->set_buffer_sub_data(glm::value_ptr(get_projection_matrix()), MAT4_SIZE, 0);
 	m_camera_data_ubo->set_buffer_sub_data(glm::value_ptr(get_view_matrix()), MAT4_SIZE, MAT4_SIZE);
-	m_camera_data_ubo->unbind_object();
+	m_camera_data_ubo->unbind_buffer();
 }
 
 glm::mat4 Camera::get_view_matrix() const

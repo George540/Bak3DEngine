@@ -52,12 +52,12 @@ Buffer::~Buffer()
     glDeleteBuffers(1, &m_ID);
 }
 
-void Buffer::bind_object() const
+void Buffer::bind_buffer() const
 {
     glBindBuffer(m_target, m_ID);
 }
 
-void Buffer::unbind_object() const
+void Buffer::unbind_buffer() const
 {
     glBindBuffer(m_target, 0);
 }
@@ -82,7 +82,7 @@ void Buffer::set_buffer_sub_data(const void* sub_data, const size_t sub_data_siz
     glBufferSubData(m_target, sub_data_offset, sub_data_size, sub_data);
 }
 
-void Buffer::set_memory_barrier(GLbitfield bit_fields)
+void Buffer::insert_memory_barrier(GLbitfield bit_fields)
 {
     if (bit_fields != 0)
     {
@@ -105,13 +105,13 @@ FrameBuffer::~FrameBuffer()
     destroy_framebuffer();
 }
 
-void FrameBuffer::bind_object() const
+void FrameBuffer::bind_buffer() const
 {
     glBindFramebuffer(m_target, m_ID);
     glViewport(0, 0, m_width, m_height);
 }
 
-void FrameBuffer::unbind_object() const // when unbinding a frame buffer, it binds back to default
+void FrameBuffer::unbind_buffer() const // when unbinding a frame buffer, it binds back to default
 {
     glBindFramebuffer(m_target, 0);
     glViewport(0, 0, m_width, m_height);
@@ -265,7 +265,7 @@ void MultisampleFrameBuffer::create_attachments()
 UniformBuffer::UniformBuffer(GLsizeiptr size, const void* data, const GLuint index, GLenum usage)
     : DataBuffer(GL_UNIFORM_BUFFER, size, data, usage)
 {
-    Buffer::unbind_object();
+    Buffer::unbind_buffer();
     glBindBufferRange(GL_UNIFORM_BUFFER, index, m_ID, 0, m_buffer_size);
     B3D_LOG_INFO("Uniform Buffer Object enabled...");
 }
@@ -278,7 +278,7 @@ void UniformBuffer::bind_to_binding_point(const GLuint index) const
 ShaderStorageBuffer::ShaderStorageBuffer(GLsizeiptr size, const void* data, const GLuint index, GLenum usage)
     : DataBuffer(GL_SHADER_STORAGE_BUFFER, size, data, index, usage)
 {
-    Buffer::unbind_object();
+    Buffer::unbind_buffer();
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, index, m_ID);
     B3D_LOG_INFO("Shader Storage Buffer Object enabled: %lld bytes at binding %u", size, index);
 }
@@ -290,12 +290,12 @@ void ShaderStorageBuffer::bind_to_binding_point(const GLuint index) const
 
 void ShaderStorageBuffer::reset(const GLenum internal_fmt, const GLenum base_fmt, const GLenum type) const
 {
-    bind_object();
+    bind_buffer();
 
     constexpr GLuint value = 0;
     glClearBufferData(GL_SHADER_STORAGE_BUFFER, internal_fmt, base_fmt, type, &value);
 
-    unbind_object();
+    unbind_buffer();
 }
 
 AtomicCounterBuffer::AtomicCounterBuffer(GLuint binding_index, GLenum usage)
@@ -317,7 +317,7 @@ void AtomicCounterBuffer::bind_to_binding_point(GLuint binding_index) const
 
 void AtomicCounterBuffer::set_counter(const GLuint value) const
 {
-    bind_object();
+    bind_buffer();
 
     // glMapBufferRange is preferred over glBufferSubData for atomics, because it avoids implicit synchronisation on some drivers
     if (GLuint* ptr = static_cast<GLuint*>(glMapBufferRange(GL_ATOMIC_COUNTER_BUFFER, 0, UINT_SIZE, GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT)))
@@ -326,12 +326,12 @@ void AtomicCounterBuffer::set_counter(const GLuint value) const
         glUnmapBuffer(GL_ATOMIC_COUNTER_BUFFER);
     }
 
-    unbind_object();
+    unbind_buffer();
 }
 
 GLuint AtomicCounterBuffer::read_counter() const
 {
-    bind_object();
+    bind_buffer();
 
     GLuint value = 0;
     if (const GLuint* ptr = static_cast<GLuint*>(glMapBufferRange(GL_ATOMIC_COUNTER_BUFFER, 0, UINT_SIZE, GL_MAP_READ_BIT)))
@@ -340,7 +340,7 @@ GLuint AtomicCounterBuffer::read_counter() const
         glUnmapBuffer(GL_ATOMIC_COUNTER_BUFFER);
     }
 
-    unbind_object();
+    unbind_buffer();
 
     return value;
 }

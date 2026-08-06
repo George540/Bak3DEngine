@@ -38,12 +38,13 @@ public:
     Buffer(GLenum target, GLsizeiptr size, const void* data, GLenum usage);
     ~Buffer() override;
 
-    void bind_object() const override;
-    void unbind_object() const override;
+    void bind_buffer() const override;
+    void unbind_buffer() const override;
 
     void set_buffer_data(const void* buffer_data, size_t buffer_data_size);
     void set_buffer_sub_data(const void* sub_data, size_t sub_data_size, size_t sub_data_offset);
-    void set_memory_barrier(GLbitfield bit_fields);
+
+    static void insert_memory_barrier(GLbitfield bit_fields);
 protected:
     GLenum m_target;
     GLsizeiptr m_buffer_size;
@@ -92,8 +93,8 @@ class FrameBuffer : public Buffer
 public:
     FrameBuffer(GLsizeiptr size, const void* data, const GLuint width, const GLuint height, GLenum usage = GL_NONE);
     ~FrameBuffer() override;
-    void bind_object() const override;
-    void unbind_object() const override;
+    void bind_buffer() const override;
+    void unbind_buffer() const override;
     void resize(GLuint new_width, GLuint new_height);
 
     GLuint get_width() const { return m_width; }

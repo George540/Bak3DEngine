@@ -26,6 +26,7 @@ THE SOFTWARE.
 
 #include "Asset/model.h"
 #include "Core/global_definitions.h"
+#include "Objects/AdvancedParticleSystem.h"
 #include "Objects/axis.h"
 #include "Objects/camera.h"
 #include "Objects/grid.h"
@@ -57,13 +58,20 @@ public:
 	ParticleSystem* get_particle_system() const { return m_particle_system; }
 	void set_particle_system(ParticleSystem* model) { m_particle_system = model; }
 
+	AdvancedParticleSystem* get_advanced_particle_system() const { return m_advanced_particle_system; }
+	void set_advanced_particle_system(AdvancedParticleSystem* model) { m_advanced_particle_system = model; }
+
 	ParticleSystem* spawn_particle_system();
 	void despawn_particle_system();
+
+	AdvancedParticleSystem* spawn_advanced_particle_system();
+	void despawn_advanced_particle_system();
 
 	static Scene* instance;
 private:
 	std::unordered_map<SceneObjectType, RenderableObject*> m_scene_objects;
 	ParticleSystem* m_particle_system;
+	AdvancedParticleSystem* m_advanced_particle_system;
 	Camera* m_camera;
 	Model* m_model; // Asset, not an Object
 	Light* m_light;

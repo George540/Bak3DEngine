@@ -53,6 +53,10 @@ void RendererPasses::render_pass_base_geometry()
     {
         particle_system->draw();
     }
+    if (const AdvancedParticleSystem* advanced_particle_system = Scene::instance->get_advanced_particle_system())
+    {
+        advanced_particle_system->draw();
+    }
 }
 
 void RendererPasses::render_pass_lighting()

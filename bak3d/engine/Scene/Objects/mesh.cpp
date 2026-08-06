@@ -49,7 +49,7 @@ Mesh::Mesh(vector<Vertex> vertices, vector<GLuint> indices, const std::string& n
     m_vao->set_attrib_pointer(5, 4, GL_INT, GL_FALSE, sizeof(Vertex), reinterpret_cast<void*>(offsetof(Vertex, m_BoneIDs)));
     m_vao->set_attrib_pointer(6, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<void*>(offsetof(Vertex, m_Weights)));
 
-    m_vao->unbind_object();
+    m_vao->unbind_buffer();
 }
 
 void Mesh::draw() const
@@ -57,7 +57,7 @@ void Mesh::draw() const
     RenderableObject::draw();
 
     // draw mesh
-    m_vao->bind_object();
+    m_vao->bind_buffer();
     glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(m_indices.size()), GL_UNSIGNED_INT, nullptr);
-    m_vao->unbind_object();
+    m_vao->unbind_buffer();
 }

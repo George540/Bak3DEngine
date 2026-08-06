@@ -34,12 +34,12 @@ VertexArray::~VertexArray()
     glDeleteVertexArrays(1, &m_ID);
 }
 
-void VertexArray::bind_object() const
+void VertexArray::bind_buffer() const
 {
     glBindVertexArray(m_ID);
 }
 
-void VertexArray::unbind_object() const
+void VertexArray::unbind_buffer() const
 {
     glBindVertexArray(0);
 }

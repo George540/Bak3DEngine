@@ -47,6 +47,10 @@ GLFWwindow* Renderer::r_window = nullptr;
 MultisampleFrameBuffer* Renderer::r_msaa_fbo = nullptr;
 FrameBuffer* Renderer::r_fbo = nullptr;
 
+#ifdef _DEBUG
+constexpr bool IS_OPENGL_DEBUG_VERBOSE = false;
+#endif
+
 void Renderer::initialize()
 {
 	r_window = EventManager::get_window();
@@ -57,6 +61,32 @@ void Renderer::initialize()
 		exit(-1);
 	}
 	B3D_LOG_INFO("Initializing GLAD context...");
+
+#ifdef _DEBUG
+	if (IS_OPENGL_DEBUG_VERBOSE)
+	{
+		glEnable(GL_DEBUG_OUTPUT);
+		glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS); // callback fires on the same thread/call stack that caused it
+		glDebugMessageCallback([](GLenum source, GLenum type, GLuint id, GLenum severity,
+								  GLsizei length, const GLchar* message, const void* userParam)
+		{
+			// Filter noisy notification-severity spam if desired
+			if (severity == GL_DEBUG_SEVERITY_LOW || severity == GL_DEBUG_SEVERITY_MEDIUM)
+			{
+				B3D_LOG_WARNING("[GL WARNING] type=0x%x id=%u severity=0x%x: %s", type, id, severity, message);
+			}
+			else if (severity == GL_DEBUG_SEVERITY_HIGH)
+			{
+				B3D_LOG_ERROR("[GL ERROR] type=0x%x id=%u severity=0x%x: %s", type, id, severity, message);
+			}
+			else if (GL_DEBUG_SEVERITY_NOTIFICATION)
+			{
+				B3D_LOG_INFO("[GL LOG] type=0x%x id=%u severity=0x%x: %s", type, id, severity, message);
+			}
+		}, nullptr);
+		glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, GL_TRUE);
+	}
+#endif
 
 	glfwSetFramebufferSizeCallback(r_window, on_framebuffer_size_callback);
 
@@ -86,11 +116,11 @@ void Renderer::begin_frame()
 		{
 			r_msaa_fbo->set_samples(samples_setting);
 		}
-		r_msaa_fbo->bind_object();
+		r_msaa_fbo->bind_buffer();
 	}
 	else
 	{
-		r_fbo->bind_object();
+		r_fbo->bind_buffer();
 	}
 
 	const auto background_color = GlobalSettings::get_global_setting_value<glm::vec4>(GlobalSettingOption::BackgroundColor);
@@ -115,11 +145,11 @@ void Renderer::draw_frame()
 	if (GlobalSettings::get_global_setting_value<bool>(GlobalSettingOption::AA_MSAA_Enabled))
 	{
 		r_msaa_fbo->resolve_to(*r_fbo);
-		r_msaa_fbo->unbind_object();
+		r_msaa_fbo->unbind_buffer();
 	}
 	else
 	{
-		r_fbo->unbind_object();
+		r_fbo->unbind_buffer();
 	}
 
 	RendererPasses::render_pass_post_processing();
@@ -127,9 +157,7 @@ void Renderer::draw_frame()
 
 void Renderer::end_frame()
 {
-	const auto background_color = GlobalSettings::get_global_setting_value<glm::vec4>(GlobalSettingOption::BackgroundColor);
-	glClearColor(background_color.r, background_color.g, background_color.b, background_color.a);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
 }
 
 void Renderer::shutdown()
