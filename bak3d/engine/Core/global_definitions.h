@@ -25,7 +25,7 @@ THE SOFTWARE.
 #pragma once
 
 #include <array>
-#include <string>
+#include <string_view>
 #include <unordered_map>
 #include <vector>
 #include <variant>
@@ -42,6 +42,7 @@ THE SOFTWARE.
  * ==========================================================================
  */
 
+constexpr static std::string_view B3D_LOG_FILE = "B3D_Logs.log";
 constexpr static int MAX_LOG_ENTRIES = 64;
 constexpr static float POST_PROCESS_COLORING_SLIDER_CLAMP = 10.0f;
 

@@ -28,6 +28,7 @@ THE SOFTWARE.
 #include "global_settings.h"
 #include "logger.h"
 
+#include "Asset/file_loader.h"
 #include "Asset/resource_manager.h"
 #include "Input/event_manager.h"
 #include "Input/renderdoc_manager.h"
@@ -39,6 +40,7 @@ void Bak3DEngine::Initialize()
 {
     RenderDocManager::initialize();
     Logger::initialize();
+    FileLoader::initialize();
     GlobalSettings::initialize();
     EventManager::initialize();
     Renderer::initialize();
@@ -80,6 +82,7 @@ void Bak3DEngine::Shutdown()
     ResourceManager::shutdown();
     EventManager::shutdown();
     GlobalSettings::shutdown();
+    FileLoader::shutdown();
     Logger::shutdown();
     RenderDocManager::shutdown();
 }

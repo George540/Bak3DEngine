@@ -28,6 +28,7 @@ THE SOFTWARE.
 #include <cstdio>
 
 #include "global_definitions.h"
+#include "Asset/file_loader.h"
 
 namespace log_helper
 {
@@ -113,6 +114,9 @@ public:
         }
 
         log_entries.push_back(log_entry);
+
+        const std::string full_log = log_entry.header_buffer + log_entry.log_buffer + "\n";
+        FileLoader::write_save_export_to_log_file_immediate(full_log);
     }
 
     static std::vector<LogEntry>& get_log_entries() { return log_entries; }

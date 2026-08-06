@@ -26,11 +26,10 @@ THE SOFTWARE.
 
 #include <vector>
 #include <string>
-#include <unordered_map>
 #include <list>
 #include <filesystem>
 
-enum FileType 
+enum class FileType 
 {
 	png,
 	jpg,
@@ -42,7 +41,9 @@ enum FileType
 	obj,
 	mtl,
 	fbx,
-	json
+	json,
+	txt,
+	log
 };
 
 /*
@@ -52,8 +53,16 @@ enum FileType
 class FileLoader
 {
 public:
-	static std::unordered_map<FileType, std::string> enum_to_string_map;
+	static void initialize();
+	static void shutdown();
 
+	static void create_file(const std::string& filename);
+	static std::string load_file_content(const std::string& filename);
+	static void write_line_to_memory(const std::string& filename, const std::string& text);
+	static void save_file_to_memory(const std::string& filename);
+	static void export_file_to_disk(const std::string& filename, const std::string& export_path);
+	static void write_save_export_to_log_file_immediate(const std::string& text);
+	
 	static std::vector<std::string> get_directories(const std::filesystem::path& path);
 	static std::vector<std::string> get_files_by_type(const std::filesystem::path& path, FileType type);
 	static std::vector<std::pair<std::string, std::string>> get_files_by_type_with_path(const std::filesystem::path& path, FileType type);

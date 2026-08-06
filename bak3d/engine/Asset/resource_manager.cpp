@@ -60,9 +60,9 @@ void ResourceManager::initialize_shaders()
 {
     // Get directory and files
     const auto directory = BAK3D_SHADERS_DIR;
-    auto vertex_shader_files = FileLoader::get_files_by_type_with_path(directory, vert);
-    auto fragment_shader_files = FileLoader::get_files_by_type_with_path(directory, frag);
-    auto compute_shader_files = FileLoader::get_files_by_type_with_path(directory, comp);
+    auto vertex_shader_files = FileLoader::get_files_by_type_with_path(directory, FileType::vert);
+    auto fragment_shader_files = FileLoader::get_files_by_type_with_path(directory, FileType::frag);
+    auto compute_shader_files = FileLoader::get_files_by_type_with_path(directory, FileType::comp);
 
     // Map shaders for lookup later
     unordered_map<string, string> vertex_shaders_map;
@@ -160,13 +160,13 @@ void ResourceManager::initialize_shaders()
 
 void ResourceManager::initialize_predefined_textures()
 {
-    auto image_files = FileLoader::get_files_by_type_with_path(string(BAK3D_ASSETS_DIR), png);
+    auto image_files = FileLoader::get_files_by_type_with_path(string(BAK3D_ASSETS_DIR), FileType::png);
     for (const auto& [file_name, file_path] : image_files)
     {
         add_texture(file_name, new Texture2D(file_path, file_name));
     }
 
-    image_files = FileLoader::get_files_by_type_with_path(string(BAK3D_ASSETS_DIR), jpg);
+    image_files = FileLoader::get_files_by_type_with_path(string(BAK3D_ASSETS_DIR), FileType::jpg);
     for (const auto& [file_name, file_path] : image_files)
     {
         add_texture(file_name, new Texture2D(file_path, file_name));
@@ -177,7 +177,7 @@ void ResourceManager::initialize_predefined_textures()
 
 void ResourceManager::initialize_models()
 {
-    const auto model_files = FileLoader::get_files_by_type_with_path(string(BAK3D_ASSETS_DIR) + "/models", obj);
+    const auto model_files = FileLoader::get_files_by_type_with_path(string(BAK3D_ASSETS_DIR) + "/models", FileType::obj);
     for (const auto& [file_name, file_path] : model_files)
     {
         add_model(file_name, new Model(file_path, file_name));
@@ -186,7 +186,7 @@ void ResourceManager::initialize_models()
 
 void ResourceManager::initialize_predefined_materials()
 {
-    const auto model_files = FileLoader::get_files_by_type_with_path(string(BAK3D_ASSETS_DIR) + "/materials", json);
+    const auto model_files = FileLoader::get_files_by_type_with_path(string(BAK3D_ASSETS_DIR) + "/materials", FileType::json);
     for (const auto& [file_name, file_path] : model_files)
     {
         auto name = FileLoader::get_name_from_filename(file_name);

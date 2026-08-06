@@ -22,6 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 =========================================================================== */
 
+#include <fstream>
 #include <iostream>
 
 #include "file_loader.h"
@@ -29,6 +30,111 @@ THE SOFTWARE.
 #include "Core/logger.h"
 
 using namespace std;
+
+namespace
+{
+	unordered_map<string, string> file_content_storage;
+}
+
+void FileLoader::initialize()
+{
+	create_file(B3D_LOG_FILE.data());
+	load_file_content(B3D_LOG_FILE.data());
+}
+
+void FileLoader::shutdown()
+{
+	
+}
+
+void FileLoader::create_file(const string& filename)
+{
+	ofstream file(filename, ios::trunc);
+	if (!file)
+	{
+		B3D_LOG_WARNING("Could not open file '%s'", filename.c_str());
+		return;
+	}
+	file.close();
+	B3D_LOG_INFO("Created new file named '%s'", filename.c_str());
+}
+
+string FileLoader::load_file_content(const string& filename)
+{
+	ifstream file(filename);
+	if (!file)
+	{
+		B3D_LOG_WARNING("Could not open file '%s'", filename.c_str());
+		return "";
+	}
+
+	string file_content;
+	string text_line;
+	while (getline(file, text_line))
+	{
+		write_line_to_memory(filename, text_line);
+	}
+	file.close();
+	B3D_LOG_INFO("Successfully loaded file %s and its content into memory", filename.c_str());
+
+	if (!file_content_storage.contains(filename))
+	{
+		file_content_storage[filename] = file_content;
+	}
+	return file_content;
+}
+
+void FileLoader::write_line_to_memory(const string& filename, const string& text)
+{
+	if (!file_content_storage.contains(filename))
+	{
+		B3D_LOG_WARNING("Could not save file %s", filename.c_str());
+		return;
+	}
+	file_content_storage[filename].append(text + "\n");
+}
+
+void FileLoader::save_file_to_memory(const string& filename)
+{
+	ofstream file(filename, ios::trunc);
+	if (!file)
+	{
+		B3D_LOG_WARNING("Could not save file %s", filename.c_str());
+		return;
+	}
+	file << file_content_storage.contains(filename) ? file_content_storage[filename] : "";
+	file.close();
+	B3D_LOG_INFO("Successfully saved file %s", filename.c_str());
+}
+
+void FileLoader::export_file_to_disk(const string& filename, const string& export_path)
+{
+	ofstream file(export_path + filename, ios::trunc);
+	if (!file)
+	{
+		B3D_LOG_WARNING("Could not export file %s at path", filename.c_str(), export_path.c_str());
+		return;
+	}
+	file << file_content_storage[filename];
+	file.close();
+	B3D_LOG_INFO("Successfully exported file %s to disk at %s", filename.c_str(), export_path.c_str());
+}
+
+void FileLoader::write_save_export_to_log_file_immediate(const std::string& text)
+{
+	// Early exit for when trying to write to the log file while it's being loaded
+	if (!file_content_storage.contains(B3D_LOG_FILE.data()))
+	{
+		return;
+	}
+	ofstream file(B3D_LOG_FILE.data(), ios::app);
+	if (!file)
+	{
+		B3D_LOG_WARNING("Could not write to log file %s", B3D_LOG_FILE.data());
+	}
+	file << text;
+	file.close();
+}
 
 vector<string> FileLoader::get_directories(const filesystem::path& path)
 {
@@ -186,22 +292,24 @@ string FileLoader::get_name_from_path(const string& path, const bool to_lower_ca
 	return get_name_from_filename(file_name, to_lower_case);
 }
 
-string FileLoader::enum_to_string(FileType type)
+string FileLoader::enum_to_string(const FileType type)
 {
 	switch (type)
 	{
-		case png: return ".png";
-		case jpg: return ".jpg";
-		case vs: return ".vert";
-		case vert: return ".vert";
-		case fs: return ".fs";
-		case frag: return ".frag";
-		case comp: return ".comp";
-		case obj: return ".obj";
-		case mtl: return ".mtl";
-		case fbx: return ".fbx";
-		case json: return ".json";
-		default: return ".obj";
+		case FileType::png: return ".png";
+		case FileType::jpg: return ".jpg";
+		case FileType::vs: return ".vert";
+		case FileType::vert: return ".vert";
+		case FileType::fs: return ".fs";
+		case FileType::frag: return ".frag";
+		case FileType::comp: return ".comp";
+		case FileType::obj: return ".obj";
+		case FileType::mtl: return ".mtl";
+		case FileType::fbx: return ".fbx";
+		case FileType::json: return ".json";
+		case FileType::txt: return ".txt";
+		case FileType::log: return ".log";
+		default: return ".txt";
 	}
 }
 
