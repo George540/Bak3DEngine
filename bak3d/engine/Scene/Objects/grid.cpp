@@ -70,7 +70,7 @@ Grid::Grid(MaterialRef material)
 
 	m_vao->set_attrib_pointer(0, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
 	m_vao->set_attrib_pointer(1, 3, GL_FLOAT, GL_FALSE, 2 * VEC3_SIZE, (void*)VEC3_SIZE);
-	m_vao->unbind_object();
+	m_vao->unbind_buffer();
 
 	m_number_of_elements = static_cast<GLuint>(indices.size()) * 4;
 
@@ -81,12 +81,11 @@ void Grid::draw() const
 {
 	glDepthFunc(GL_ALWAYS);
 
-	(*m_material_slot)->set_vec4("color", glm::vec4(0.5f));
 	RenderableObject::draw();
 
-	m_vao->bind_object();
+	m_vao->bind_buffer();
 	glDrawElements(GL_LINES, m_number_of_elements, GL_UNSIGNED_INT, nullptr);
-	m_vao->unbind_object();
+	m_vao->unbind_buffer();
 
 	glDepthFunc(GL_LESS);
 }
