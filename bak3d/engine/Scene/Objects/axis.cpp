@@ -40,7 +40,7 @@ Axis::Axis(MaterialRef material) :
 
 	m_vao->set_attrib_pointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(AxisVertex), reinterpret_cast<void*>(offsetof(AxisVertex, position)));
 	m_vao->set_attrib_pointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(AxisVertex), reinterpret_cast<void*>(offsetof(AxisVertex, color)));
-	m_vao->unbind_buffer();
+	m_vao->unbind();
 
 	B3D_LOG_INFO("Setting up 3D axis gizmo...");
 }
@@ -51,9 +51,9 @@ void Axis::draw() const
 
 	RenderableObject::draw();
 
-	m_vao->bind_buffer();
+	m_vao->bind();
 	glDrawElements(GL_LINES, static_cast<GLsizei>(AXIS_INDICES.size()), GL_UNSIGNED_INT, nullptr);
-	m_vao->unbind_buffer();
+	m_vao->unbind();
 
 	glDepthFunc(GL_LESS);
 }

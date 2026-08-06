@@ -46,15 +46,15 @@ void ParticleSystem::ensure_ibo_capacity(const ParticleEmitter& emitter)
 
     // (Re)build VAO — fully configure it once here, never again until next resize
     gpu_data.vao = std::make_unique<VertexArray>();
-    gpu_data.vao->bind_buffer();
+    gpu_data.vao->bind();
 
     // Attribute 0: quad vertex from the shared VBO
     // VBO must be bound when glVertexAttribPointer is called so VAO records it
-    m_vbo->bind_buffer();
+    m_vbo->bind();
     gpu_data.vao->set_attrib_pointer(0, 4, GL_FLOAT, GL_FALSE, VEC4_SIZE, nullptr);
 
     // Attributes 1-4: per-instance data from this emitter's IBO
-    gpu_data.ibo->bind_buffer();
+    gpu_data.ibo->bind();
     constexpr GLsizei stride = sizeof(ParticleInstanceData);
     gpu_data.vao->set_attrib_pointer(1, 4, GL_FLOAT, GL_FALSE, stride,
         reinterpret_cast<void*>(offsetof(ParticleInstanceData, position)), 1);
@@ -63,9 +63,9 @@ void ParticleSystem::ensure_ibo_capacity(const ParticleEmitter& emitter)
     gpu_data.vao->set_attrib_pointer(3, 1, GL_FLOAT, GL_FALSE, stride,
         reinterpret_cast<void*>(offsetof(ParticleInstanceData, scale)), 1);
 
-    m_ebo->bind_buffer();
-    m_vbo->unbind_buffer();
-    gpu_data.vao->unbind_buffer();
+    m_ebo->bind();
+    m_vbo->unbind();
+    gpu_data.vao->unbind();
 }
 
 bool ParticleSystem::emitter_name_exists(const std::string& name) const
@@ -89,12 +89,12 @@ void ParticleSystem::update(const float dt)
         auto& gpu_data = m_emitter_gpu[emitter->get_name()];
         const auto& instance_data = emitter->get_instance_data();
 
-        gpu_data.ibo->bind_buffer();
+        gpu_data.ibo->bind();
         gpu_data.ibo->set_buffer_sub_data(
             instance_data.data(),
             sizeof(ParticleInstanceData) * emitter->get_max_particles(),
             0);
-        gpu_data.ibo->unbind_buffer();
+        gpu_data.ibo->unbind();
     }
 }
 
@@ -127,7 +127,7 @@ void ParticleSystem::draw() const
         }
 
         // Single bind — all attribute state already recorded in this VAO
-        it->second.vao->bind_buffer();
+        it->second.vao->bind();
 
         const TextureRef& texture = emitter->get_texture();
         if (texture) texture->bind(0);
@@ -147,7 +147,7 @@ void ParticleSystem::draw() const
             Texture2D::unbind();
         }
 
-        it->second.vao->unbind_buffer();
+        it->second.vao->unbind();
     }
 
     (*m_material_slot)->get_shader()->unuse();

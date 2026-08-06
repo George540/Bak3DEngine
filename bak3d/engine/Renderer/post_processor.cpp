@@ -94,7 +94,7 @@ void PostProcessor::process_frame(const FrameBuffer& resolved_fbo)
 
         const ShaderRef shader = pass->get_shader();
 
-        pong->bind_buffer();
+        pong->bind();
         shader->use();
 
         glActiveTexture(GL_TEXTURE0);
@@ -106,7 +106,7 @@ void PostProcessor::process_frame(const FrameBuffer& resolved_fbo)
         draw_quad();
 
         shader->unuse();
-        pong->unbind_buffer();
+        pong->unbind();
 
         // swap: last output becomes next input
         ping = pong;
@@ -131,7 +131,7 @@ void PostProcessor::resize(GLuint width, GLuint height)
 void PostProcessor::create_quad()
 {
     m_vao = new VertexArray();
-    m_vao->bind_buffer();
+    m_vao->bind();
 
     m_vbo = new VertexBuffer(static_cast<GLsizei>(QUAD_VERTICES.size()) * VEC4_SIZE, QUAD_VERTICES.data());
     m_ebo = new ElementBuffer(static_cast<GLsizei>(QUAD_INDICES.size()) * UINT_SIZE, QUAD_INDICES.data());
@@ -139,14 +139,14 @@ void PostProcessor::create_quad()
     m_vao->set_attrib_pointer(0, 4, GL_FLOAT, GL_FALSE, VEC4_SIZE, nullptr);
     m_vao->set_attrib_pointer(1, 2, GL_FLOAT, GL_FALSE, VEC4_SIZE, reinterpret_cast<void*>(2 * sizeof(float)));
 
-    m_vao->unbind_buffer();
+    m_vao->unbind();
 }
 
 void PostProcessor::draw_quad()
 {
-    m_vao->bind_buffer();
+    m_vao->bind();
     glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(QUAD_INDICES.size()), GL_UNSIGNED_INT, nullptr);
-    m_vao->unbind_buffer();
+    m_vao->unbind();
 }
 
 void PostProcessor::destroy_quad()

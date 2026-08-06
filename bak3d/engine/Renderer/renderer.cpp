@@ -116,11 +116,11 @@ void Renderer::begin_frame()
 		{
 			r_msaa_fbo->set_samples(samples_setting);
 		}
-		r_msaa_fbo->bind_buffer();
+		r_msaa_fbo->bind();
 	}
 	else
 	{
-		r_fbo->bind_buffer();
+		r_fbo->bind();
 	}
 
 	const auto background_color = GlobalSettings::get_global_setting_value<glm::vec4>(GlobalSettingOption::BackgroundColor);
@@ -145,11 +145,11 @@ void Renderer::draw_frame()
 	if (GlobalSettings::get_global_setting_value<bool>(GlobalSettingOption::AA_MSAA_Enabled))
 	{
 		r_msaa_fbo->resolve_to(*r_fbo);
-		r_msaa_fbo->unbind_buffer();
+		r_msaa_fbo->unbind();
 	}
 	else
 	{
-		r_fbo->unbind_buffer();
+		r_fbo->unbind();
 	}
 
 	RendererPasses::render_pass_post_processing();

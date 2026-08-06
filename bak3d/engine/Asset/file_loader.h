@@ -49,6 +49,7 @@ enum class FileType
 /*
  * Static utility class for loading assets from files such as shaders, models, textures,
  * and generally folders and directories in order to get content to the engine.
+ * Also manages the engine's log file.
  */
 class FileLoader
 {

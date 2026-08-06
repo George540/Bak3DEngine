@@ -37,8 +37,8 @@ public:
     VertexArray();
     ~VertexArray() override;
 
-    void bind_buffer() const override;
-    void unbind_buffer() const override;
+    void bind() const override;
+    void unbind() const override;
 
     void set_attrib_pointer(GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const void* pointer, GLuint divisor = 0);
 };

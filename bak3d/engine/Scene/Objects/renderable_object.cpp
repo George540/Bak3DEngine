@@ -38,7 +38,7 @@ RenderableObject::RenderableObject(const MaterialRef& material, const glm::vec3 
 	m_visible = true;
 
 	m_vao = new VertexArray();
-	m_vao->bind_buffer();
+	m_vao->bind();
 
 	// Will be handled by derived class
 	m_vbo = nullptr;

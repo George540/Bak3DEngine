@@ -48,11 +48,11 @@ AdvancedParticleSystem::AdvancedParticleSystem(const std::string& name)
     // Describe the SAME buffer object to the VAO via GL_ARRAY_BUFFER.
     // This is independent of its GL_SHADER_STORAGE_BUFFER binding at index 16 -
     // a buffer object can be bound to multiple targets at once.
-    m_vao->bind_buffer();
-    m_ssbo_in->bind_buffer();
+    m_vao->bind();
+    m_ssbo_in->bind();
     m_vao->set_attrib_pointer(0, 4, GL_FLOAT, GL_FALSE, VEC4_SIZE, nullptr);
-    m_vao->unbind_buffer();
-    m_ssbo_in->unbind_buffer();
+    m_vao->unbind();
+    m_ssbo_in->unbind();
 
     B3D_LOG_INFO("Advanced Particle System '%s' created.", name.c_str());
 }
@@ -87,9 +87,9 @@ void AdvancedParticleSystem::draw() const
 
     glEnable(GL_PROGRAM_POINT_SIZE);
 
-    m_vao->bind_buffer();
+    m_vao->bind();
     glDrawArrays(GL_POINTS, 0, NUM_ELEMENTS);
-    m_vao->unbind_buffer();
+    m_vao->unbind();
 
     glDisable(GL_PROGRAM_POINT_SIZE);
 }

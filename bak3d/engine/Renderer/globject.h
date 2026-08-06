@@ -31,8 +31,8 @@ class GLObject
 {
 public:
     virtual ~GLObject() = default;
-    virtual void bind_buffer() const = 0;
-    virtual void unbind_buffer() const = 0;
+    virtual void bind() const = 0;
+    virtual void unbind() const = 0;
     GLuint get_id() const { return m_ID; }
 
 protected:

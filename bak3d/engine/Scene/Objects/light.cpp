@@ -47,7 +47,7 @@ Light::Light(glm::vec3 position, glm::vec3 scaling, const MaterialRef& material)
 	m_ebo = new ElementBuffer(static_cast<GLsizei>(QUAD_INDICES.size()) * UINT_SIZE, QUAD_INDICES.data());
 
 	m_vao->set_attrib_pointer(0, 4, GL_FLOAT, GL_FALSE, VEC4_SIZE, nullptr);
-	m_vao->unbind_buffer();
+	m_vao->unbind();
 
 	m_light_data_ubo = std::make_unique<UniformBuffer>(6 * VEC4_SIZE /*Temporary size*/, nullptr, 1, GL_DYNAMIC_DRAW);
 
@@ -112,9 +112,9 @@ void Light::draw() const
 
 	m_sprite_texture->bind(0);
 
-	m_vao->bind_buffer();
+	m_vao->bind();
 	glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(QUAD_INDICES.size()), GL_UNSIGNED_INT, nullptr);
-	m_vao->unbind_buffer();
+	m_vao->unbind();
 
 	Texture2D::unbind();
 
@@ -136,7 +136,7 @@ void Light::set_cone_angles(const float inner_degrees, const float outer_degrees
 
 void Light::update_light_data_ubo() const
 {
-	m_light_data_ubo->bind_buffer();
+	m_light_data_ubo->bind();
 
 	// vec4 position
 	m_light_data_ubo->set_buffer_sub_data(&m_position,			 VEC3_SIZE,  0 * VEC4_SIZE + 0);
@@ -161,7 +161,7 @@ void Light::update_light_data_ubo() const
 	const int32_t type = static_cast<int32_t>(m_type);
 	m_light_data_ubo->set_buffer_sub_data(&type,				 INT_SIZE,   5 * VEC4_SIZE);
 
-	m_light_data_ubo->unbind_buffer();
+	m_light_data_ubo->unbind();
 }
 
 void Light::set_texture_by_type(const LightType type)
