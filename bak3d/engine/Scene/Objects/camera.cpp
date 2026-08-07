@@ -46,7 +46,9 @@ Camera::Camera(glm::vec3 position, glm::vec3 lookat, glm::vec3 up, float speed, 
 	m_vertical_angle(ver_angle),
 	m_zoom(zoom)
 {
-	m_camera_data_ubo = make_unique<UniformBuffer>(MAT4_SIZE * 2, nullptr, 0, GL_DYNAMIC_DRAW);
+	// @TODO: Replace with struct payload instead of manual size
+	// 2 mat4's * 1 vec4 = 9 vec4's
+	m_camera_data_ubo = make_unique<UniformBuffer>(VEC4_SIZE * 9 /*Temporary size*/, nullptr, 0, GL_DYNAMIC_DRAW);
 
 	B3D_LOG_INFO("Camera has been set up.");
 };
@@ -82,6 +84,7 @@ void Camera::update(float dt)
 	m_camera_data_ubo->bind();
 	m_camera_data_ubo->set_buffer_sub_data(glm::value_ptr(get_projection_matrix()), MAT4_SIZE, 0);
 	m_camera_data_ubo->set_buffer_sub_data(glm::value_ptr(get_view_matrix()), MAT4_SIZE, MAT4_SIZE);
+	m_camera_data_ubo->set_buffer_sub_data(glm::value_ptr(glm::vec4(m_position, 1.0f)), VEC4_SIZE, 2 * MAT4_SIZE);
 	m_camera_data_ubo->unbind();
 }
 

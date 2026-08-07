@@ -2,15 +2,21 @@
 
 out vec4 fragColor;
 
+#include "Common_Global.glsl"
+
+uniform vec3 particle_albedo = vec3(1.0);
+
 void main()
 {
-    vec2 circle_coord = 2.0 * gl_PointCoord - 1.0;
-    
-    // To shape the point particles into a circle,
-    // throw away squared corners if fragment lies outside the circle's unit radius
-    if (dot(circle_coord, circle_coord) > 1.0)
+    vec3 normal;
+    if (!get_point_sphere_normal(gl_PointCoord, camera_data.view, normal))
     {
         discard;
     }
-    fragColor = vec4(1.0, 1.0, 1.0, 1.0);
+
+    //vec3 view_dir = normalize(camera_data_position_placeholder - FragPos);
+
+    vec3 lit_result = particle_albedo; // @TODO: Include light data switch setup
+
+    fragColor = vec4(lit_result, 1.0);
 }

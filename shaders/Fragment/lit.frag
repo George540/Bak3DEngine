@@ -27,7 +27,6 @@ in VS_OUT
 } fs_in;
 
 uniform Material material;
-uniform vec3 camera_position;
 
 out vec4 FragColor;
 
@@ -56,7 +55,7 @@ vec3 get_view_dir()
 {
     if (material.use_normal_texture)
         return normalize(fs_in.TangentViewPos - fs_in.TangentFragPos);
-    return normalize(camera_position - fs_in.FragPos);
+    return normalize(camera_data.position.xyz - fs_in.FragPos);
 }
 
 vec3 calc_ambient(vec3 light_ambient)
@@ -81,15 +80,6 @@ vec3 calc_specular(vec3 light_specular, vec3 lightDir, vec3 normal, vec3 viewDir
     if (material.use_specular_texture)
         return light_specular * spec * texture(material.specular_texture, fs_in.TexCoord).rgb;
     return light_specular * spec * vec3(material.surface_parameters.z);
-}
-
-float calc_attenuation(float dist)
-{
-    float radius = light_data.ambient.a;
-    float c = 1.0;
-    float l = 4.5  / radius;
-    float q = 75.0 / (radius * radius);
-    return 1.0 / (c + l * dist + q * (dist * dist));
 }
 
 // Light type calculators
@@ -120,8 +110,7 @@ vec3 calc_point_light()
     vec3 diffuse  = calc_diffuse(light_data.diffuse.rgb, lightDir, normal);
     vec3 specular = calc_specular(light_data.specular.rgb, lightDir, normal, viewDir);
 
-    float dist        = length(light_data.position.rgb - fs_in.FragPos);
-    float attenuation = calc_attenuation(dist);
+    float attenuation = process_attenuation(fs_in.FragPos);
 
     ambient  *= attenuation;
     diffuse  *= attenuation;
@@ -156,8 +145,7 @@ vec3 calc_spot_light()
     specular *= spot_intensity;
 
     // Distance attenuation
-    float dist        = length(light_data.position.rgb - fs_in.FragPos);
-    float attenuation = calc_attenuation(dist);
+    float attenuation = process_attenuation(fs_in.FragPos);
 
     ambient  *= attenuation;
     diffuse  *= attenuation;

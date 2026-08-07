@@ -6,8 +6,6 @@ layout (location = 2) in vec2 aTexCoords;
 layout (location = 3) in vec3 aTangent;
 layout (location = 4) in vec3 aBitangent;
 
-uniform vec3 camera_position;
-
 #include "Common_Global.glsl"
 
 out VS_OUT
@@ -41,7 +39,7 @@ void main()
     mat3 TBN = transpose(mat3(T, B, N));
 
     vs_out.TangentLightPos = TBN * light_data.position.rgb;
-    vs_out.TangentViewPos  = TBN * camera_position;
+    vs_out.TangentViewPos  = TBN * camera_data.position.xyz;
     vs_out.TangentFragPos  = TBN * vs_out.FragPos;
     vs_out.TangentLightDir = TBN * normalize(-light_data.direction.rgb);
 

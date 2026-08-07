@@ -97,8 +97,6 @@ void Model::draw() const
 
 void Model::update_material_properties() const
 {
-	(*m_current_material_slot)->set_vec3("camera_position", Scene::instance->get_camera()->get_camera_position());
-
 	(*m_current_material_slot)->bind_textures_cache();
 }
  

@@ -49,6 +49,7 @@ Light::Light(glm::vec3 position, glm::vec3 scaling, const MaterialRef& material)
 	m_vao->set_attrib_pointer(0, 4, GL_FLOAT, GL_FALSE, VEC4_SIZE, nullptr);
 	m_vao->unbind();
 
+	// @TODO: Replace with struct payload instead of manual size
 	m_light_data_ubo = std::make_unique<UniformBuffer>(6 * VEC4_SIZE /*Temporary size*/, nullptr, 1, GL_DYNAMIC_DRAW);
 
 	m_diffuse = glm::vec3(1.0f);
