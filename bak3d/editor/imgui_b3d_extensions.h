@@ -47,12 +47,13 @@ public:
     static bool PropertySliderInt(const char* label, int* value, int v_min, int v_max, const char* tooltip_desc = nullptr);
     static bool PropertyButton(const char* property_label, const char* button_label = nullptr, const char* tooltip_desc = nullptr, ImVec2 size = ImVec2(0, 0));
     static bool PropertyImageButton(const char* label, const char* tooltip_desc, ImTextureID texture_id, ImVec2 size, ImVec2 uv0 = ImVec2( 1.0f, 1.0f), ImVec2 uv1 = ImVec2( 0.0f, 0.0f), ImVec4 bg_col = ImVec4(0.0f, 0.0f, 0.0f, 0.0f), ImVec4 tint_col = ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
-
+    
     static std::string TruncateLabel(const std::string& label, float tile_width);
     static void AssetTooltip(const Asset* asset);
 
     static bool SeparatorWithSpacing(int num_spaces = 1);
     static bool StringContainsIgnoreCase(std::string str, const std::string& sub_str);
+    static bool InteractableMultilineText(const std::string& label, const std::string& text, const ImVec4 color);
 
     static bool MultiSpacing(int num_spaces);
 

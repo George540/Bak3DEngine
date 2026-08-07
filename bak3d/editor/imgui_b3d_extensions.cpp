@@ -299,3 +299,30 @@ bool ImGuiB3D::StringContainsIgnoreCase(string str, const string& sub_str)
 
     return str.find(sub_lower) != std::string::npos;
 }
+
+bool ImGuiB3D::InteractableMultilineText(const std::string& label, const std::string& text, const ImVec4 color)
+{
+    // Push styling
+    ImGui::PushStyleColor(ImGuiCol_Text, color);
+    ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(0, 0, 0, 0));
+    ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0, 0, 0, 0));
+    ImGui::PushStyleVar(ImGuiStyleVar_ScrollbarSize, 0.0f);
+
+    char log_buffer[512];
+    strncpy_s(log_buffer, text.c_str(), sizeof(log_buffer) - 1);
+    log_buffer[sizeof(log_buffer) - 1] = '\0';
+    const string text_label = "##" + label;
+
+    const float width = ImGui::GetContentRegionAvail().x;
+    const ImVec2 text_size = ImGui::CalcTextSize(log_buffer, nullptr, false, width);
+    const float min_height = ImGui::GetTextLineHeightWithSpacing();
+    const float dynamic_height = std::max(text_size.y + ImGui::GetStyle().FramePadding.y * 2.0f, min_height);
+
+    const bool result = ImGui::InputTextMultiline(text_label.c_str(), log_buffer, IM_ARRAYSIZE(log_buffer), ImVec2(width, dynamic_height), ImGuiInputTextFlags_ReadOnly | ImGuiInputTextFlags_WordWrap | ImGuiInputTextFlags_NoHorizontalScroll);
+
+    // Pop Styling
+    ImGui::PopStyleVar();
+    ImGui::PopStyleColor(3);
+
+    return result;
+}

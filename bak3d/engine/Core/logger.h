@@ -106,7 +106,11 @@ public:
         log_entry.log_level = level;
         log_entry.header_buffer = header_buffer;
         log_entry.log_buffer = log_buffer;
-        
+
+        if (log_entry.log_buffer.ends_with('\n'))
+        {
+            log_entry.log_buffer.pop_back();
+        }
 
         if (log_entries.size() >= MAX_LOG_ENTRIES)
         {
@@ -115,7 +119,7 @@ public:
 
         log_entries.push_back(log_entry);
 
-        const std::string full_log = log_entry.header_buffer + log_entry.log_buffer + "\n";
+        const std::string full_log = log_entry.header_buffer + log_entry.log_buffer;
         FileLoader::write_save_export_to_log_file_immediate(full_log);
     }
 

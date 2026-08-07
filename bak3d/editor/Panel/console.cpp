@@ -69,20 +69,6 @@ namespace
 
         ImGui::PopStyleColor(4);
     }
-
-    void format_log_element(const string& full_log_message, const string& log_header, const ImVec4 color, int& log_current_index)
-    {
-        ImGui::PushStyleColor(ImGuiCol_Text, color);
-        ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(0, 0, 0, 0));
-        ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0, 0, 0, 0));
-        ImGui::SetNextItemWidth(-FLT_MIN);
-        char log_buffer[512];
-        strncpy_s(log_buffer, full_log_message.c_str(), sizeof(log_buffer) - 1);
-        log_buffer[sizeof(log_buffer) - 1] = '\0'; 
-        string text_label = "##" + to_string(log_current_index++) + log_header + "\n";
-        ImGui::InputText(text_label.c_str(), log_buffer, sizeof(log_buffer), ImGuiInputTextFlags_ReadOnly);
-        ImGui::PopStyleColor(3);
-    }
 }
 
 Console::Console() : EditorPanel("Logger")
@@ -150,7 +136,7 @@ void Console::update()
         int current_log_index = 0;
         for (const auto& log_entry : Logger::get_log_entries())
         {
-            string full_log = log_entry.header_buffer + log_entry.log_buffer + "\n";
+            string full_log = log_entry.header_buffer + log_entry.log_buffer;
             if (search_buffer[0] != '\0' && !ImGuiB3D::StringContainsIgnoreCase(full_log, string(search_buffer)))
             {
                 continue;
@@ -180,7 +166,8 @@ void Console::update()
                     log_color = ImVec4(1.0f, 1.0f, 1.0f, 1.0f); 
                     break;
             }
-            format_log_element(full_log, log_entry.header_buffer, log_color, current_log_index);
+            const string label = to_string(current_log_index++) + log_entry.header_buffer;
+            ImGuiB3D::InteractableMultilineText(label, full_log, log_color);
         }
 
         if (ImGui::GetScrollY() >= ImGui::GetScrollMaxY())
