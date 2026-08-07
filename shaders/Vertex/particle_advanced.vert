@@ -16,5 +16,5 @@ void main()
     float worldSize = inParticle.w;
     
     float pixelScale = camera_data.projection[1][1] * (viewport_height * 0.5);
-    gl_PointSize = clamp(worldSize * pixelScale * point_scale / gl_Position.w, 1.0, 10.0); // Tunable clamps
+    gl_PointSize = worldSize * pixelScale * point_scale / gl_Position.w;
 }

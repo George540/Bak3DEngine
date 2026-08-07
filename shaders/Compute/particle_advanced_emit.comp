@@ -41,5 +41,5 @@ void main()
     float z = (rand(vec2(seedZ, 3.0)) * 2.0 - 1.0) * spawn_extent;
     float size = 0.05 + rand(vec2(seedW, 4.0)) * 0.3; // Generate world-space particle "radius", not based on pixel size
 
-    particles[index].position = vec4(x, y, z, 0.2);
+    particles[index].position = vec4(x, y, z, 1.0);
 }
