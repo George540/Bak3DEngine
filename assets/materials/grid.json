@@ -1,6 +1,7 @@
 {
   "shader": "grid",
   "uniforms": {
+	"color": { "type": "vec3",  "value": [0.5, 0.5, 0.5] },
     "model": { "type": "mat4",  "value": [
       1,0,0,0,
       0,1,0,0,
