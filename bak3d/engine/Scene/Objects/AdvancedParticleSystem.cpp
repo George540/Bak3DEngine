@@ -42,17 +42,13 @@ AdvancedParticleSystem::AdvancedParticleSystem(const std::string& name)
         B3D_LOG_ERROR("Compute shader missing or failed to compile.");
     }
 
-    // Single SSBO: written by the compute shader as a storage block, read by the vertex shader as a vertex attribute source.
     m_ssbo_in = make_unique<ShaderStorageBuffer>(NUM_ELEMENTS * VEC4_SIZE, nullptr, 16);
 
-    // Describe the SAME buffer object to the VAO via GL_ARRAY_BUFFER.
-    // This is independent of its GL_SHADER_STORAGE_BUFFER binding at index 16 -
-    // a buffer object can be bound to multiple targets at once.
     m_vao->bind();
-    glBindBuffer(GL_ARRAY_BUFFER, m_ssbo_in->get_id());
+    m_ssbo_in->bind_to_target(GL_ARRAY_BUFFER);
     m_vao->set_attrib_pointer(0, 4, GL_FLOAT, GL_FALSE, VEC4_SIZE, nullptr);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    m_ssbo_in->unbind();
+    m_ssbo_in->unbind_from_target(GL_ARRAY_BUFFER);
+    m_vao->unbind();
 
     B3D_LOG_INFO("Advanced Particle System '%s' created.", name.c_str());
 }

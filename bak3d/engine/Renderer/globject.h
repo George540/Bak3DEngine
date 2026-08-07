@@ -33,6 +33,11 @@ public:
     virtual ~GLObject() = default;
     virtual void bind() const = 0;
     virtual void unbind() const = 0;
+
+    // Can be used to bind to and unbind from multiple targets
+    void bind_to_target(const GLenum target) const { glBindBuffer(target, m_ID); }
+    void unbind_from_target(const GLenum target) { glBindBuffer(target, 0); }
+    
     GLuint get_id() const { return m_ID; }
 
 protected:
