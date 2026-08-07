@@ -55,8 +55,8 @@ public:
 	void use() const;
 	void unuse() const;
 
-	void dispatch_compute(GLuint groups_x, GLuint groups_y, GLuint groups_z) const;
-	void dispatch_compute_1d(GLuint total, GLuint workgroup_size) const;
+	void dispatch_compute(GLuint work_group_local_size_x, GLuint work_group_local_size_y, GLuint work_group_local_size_z) const;
+	void dispatch_compute_1d(GLuint total, GLuint work_group_local_size_x) const;
 
 	// Utility Functions
 	void set_bool(const std::string& name, bool value) const;

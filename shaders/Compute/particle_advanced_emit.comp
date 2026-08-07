@@ -4,8 +4,11 @@ layout(local_size_x = 64, local_size_y = 1, local_size_z = 1) in;
 
 struct Particle
 {
-    vec4 position; // XYZ = position, W = free
+    vec4 position; // XYZ = world-space position, W = world-space particle size (radius units)
 };
+
+uniform int particle_count;
+uniform float spawn_extent = 5.0; // half-extent of the world-space scatter cube, in world units
 
 layout(std430, binding = 16) buffer ParticleBuffer
 {
@@ -21,7 +24,7 @@ float rand(vec2 co)
 void main()
 {
     uint index = gl_GlobalInvocationID.x;
-    if (index >= 128) // NUM_PARTICLES needs to be passed in via a uniform or UBO
+    if (index >= particle_count) // NUM_PARTICLES needs to be passed in via a uniform or UBO
     {
         return;
     }
@@ -32,14 +35,11 @@ void main()
     float seedZ = float(index) * 0.391;
     float seedW = float(index) * 0.912;
 
-    // Generate random coordinates between -1.0 and 1.0 (Clip space boundaries)
-    float x = rand(vec2(seedX, 1.0)) * 2.0 - 1.0;
-    float y = rand(vec2(seedY, 2.0)) * 2.0 - 1.0;
-    float z = rand(vec2(seedZ, 3.0)) * 2.0 - 1.0;
+    // Generate random world-space coordinates
+    float x = (rand(vec2(seedX, 1.0)) * 2.0 - 1.0) * spawn_extent;
+    float y = (rand(vec2(seedY, 2.0)) * 2.0 - 1.0) * spawn_extent;
+    float z = (rand(vec2(seedZ, 3.0)) * 2.0 - 1.0) * spawn_extent;
+    float size = 0.05 + rand(vec2(seedW, 4.0)) * 0.3; // Generate world-space particle "radius", not based on pixel size
 
-    // Generate random point size between 2.0 and 12.0 pixels
-    float size = 2.0 + rand(vec2(seedW, 4.0)) * 20.0;
-
-    // Write directly into the buffer
-    particles[index].position = vec4(x, y, z, 10.0);
+    particles[index].position = vec4(x, y, z, 0.2);
 }

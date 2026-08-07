@@ -210,19 +210,19 @@ void Shader::unuse() const
     glUseProgram(0);
 }
 
-void Shader::dispatch_compute(const GLuint groups_x, const GLuint groups_y, const GLuint groups_z) const
+void Shader::dispatch_compute(const GLuint work_group_local_size_x, const GLuint work_group_local_size_y, const GLuint work_group_local_size_z) const
 {
     if (m_stages.contains(GL_COMPUTE_SHADER))
     {
-        glDispatchCompute(groups_x, groups_y, groups_z);
+        glDispatchCompute(work_group_local_size_x, work_group_local_size_y, work_group_local_size_z);
     }
 }
 
-void Shader::dispatch_compute_1d(const GLuint total, const GLuint workgroup_size) const
+void Shader::dispatch_compute_1d(const GLuint total, const GLuint work_group_local_size_x) const
 {
     if (m_stages.contains(GL_COMPUTE_SHADER))
     {
-        const GLuint group_count = (total + workgroup_size - 1) / workgroup_size;
+        const GLuint group_count = (total + work_group_local_size_x - 1) / work_group_local_size_x;
         glDispatchCompute(group_count, 1, 1);
     }
 }

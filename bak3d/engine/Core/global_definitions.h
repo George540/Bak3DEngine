@@ -110,7 +110,8 @@ enum class SceneObjectType : uint32_t
  * Definitions for different rendering structures and constant primitive data.
  * ==========================================================================
  */
-constexpr auto MAX_BONE_INFLUENCE = 4;
+static constexpr GLuint WORK_GROUP_LOCAL_SIZE = 64;
+static constexpr auto MAX_BONE_INFLUENCE = 4;
 
 static constexpr GLsizei FLOAT_SIZE = sizeof(float);
 static constexpr GLsizei VEC2_SIZE = sizeof(glm::vec2);

@@ -25,11 +25,11 @@ THE SOFTWARE.
 #include "AdvancedParticleSystem.h"
 
 #include "Asset/resource_manager.h"
+#include "Input/event_manager.h"
 
 using namespace std;
 
-static constexpr GLuint NUM_ELEMENTS = 128;
-static constexpr GLuint WORKGROUP_SIZE = 64;
+static constexpr GLuint NUM_ELEMENTS = 1000;
 
 AdvancedParticleSystem::AdvancedParticleSystem(const std::string& name)
     : RenderableObject(ResourceManager::get_material("particle_advanced"),
@@ -57,11 +57,6 @@ AdvancedParticleSystem::AdvancedParticleSystem(const std::string& name)
     B3D_LOG_INFO("Advanced Particle System '%s' created.", name.c_str());
 }
 
-AdvancedParticleSystem::~AdvancedParticleSystem()
-{
-    
-}
-
 void AdvancedParticleSystem::update(float dt)
 {
     return;
@@ -76,7 +71,15 @@ void AdvancedParticleSystem::draw() const
         return;
     }
 
-    (*m_material_slot)->get_shader()->use();
+    const ShaderRef particle_shader = (*m_material_slot)->get_shader();
+    if (!particle_shader || !particle_shader->is_shader_compiled())
+    {
+        return;
+    }
+    particle_shader->use();
+    particle_shader->set_float("viewport_height", static_cast<float>(EventManager::get_viewport_height()));
+    (*m_material_slot)->set_float("point_scale", 1.0f); // @TODO: Apply to particle UBO
+    apply_material();
 
     glEnable(GL_PROGRAM_POINT_SIZE);
 
@@ -95,8 +98,10 @@ void AdvancedParticleSystem::simulate() const
     }
 
     m_comp_test_shader->use();
+    m_comp_test_shader->set_int("particle_count", NUM_ELEMENTS); // @TODO: Add to UBO
+    m_comp_test_shader->set_float("spawn_extent", 10.0f);
     m_ssbo_in->bind_to_binding_point(16);
-    m_comp_test_shader->dispatch_compute_1d(NUM_ELEMENTS, WORKGROUP_SIZE);
+    m_comp_test_shader->dispatch_compute_1d(NUM_ELEMENTS, WORK_GROUP_LOCAL_SIZE);
     Buffer::insert_memory_barrier(GL_SHADER_STORAGE_BARRIER_BIT | GL_VERTEX_ATTRIB_ARRAY_BARRIER_BIT);
     m_comp_test_shader->unuse();
 }
