@@ -88,7 +88,7 @@ void Model::draw() const
 	if (!m_visible || !Scene::instance->get_camera() || !Scene::instance->get_active_light() || !m_current_material_slot) return;
 
 	update_material_properties();
-	
+
 	for (auto& mesh : meshes)
 	{
 		mesh->draw();

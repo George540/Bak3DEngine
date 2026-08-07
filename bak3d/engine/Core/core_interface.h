@@ -33,3 +33,14 @@ public:
     virtual ~IRenderable() = default;
     virtual void draw() const = 0;
 };
+
+/*
+ * Interface-like structure to set up a simulatable object in the render pass, mostly using compute shaders
+ */
+class ISimulatable
+{
+public:
+    virtual ~ISimulatable() = default;
+private:
+    virtual void simulate() const = 0;
+};

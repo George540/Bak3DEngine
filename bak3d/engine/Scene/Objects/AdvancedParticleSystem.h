@@ -29,7 +29,7 @@ THE SOFTWARE.
 /*
  * A more advanced particle system
  */
-class AdvancedParticleSystem : public RenderableObject
+class AdvancedParticleSystem : public RenderableObject, ISimulatable
 {
 public:
     explicit AdvancedParticleSystem(const std::string& name = "AdvancedParticleSystem");
@@ -39,6 +39,8 @@ public:
     void draw() const override;
 
 private:
+    void simulate() const override;
+
     ShaderRef m_comp_test_shader = nullptr;
 
     std::unique_ptr<ShaderStorageBuffer> m_ssbo_in;

@@ -49,9 +49,9 @@ AdvancedParticleSystem::AdvancedParticleSystem(const std::string& name)
     // This is independent of its GL_SHADER_STORAGE_BUFFER binding at index 16 -
     // a buffer object can be bound to multiple targets at once.
     m_vao->bind();
-    m_ssbo_in->bind();
+    glBindBuffer(GL_ARRAY_BUFFER, m_ssbo_in->get_id());
     m_vao->set_attrib_pointer(0, 4, GL_FLOAT, GL_FALSE, VEC4_SIZE, nullptr);
-    m_vao->unbind();
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
     m_ssbo_in->unbind();
 
     B3D_LOG_INFO("Advanced Particle System '%s' created.", name.c_str());
@@ -64,20 +64,13 @@ AdvancedParticleSystem::~AdvancedParticleSystem()
 
 void AdvancedParticleSystem::update(float dt)
 {
-    if (!m_comp_test_shader || !m_comp_test_shader->is_shader_compiled())
-    {
-        return;
-    }
-
-    m_comp_test_shader->use();
-    m_ssbo_in->bind_to_binding_point(16);
-    m_comp_test_shader->dispatch_compute_1d(NUM_ELEMENTS, WORKGROUP_SIZE);
-    Buffer::insert_memory_barrier(GL_SHADER_STORAGE_BARRIER_BIT | GL_VERTEX_ATTRIB_ARRAY_BARRIER_BIT);
-    m_comp_test_shader->unuse();
+    return;
 }
 
 void AdvancedParticleSystem::draw() const
 {
+    simulate();
+
     if (!has_material())
     {
         return;
@@ -92,4 +85,18 @@ void AdvancedParticleSystem::draw() const
     m_vao->unbind();
 
     glDisable(GL_PROGRAM_POINT_SIZE);
+}
+
+void AdvancedParticleSystem::simulate() const
+{
+    if (!m_comp_test_shader || !m_comp_test_shader->is_shader_compiled())
+    {
+        return;
+    }
+
+    m_comp_test_shader->use();
+    m_ssbo_in->bind_to_binding_point(16);
+    m_comp_test_shader->dispatch_compute_1d(NUM_ELEMENTS, WORKGROUP_SIZE);
+    Buffer::insert_memory_barrier(GL_SHADER_STORAGE_BARRIER_BIT | GL_VERTEX_ATTRIB_ARRAY_BARRIER_BIT);
+    m_comp_test_shader->unuse();
 }

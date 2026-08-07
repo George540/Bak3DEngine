@@ -34,7 +34,7 @@ namespace
 {
     RENDERDOC_Version rdc_version = eRENDERDOC_API_Version_1_4_0;
     RENDERDOC_API_1_4_0* rdc_api  = nullptr;
-    constexpr bool IS_RDC_DISABLED = true;
+    constexpr bool IS_RDC_DISABLED = false;
     bool pending_capture = false;
 }
 

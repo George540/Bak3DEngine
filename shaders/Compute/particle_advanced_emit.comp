@@ -21,6 +21,10 @@ float rand(vec2 co)
 void main()
 {
     uint index = gl_GlobalInvocationID.x;
+    if (index >= 128) // NUM_PARTICLES needs to be passed in via a uniform or UBO
+    {
+        return;
+    }
 
     // Seed unique to each thread index
     float seedX = float(index) * 0.152;
@@ -37,5 +41,5 @@ void main()
     float size = 2.0 + rand(vec2(seedW, 4.0)) * 20.0;
 
     // Write directly into the buffer
-    particles[index].position = vec4(x, y, z, size);
+    particles[index].position = vec4(x, y, z, 10.0);
 }
