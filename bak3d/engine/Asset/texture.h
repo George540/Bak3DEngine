@@ -43,7 +43,7 @@ class Texture2D : public Asset
 {
 public:
     Texture2D() = default;
-    Texture2D(const std::string& path, const std::string& file_name);
+    Texture2D(const std::string& path, const std::string& file_name, bool is_editor = false);
     Texture2D(const Texture2D&) = delete;
     ~Texture2D() override;
 
@@ -55,6 +55,7 @@ public:
     int get_width() const { return m_width; }
     int get_height() const { return m_height; }
     int get_nb_color_channels() const { return m_nb_color_channels; }
+    bool is_editor_texture() const { return m_is_editor; }
 
     Texture2D& operator=(const Texture2D&) = delete;
     bool operator==(const Texture2D& other) const;
@@ -63,4 +64,5 @@ private:
     GLuint m_texture_id;
     int m_width, m_height; // texture image dimensions: width and height of loaded image in pixels
     int m_nb_color_channels; // the number of color components in the loaded image
+    bool m_is_editor;
 };

@@ -163,13 +163,17 @@ void ResourceManager::initialize_predefined_textures()
     auto image_files = FileLoader::get_files_by_type_with_path(string(BAK3D_ASSETS_DIR), FileType::png);
     for (const auto& [file_name, file_path] : image_files)
     {
-        add_texture(file_name, new Texture2D(file_path, file_name));
+        filesystem::path path(file_path);
+        bool is_editor_texture = path.parent_path().filename() == "editor";
+        add_texture(file_name, new Texture2D(file_path, file_name, is_editor_texture));
     }
 
     image_files = FileLoader::get_files_by_type_with_path(string(BAK3D_ASSETS_DIR), FileType::jpg);
     for (const auto& [file_name, file_path] : image_files)
     {
-        add_texture(file_name, new Texture2D(file_path, file_name));
+        filesystem::path path(file_path);
+        bool is_editor_texture = path.parent_path().filename() == "editor";
+        add_texture(file_name, new Texture2D(file_path, file_name, is_editor_texture));
     }
 
     B3D_LOG_INFO("Successfully loaded %d textures.", Textures.size());

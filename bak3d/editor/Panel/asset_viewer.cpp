@@ -116,6 +116,10 @@ void AssetPanel::draw_asset_grid()
             {
                 continue;
             }
+            if (texture->is_editor_texture())
+            {
+                continue;
+            }
 
             ImGui::TableNextColumn();
             draw_asset_tile(name, texture.ref()->asset);

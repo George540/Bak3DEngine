@@ -41,8 +41,9 @@ THE SOFTWARE.
 
 using namespace std;
 
-Texture2D::Texture2D(const string& path, const string& file_name)
+Texture2D::Texture2D(const string& path, const string& file_name, const bool is_editor)
     : Asset(path, file_name)
+    , m_is_editor(is_editor)
 {
     // Bypass gen texture ID with unique ID
     glGenTextures(1, &m_texture_id);
