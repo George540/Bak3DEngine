@@ -11,7 +11,8 @@ out VS_OUT
 
 //@TODO: Add to particle config UBO
 uniform float viewport_height;
-uniform float point_scale = 0.5; // artist-facing tuning knob
+
+float point_scale = 0.05; // to be constant
 
 void main()
 {

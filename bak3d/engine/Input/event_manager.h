@@ -97,14 +97,7 @@ public:
 	static double get_mouse_motion_y();
 	static double get_camera_scroll_offset();
 
-	static bool get_using_diffuse_texture() { return is_using_diffuse_texture; }
-	static void set_using_diffuse_texture(bool isDiffuse) { is_using_diffuse_texture = isDiffuse; }
-
-	static bool get_using_specular_texture() { return is_using_specular_texture; }
-	static void set_using_specular_texture(bool isSpecular) { is_using_specular_texture = isSpecular; }
-
-	static bool get_using_normal_maps() { return is_using_normals_texture; }
-	static void set_using_normal_maps(bool isNormal) { is_using_normals_texture = isNormal; }
+	static void set_windows_application_icon();
 
 	static void enable_mouse_cursor();
 	static void disable_mouse_cursor();

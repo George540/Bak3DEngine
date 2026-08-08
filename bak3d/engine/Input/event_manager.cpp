@@ -32,6 +32,7 @@ THE SOFTWARE.
 #include "event_manager.h"
 
 #include <imgui_impl_glfw.h>
+#include <stb_image.h>
 
 #include "imgui.h"
 #include "Core/logger.h"
@@ -157,6 +158,8 @@ void EventManager::initialize()
 
 	toggle_vsync(false);
 
+	set_windows_application_icon();
+
 	// Initial time
 	last_frame_time = glfwGetTime();
 	srand(static_cast<unsigned int>(time(nullptr)));  // NOLINT(cert-msc51-cpp)
@@ -275,6 +278,24 @@ double EventManager::get_mouse_motion_y()
 double EventManager::get_camera_scroll_offset()
 {
 	return cam_zoom_distance;
+}
+
+void EventManager::set_windows_application_icon()
+{
+	GLFWimage images[1];
+	images[0].pixels = stbi_load((string(BAK3D_ASSETS_DIR) + "/editor/bak3d_icon.png").c_str(), &images[0].width, &images[0].height, nullptr, 4);
+	if (images[0].pixels)
+	{
+		glfwSetWindowIcon(m_window, 1, images);
+        
+		// 4. Free the image data immediately after setting it
+		stbi_image_free(images[0].pixels);
+		glfwPollEvents();
+	}
+	else
+	{
+		B3D_LOG_WARNING("Failed to load icon image 'bak3d_icon.png'. Must be in asset folder '/editor'");
+	}
 }
 
 void EventManager::enable_mouse_cursor()

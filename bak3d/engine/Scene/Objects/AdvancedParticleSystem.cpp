@@ -29,7 +29,7 @@ THE SOFTWARE.
 
 using namespace std;
 
-static constexpr GLuint NUM_ELEMENTS = 10000;
+static constexpr GLuint NUM_ELEMENTS = 1000000;
 
 AdvancedParticleSystem::AdvancedParticleSystem(const std::string& name)
     : RenderableObject(ResourceManager::get_material("particle_advanced"),
