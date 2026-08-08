@@ -47,28 +47,18 @@ vec3 apply_billboarding(
     return world_position + (camera_right * rotated_vertex.x + camera_up * rotated_vertex.y) * scale;
 }
 
-bool get_point_sphere_normal(vec2 point_coord, mat4 view, out vec3 world_normal)
+bool get_point_sphere_normal(vec2 point_coord, vec3 world_pos, vec3 camera_pos, out vec3 flat_normal)
 {
     vec2 circle_coord = point_coord * 2.0 - 1.0;
-    
-    float r2 = dot(circle_coord, circle_coord);
-    if (r2 > 1.0)
+
+    if (dot(circle_coord, circle_coord) > 1.0)
     {
-        world_normal = vec3(0.0);
+        flat_normal = vec3(0.0);
         return false;
     }
-    
-    // Sphere equation based on z:
-    // x^2 + y^2 + z^2 = 1 -> z = sqrt(1.0 - x^2 - y^2)
-    float z = sqrt(1.0 - r2);
 
-    // Camera basis vectors in world space (rows of the view matrix)
-    vec3 camera_right = vec3(view[0][0], view[1][0], view[2][0]);
-    vec3 camera_up = vec3(view[0][1], view[1][1], view[2][1]);
-    vec3 camera_forward = vec3(view[0][2], view[1][2], view[2][2]); // points away from camera into scene
+    flat_normal = normalize(camera_pos - world_pos);
 
-    // Flip forward so normal points toward the camera
-    world_normal = normalize(circle_coord.x * camera_right + circle_coord.y * camera_up - z * camera_forward);
     return true;
 }
 
@@ -145,7 +135,7 @@ vec3 process_point_light(vec3 frag_position, vec3 normal)
     return (ambient + diffuse + specular) * light_data.diffuse.a;
 }
 
-vec3 process_spotlight(vec3 frag_position, vec3 normal)
+vec3 process_spot_light(vec3 frag_position, vec3 normal)
 {
     vec3 light_direction = get_light_direction(frag_position);
     vec3 view_direction = get_view_direction(frag_position);

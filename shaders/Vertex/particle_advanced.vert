@@ -1,6 +1,11 @@
 ﻿#version 460
 
-layout(location = 0) in vec4 inParticle; // xyz = world position, w = world-space size
+layout(location = 0) in vec4 in_particle; // xyz = world position, w = world-space size
+
+out VS_OUT
+{
+    vec3 frag_position;
+} vs_out;
 
 #include "Common_Global.glsl"
 
@@ -9,12 +14,12 @@ uniform float point_scale = 1.0; // artist-facing tuning knob
 
 void main()
 {
-    vec3 worldPosition = inParticle.xyz;
-    vec4 viewPosition = camera_data.view * vec4(worldPosition, 1.0);
-    gl_Position = camera_data.projection * viewPosition;
+    vec3 world_position = in_particle.xyz;
+    vs_out.frag_position = world_position;
+    vec4 view_position = camera_data.view * vec4(world_position, 1.0);
+    gl_Position = camera_data.projection * view_position;
 
-    float worldSize = inParticle.w;
-    
-    float pixelScale = camera_data.projection[1][1] * (viewport_height * 0.5);
-    gl_PointSize = worldSize * pixelScale * point_scale / gl_Position.w;
+    float world_size = in_particle.w;
+    float pixel_scale = camera_data.projection[1][1] * (viewport_height * 0.01);
+    gl_PointSize = world_size * pixel_scale * point_scale / gl_Position.w;
 }

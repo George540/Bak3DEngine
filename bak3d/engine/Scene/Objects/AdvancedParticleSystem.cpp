@@ -29,7 +29,7 @@ THE SOFTWARE.
 
 using namespace std;
 
-static constexpr GLuint NUM_ELEMENTS = 1000;
+static constexpr GLuint NUM_ELEMENTS = 1000000;
 
 AdvancedParticleSystem::AdvancedParticleSystem(const std::string& name)
     : RenderableObject(ResourceManager::get_material("particle_advanced"),
@@ -95,7 +95,7 @@ void AdvancedParticleSystem::simulate() const
 
     m_comp_test_shader->use();
     m_comp_test_shader->set_int("particle_count", NUM_ELEMENTS); // @TODO: Add to UBO
-    m_comp_test_shader->set_float("spawn_extent", 10.0f);
+    m_comp_test_shader->set_float("spawn_extent", 1.0f);
     m_ssbo_in->bind_to_binding_point(16);
     m_comp_test_shader->dispatch_compute_1d(NUM_ELEMENTS, WORK_GROUP_LOCAL_SIZE);
     Buffer::insert_memory_barrier(GL_SHADER_STORAGE_BARRIER_BIT | GL_VERTEX_ATTRIB_ARRAY_BARRIER_BIT);
