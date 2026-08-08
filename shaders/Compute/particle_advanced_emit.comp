@@ -7,6 +7,7 @@ struct Particle
     vec4 position; // XYZ = world-space position, W = world-space particle size (radius units)
 };
 
+//@TODO: Add to particle config UBO
 uniform int particle_count;
 uniform float spawn_extent = 5.0; // half-extent of the world-space scatter cube, in world units
 
@@ -15,11 +16,7 @@ layout(std430, binding = 16) buffer ParticleBuffer
     Particle particles[];
 };
 
-// Simple hash function to generate random floats based on a seed vector
-float rand(vec2 co)
-{
-    return fract(sin(dot(co, vec2(12.9898, 78.233))) * 43758.5453);
-}
+#include "Common_Global.glsl"
 
 void main()
 {
@@ -29,17 +26,11 @@ void main()
         return;
     }
 
-    // Seed unique to each thread index
-    float seedX = float(index) * 0.152;
-    float seedY = float(index) * 0.734;
-    float seedZ = float(index) * 0.391;
-    float seedW = float(index) * 0.912;
-
-    // Generate random world-space coordinates
-    float x = (rand(vec2(seedX, 1.0)) * 2.0 - 1.0) * spawn_extent;
-    float y = (rand(vec2(seedY, 2.0)) * 2.0 - 1.0) * spawn_extent;
-    float z = (rand(vec2(seedZ, 3.0)) * 2.0 - 1.0) * spawn_extent;
-    float size = 0.05 + rand(vec2(seedW, 4.0)) * 0.3; // Generate world-space particle "radius", not based on pixel size
+    // Decorrelate each axis by hashing index combined with a different constant per axis
+    float x = (pcg_hash_rand01(index * 3u + 0u) * 2.0 - 1.0) * spawn_extent;
+    float y = (pcg_hash_rand01(index * 3u + 1u) * 2.0 - 1.0) * spawn_extent;
+    float z = (pcg_hash_rand01(index * 3u + 2u) * 2.0 - 1.0) * spawn_extent;
+    float size = 0.05 + pcg_hash_rand01(index * 3u + 2u ^ 0x9E3779B9u) * 0.3;
 
     particles[index].position = vec4(x, y, z, 1.0);
 }

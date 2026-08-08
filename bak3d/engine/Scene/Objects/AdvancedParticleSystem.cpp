@@ -29,7 +29,7 @@ THE SOFTWARE.
 
 using namespace std;
 
-static constexpr GLuint NUM_ELEMENTS = 1000000;
+static constexpr GLuint NUM_ELEMENTS = 10000;
 
 AdvancedParticleSystem::AdvancedParticleSystem(const std::string& name)
     : RenderableObject(ResourceManager::get_material("particle_advanced"),
@@ -67,14 +67,20 @@ void AdvancedParticleSystem::draw() const
         return;
     }
 
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glDepthMask(GL_FALSE);
+
     const ShaderRef particle_shader = (*m_material_slot)->get_shader();
     if (!particle_shader || !particle_shader->is_shader_compiled())
     {
+        glDepthMask(GL_TRUE);
+        glDisable(GL_BLEND);
         return;
     }
     particle_shader->use();
     particle_shader->set_float("viewport_height", static_cast<float>(EventManager::get_viewport_height()));
-    (*m_material_slot)->set_float("point_scale", 1.0f); // @TODO: Apply to particle UBO
+    (*m_material_slot)->set_float("point_scale", 1.0f);
     apply_material();
 
     glEnable(GL_PROGRAM_POINT_SIZE);
@@ -84,6 +90,8 @@ void AdvancedParticleSystem::draw() const
     m_vao->unbind();
 
     glDisable(GL_PROGRAM_POINT_SIZE);
+    glDepthMask(GL_TRUE);
+    glDisable(GL_BLEND);
 }
 
 void AdvancedParticleSystem::simulate() const
@@ -95,7 +103,7 @@ void AdvancedParticleSystem::simulate() const
 
     m_comp_test_shader->use();
     m_comp_test_shader->set_int("particle_count", NUM_ELEMENTS); // @TODO: Add to UBO
-    m_comp_test_shader->set_float("spawn_extent", 1.0f);
+    m_comp_test_shader->set_float("spawn_extent", 5.0f);
     m_ssbo_in->bind_to_binding_point(16);
     m_comp_test_shader->dispatch_compute_1d(NUM_ELEMENTS, WORK_GROUP_LOCAL_SIZE);
     Buffer::insert_memory_barrier(GL_SHADER_STORAGE_BARRIER_BIT | GL_VERTEX_ATTRIB_ARRAY_BARRIER_BIT);

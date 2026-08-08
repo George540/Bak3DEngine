@@ -23,6 +23,18 @@ layout (std140, binding = 1) uniform LightData
     float padding[3];
 } light_data;
 
+uint pcg_hash(uint input_value)
+{
+    uint state = input_value * 747796405u + 2891336453u;
+    uint word = ((state >> ((state >> 28u) + 4u)) ^ state) * 277803737u;
+    return (word >> 22u) ^ word;
+}
+
+float pcg_hash_rand01(uint seed)
+{
+    return float(pcg_hash(seed)) / 4294967295.0; // normalize to 0.0-1.0
+}
+
 vec3 apply_billboarding(
     vec3 world_position,
     vec2 vertex_xy,
@@ -47,21 +59,6 @@ vec3 apply_billboarding(
     return world_position + (camera_right * rotated_vertex.x + camera_up * rotated_vertex.y) * scale;
 }
 
-bool get_point_sphere_normal(vec2 point_coord, vec3 world_pos, vec3 camera_pos, out vec3 flat_normal)
-{
-    vec2 circle_coord = point_coord * 2.0 - 1.0;
-
-    if (dot(circle_coord, circle_coord) > 1.0)
-    {
-        flat_normal = vec3(0.0);
-        return false;
-    }
-
-    flat_normal = normalize(camera_pos - world_pos);
-
-    return true;
-}
-
 float get_light_distance(vec3 frag_position)
 {
     return length(light_data.position.xyz - frag_position);
@@ -77,22 +74,13 @@ vec3 get_view_direction(vec3 frag_position)
     return normalize(camera_data.position.xyz - frag_position);
 }
 
-vec3 process_ambient(vec3 light_ambient)
+// Smooth radial alpha falloff from opaque center to transparent edges (like default_particle.png)
+// Higher softness = softer edges, lower softness = closer to a hard circle
+float calculate_point_alpha_falloff(vec2 point_coord, float softness)
 {
-    return light_ambient * vec3(1.0); // 1.0 is surface_parameter.x
-}
-
-vec3 process_diffuse(vec3 frag_position, vec3 light_direction, vec3 light_diffuse, vec3 normal)
-{
-    float diffuse = max(dot(light_direction, normal), 0.0);
-    return light_diffuse * diffuse * 1.0; // 1.0 is surface_parameter.y
-}
-
-vec3 process_specular(vec3 light_specular, vec3 light_direction, vec3 view_direction, vec3 normal)
-{
-    vec3 halfway_direction = normalize(light_direction + view_direction);
-    float specular = pow(max(dot(normal, halfway_direction), 0.0), 1.0); // 1.0 is surface_parameter.z
-    return light_specular * specular * vec3(1.0); // 1.0 is surface_parameter.z
+    vec2 circle_coord = point_coord * 2.0 - 1.0;
+    float radius = length(circle_coord);
+    return 1.0 - smoothstep(1.0 - softness, 1.0, radius);
 }
 
 float process_attenuation(vec3 frag_position)
@@ -105,66 +93,44 @@ float process_attenuation(vec3 frag_position)
     return 1.0 / (c + l * distance + q * (distance * distance));
 }
 
-vec3 process_directional_light(vec3 frag_position, vec3 normal)
+// Forward scatter: cheap translucency effect where light passes through semi-transparent particle and lights it from behind.
+// Normal not applied here since it is not a surface-based position.
+float calculate_translucency(vec3 view_direction, vec3 light_direction, float scatter_power)
 {
-    vec3 light_direction = normalize(-light_data.direction.xyz);
-    vec3 view_direction = get_view_direction(frag_position);
-
-    vec3 ambient = process_ambient(light_data.ambient.rgb);
-    vec3 diffuse = process_diffuse(frag_position, light_direction, light_data.diffuse.rgb, normal);
-    vec3 specular = process_specular(light_data.specular.rgb, light_direction, view_direction, normal);
-
-    return (ambient + diffuse + specular) * light_data.diffuse.a;
+    float back_scatter = max(dot(-view_direction, light_direction), 0.0);
+    return pow(back_scatter, scatter_power);
 }
 
-vec3 process_point_light(vec3 frag_position, vec3 normal)
+vec3 process_particle_light(vec3 frag_position, vec3 view_direction, float scatter_power)
 {
-    vec3 light_direction = get_light_direction(frag_position);
-    vec3 view_direction = get_view_direction(frag_position);
+    vec3 light_direction;
+    float attenuation = 1.0;
+    float spot_intensity = 1.0;
 
-    vec3 ambient = process_ambient(light_data.ambient.rgb);
-    vec3 diffuse = process_diffuse(frag_position, light_direction, light_data.diffuse.rgb, normal);
-    vec3 specular = process_specular(light_data.specular.rgb, light_direction, view_direction, normal);
+    if (light_data.type == LIGHT_TYPE_DIRECTIONAL)
+    {
+        light_direction = normalize(-light_data.direction.xyz);
+    }
+    else
+    {
+        light_direction = get_light_direction(frag_position);
+        attenuation = process_attenuation(frag_position);
 
-    float attenuation = process_attenuation(frag_position);
+        if (light_data.type == LIGHT_TYPE_SPOT || light_data.type == LIGHT_TYPE_AREA)
+        {
+            vec3 world_spotlight_direction = normalize(light_data.direction.xyz);
+            float theta = dot(light_direction, -world_spotlight_direction);
+            float cut_off = light_data.position.a;
+            float outer_cut_off  = light_data.direction.a;
+            float epsilon = cut_off - outer_cut_off;
+            spot_intensity = clamp((theta - outer_cut_off) / max(epsilon, 0.001), 0.0, 1.0);
+        }
+    }
 
-    ambient *= attenuation;
-    diffuse *= attenuation;
-    specular *= attenuation;
+    float translucency = calculate_translucency(view_direction, light_direction, scatter_power);
 
-    return (ambient + diffuse + specular) * light_data.diffuse.a;
-}
+    vec3 ambient = light_data.ambient.rgb;
+    vec3 scattered = light_data.diffuse.rgb * translucency;
 
-vec3 process_spot_light(vec3 frag_position, vec3 normal)
-{
-    vec3 light_direction = get_light_direction(frag_position);
-    vec3 view_direction = get_view_direction(frag_position);
-
-    vec3 ambient = process_ambient(light_data.ambient.rgb);
-    vec3 diffuse = process_diffuse(frag_position, light_direction, light_data.diffuse.rgb, normal);
-    vec3 specular = process_specular(light_data.specular.rgb, light_direction, view_direction, normal);
-
-    vec3 world_light_direction = normalize(light_data.position.rgb - frag_position);
-    vec3 world_spotlight_direction = normalize(light_data.direction.rgb);
-
-    // Spotlight cone attenuation (soft edges)
-    // cut_off and outer_cut_off are stored as cosines, inner > outer
-    float theta = dot(world_light_direction, -world_spotlight_direction);
-    float cut_off = light_data.position.a;
-    float outer_cut_off = light_data.direction.a;
-    float epsilon = cut_off - outer_cut_off;
-    float spot_intensity = clamp((theta - outer_cut_off) / max(epsilon, 0.001), 0.0, 1.0);
-
-    ambient *= spot_intensity;
-    diffuse *= spot_intensity;
-    specular *= spot_intensity;
-
-    // Distance attenuation
-    float attenuation = process_attenuation(frag_position);
-
-    ambient *= attenuation;
-    diffuse *= attenuation;
-    specular *= attenuation;
-
-    return (ambient + diffuse + specular) * light_data.diffuse.a;
+    return (ambient + scattered) * attenuation * spot_intensity * light_data.diffuse.a;
 }

@@ -9,8 +9,9 @@ out VS_OUT
 
 #include "Common_Global.glsl"
 
+//@TODO: Add to particle config UBO
 uniform float viewport_height;
-uniform float point_scale = 1.0; // artist-facing tuning knob
+uniform float point_scale = 0.5; // artist-facing tuning knob
 
 void main()
 {
@@ -20,6 +21,6 @@ void main()
     gl_Position = camera_data.projection * view_position;
 
     float world_size = in_particle.w;
-    float pixel_scale = camera_data.projection[1][1] * (viewport_height * 0.01);
+    float pixel_scale = camera_data.projection[1][1] * viewport_height;
     gl_PointSize = world_size * pixel_scale * point_scale / gl_Position.w;
 }
