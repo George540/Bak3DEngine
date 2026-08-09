@@ -41,8 +41,8 @@ public:
     void bind() const override;
     void unbind() const override;
 
-    void set_buffer_data(const void* buffer_data, size_t buffer_data_size);
-    void set_buffer_sub_data(const void* sub_data, size_t sub_data_size, size_t sub_data_offset);
+    void bind_buffer_data(const void* buffer_data, size_t buffer_data_size);
+    void bind_buffer_sub_data(const void* sub_data, size_t sub_data_size, size_t sub_data_offset);
 
     static void insert_memory_barrier(GLbitfield bit_fields);
 protected:
@@ -91,7 +91,14 @@ public:
 class FrameBuffer : public Buffer
 {
 public:
-    FrameBuffer(GLsizeiptr size, const void* data, const GLuint width, const GLuint height, GLenum usage = GL_NONE);
+    FrameBuffer(GLsizeiptr size,
+        const void* data,
+        const GLuint width,
+        const GLuint height,
+        const GLenum attachment_type = GL_COLOR_ATTACHMENT0,
+        const GLenum usage = GL_NONE,
+        const bool use_depth_texture = false,
+        const char* debug_name = nullptr);
     ~FrameBuffer() override;
     void bind() const override;
     void unbind() const override;
@@ -101,17 +108,23 @@ public:
     GLuint get_height() const { return m_height; }
     float get_aspect_ratio() const;
     GLuint get_render_buffer() const { return m_texture_buffer; }
-    GLuint get_depth_buffer() const { return m_rbo; }
+    GLuint get_buffer() const { return m_rbo; }
+    GLuint get_depth_texture() const { return m_depth_texture_id; }
 
 protected:
     virtual void create_attachments();
     void create_framebuffer();
     void destroy_framebuffer();
+    void label_resources() const;
 
     GLuint m_width;
     GLuint m_height;
     GLuint m_texture_buffer;
     GLuint m_rbo;
+    GLuint m_depth_texture_id = 0;
+    GLenum m_attachment_type;
+    bool m_use_depth_texture = false;
+    std::string m_debug_name;
 };
 
 /*
@@ -120,7 +133,14 @@ protected:
 class MultisampleFrameBuffer : public FrameBuffer
 {
 public:
-    MultisampleFrameBuffer(GLsizeiptr size, const void* data, GLuint width, GLuint height, GLsizei samples = 4, GLenum usage = GL_NONE);
+    MultisampleFrameBuffer(
+        GLsizeiptr size,
+        const void* data,
+        GLuint width,
+        GLuint height,
+        GLsizei samples = 4,
+        GLenum usage = GL_NONE,
+        const char* debug_name = nullptr);
 
     void set_samples(const GLsizei new_samples);
     GLsizei get_samples() const { return m_samples; }

@@ -26,6 +26,7 @@ THE SOFTWARE.
 
 #include "Asset/resource_manager.h"
 #include "Input/event_manager.h"
+#include "Renderer/debug_scope.h"
 
 using namespace std;
 
@@ -100,6 +101,8 @@ void AdvancedParticleSystem::simulate() const
     {
         return;
     }
+
+    DebugScopeGroup scope("GPU Particles: Emit Compute Dispatch");
 
     m_comp_test_shader->use();
     m_comp_test_shader->set_int("particle_count", NUM_ELEMENTS); // @TODO: Add to UBO

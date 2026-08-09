@@ -90,7 +90,7 @@ void ParticleSystem::update(const float dt)
         const auto& instance_data = emitter->get_instance_data();
 
         gpu_data.ibo->bind();
-        gpu_data.ibo->set_buffer_sub_data(
+        gpu_data.ibo->bind_buffer_sub_data(
             instance_data.data(),
             sizeof(ParticleInstanceData) * emitter->get_max_particles(),
             0);

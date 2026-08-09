@@ -140,27 +140,27 @@ void Light::update_light_data_ubo() const
 	m_light_data_ubo->bind();
 
 	// vec4 position
-	m_light_data_ubo->set_buffer_sub_data(&m_position,			 VEC3_SIZE,  0 * VEC4_SIZE + 0);
-	m_light_data_ubo->set_buffer_sub_data(&m_inner_cut_off,      FLOAT_SIZE, 0 * VEC4_SIZE + VEC3_SIZE);
+	m_light_data_ubo->bind_buffer_sub_data(&m_position,			 VEC3_SIZE,  0 * VEC4_SIZE + 0);
+	m_light_data_ubo->bind_buffer_sub_data(&m_inner_cut_off,      FLOAT_SIZE, 0 * VEC4_SIZE + VEC3_SIZE);
 
 	// vec4 direction
-	m_light_data_ubo->set_buffer_sub_data(&m_direction,			 VEC3_SIZE,  1 * VEC4_SIZE + 0);
-	m_light_data_ubo->set_buffer_sub_data(&m_outer_cut_off,		 FLOAT_SIZE, 1 * VEC4_SIZE + VEC3_SIZE);
+	m_light_data_ubo->bind_buffer_sub_data(&m_direction,			 VEC3_SIZE,  1 * VEC4_SIZE + 0);
+	m_light_data_ubo->bind_buffer_sub_data(&m_outer_cut_off,		 FLOAT_SIZE, 1 * VEC4_SIZE + VEC3_SIZE);
 
 	// vec4 ambient (.a = radius)
-	m_light_data_ubo->set_buffer_sub_data(&m_ambient,			 VEC3_SIZE,  2 * VEC4_SIZE + 0);
-	m_light_data_ubo->set_buffer_sub_data(&m_attenuation_radius, FLOAT_SIZE, 2 * VEC4_SIZE + VEC3_SIZE);
+	m_light_data_ubo->bind_buffer_sub_data(&m_ambient,			 VEC3_SIZE,  2 * VEC4_SIZE + 0);
+	m_light_data_ubo->bind_buffer_sub_data(&m_attenuation_radius, FLOAT_SIZE, 2 * VEC4_SIZE + VEC3_SIZE);
 
 	// vec4 diffuse (.a = intensity)
-	m_light_data_ubo->set_buffer_sub_data(&m_diffuse,			 VEC3_SIZE,  3 * VEC4_SIZE + 0);
-	m_light_data_ubo->set_buffer_sub_data(&m_intensity,			 FLOAT_SIZE, 3 * VEC4_SIZE + VEC3_SIZE);
+	m_light_data_ubo->bind_buffer_sub_data(&m_diffuse,			 VEC3_SIZE,  3 * VEC4_SIZE + 0);
+	m_light_data_ubo->bind_buffer_sub_data(&m_intensity,			 FLOAT_SIZE, 3 * VEC4_SIZE + VEC3_SIZE);
 
 	// vec4 specular (.a = unused)
-	m_light_data_ubo->set_buffer_sub_data(&m_specular,			 VEC3_SIZE,  4 * VEC4_SIZE + 0);
+	m_light_data_ubo->bind_buffer_sub_data(&m_specular,			 VEC3_SIZE,  4 * VEC4_SIZE + 0);
 
 	// int type
 	const int32_t type = static_cast<int32_t>(m_type);
-	m_light_data_ubo->set_buffer_sub_data(&type,				 INT_SIZE,   5 * VEC4_SIZE);
+	m_light_data_ubo->bind_buffer_sub_data(&type,				 INT_SIZE,   5 * VEC4_SIZE);
 
 	m_light_data_ubo->unbind();
 }

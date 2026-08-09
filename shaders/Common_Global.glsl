@@ -23,6 +23,13 @@ layout (std140, binding = 1) uniform LightData
     float padding[3];
 } light_data;
 
+layout (std140, binding = 2) uniform PageData
+{
+    vec4 depth_settings; // .r = near, .g = far, .gb = currently unused
+    int debug_mode;      // 0 = color, 1 = depth, TBD: 2 = AO, 3 = normals, etc
+    float padding[3];
+} page_data;
+
 // Nathan Reed, "Hash Function for GPU Rendering", 2021, https://www.reedbeta.com/blog/hash-functions-for-gpu-rendering/
 uint pcg_hash(uint input_value)
 {

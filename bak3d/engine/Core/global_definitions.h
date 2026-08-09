@@ -46,6 +46,19 @@ constexpr static std::string_view B3D_LOG_FILE = "B3D_Logs.log";
 constexpr static int MAX_LOG_ENTRIES = 64;
 constexpr static float POST_PROCESS_COLORING_SLIDER_CLAMP = 10.0f;
 
+/*
+ * Uniform Data struct for debug views and other page-related data.
+ * Note: These are NOT post processing data.
+ */
+struct PagesData
+{
+    glm::vec4 depth_settings = glm::vec4(0.1f, 10.0f, 0.0f, 0.0f);
+    int debug_mode = 1;
+    float _padding[3]; 
+};
+static constexpr GLsizei PAGES_DATA_SIZE = sizeof(PagesData);
+// @TODO: Make a sizeof constexpr for every custom sturct that is used as a size
+
 using GlobalSettingValueType = std::variant<
     bool,
     int,
@@ -91,6 +104,7 @@ enum class GlobalSettingOption : uint32_t
     PostProcess_KernelEffect_EmbossIntensity,
     PostProcess_KernelEffect_BoxBlurIntensity,
     PostProcess_KernelEffect_LaplacianIntensity,
+    DebugView_DepthTesting,
     Max
 };
 
@@ -112,6 +126,7 @@ enum class SceneObjectType : uint32_t
  */
 static constexpr GLuint WORK_GROUP_LOCAL_SIZE = 64;
 static constexpr auto MAX_BONE_INFLUENCE = 4;
+static constexpr GLint SWIZZLE_MASK[] = { GL_RED, GL_RED, GL_RED, GL_ONE };
 
 static constexpr GLsizei FLOAT_SIZE = sizeof(float);
 static constexpr GLsizei VEC2_SIZE = sizeof(glm::vec2);

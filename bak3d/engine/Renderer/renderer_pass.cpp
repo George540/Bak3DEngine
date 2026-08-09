@@ -24,13 +24,17 @@ THE SOFTWARE.
 
 #include "renderer_pass.h"
 
+#include "debug_scope.h"
 #include "post_processor.h"
 #include "renderer.h"
+#include "Asset/resource_manager.h"
 #include "Core/global_settings.h"
 #include "Scene/scene.h"
 
 void RendererPasses::render_pass_debug_geometry()
 {
+    DebugScopeGroup scope("Debug Geometry Pass");
+
     const bool is_grid_rendering = GlobalSettings::get_global_setting_value<bool>(GlobalSettingOption::GridRendering);
     const bool is_axis_rendering = GlobalSettings::get_global_setting_value<bool>(GlobalSettingOption::AxisRendering);
     if (is_grid_rendering)
@@ -45,6 +49,8 @@ void RendererPasses::render_pass_debug_geometry()
 
 void RendererPasses::render_pass_base_geometry()
 {
+    DebugScopeGroup scope("Base Geometry Pass");
+
     if (const Model* model = Scene::instance->get_model())
     {
         model->draw();
@@ -61,6 +67,8 @@ void RendererPasses::render_pass_base_geometry()
 
 void RendererPasses::render_pass_lighting()
 {
+    DebugScopeGroup scope("Lighting (Geometry) Pass");
+
     if (GlobalSettings::get_global_setting_value<bool>(GlobalSettingOption::Light_Enabled))
     {
         Scene::instance->get_active_light()->draw();
@@ -69,8 +77,17 @@ void RendererPasses::render_pass_lighting()
 
 void RendererPasses::render_pass_post_processing()
 {
+    DebugScopeGroup scope("Post Processing Pass");
+
     if (GlobalSettings::get_global_setting_value<bool>(GlobalSettingOption::PostProcessing_Enabled))
     {
         PostProcessor::process_frame(*Renderer::get_frame_buffer());
     }
+}
+
+void RendererPasses::render_pass_debug_view()
+{
+    DebugScopeGroup scope("Debug View Pass");
+
+    ResourceManager::get_shader("debug_view")->set_int("depth_texture", Renderer::get_frame_buffer()->get_depth_texture());
 }

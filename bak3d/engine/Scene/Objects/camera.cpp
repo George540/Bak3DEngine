@@ -82,9 +82,9 @@ void Camera::update(float dt)
 	m_position *= EventManager::get_camera_scroll_offset();
 
 	m_camera_data_ubo->bind();
-	m_camera_data_ubo->set_buffer_sub_data(glm::value_ptr(get_projection_matrix()), MAT4_SIZE, 0);
-	m_camera_data_ubo->set_buffer_sub_data(glm::value_ptr(get_view_matrix()), MAT4_SIZE, MAT4_SIZE);
-	m_camera_data_ubo->set_buffer_sub_data(glm::value_ptr(glm::vec4(m_position, 1.0f)), VEC4_SIZE, 2 * MAT4_SIZE);
+	m_camera_data_ubo->bind_buffer_sub_data(glm::value_ptr(get_projection_matrix()), MAT4_SIZE, 0);
+	m_camera_data_ubo->bind_buffer_sub_data(glm::value_ptr(get_view_matrix()), MAT4_SIZE, MAT4_SIZE);
+	m_camera_data_ubo->bind_buffer_sub_data(glm::value_ptr(glm::vec4(m_position, 1.0f)), VEC4_SIZE, 2 * MAT4_SIZE);
 	m_camera_data_ubo->unbind();
 }
 

@@ -37,7 +37,18 @@ void Viewport::update()
     }
 
     bool post_processing_enabled = GlobalSettings::get_global_setting_value<bool>(GlobalSettingOption::PostProcessing_Enabled);
-    auto frame_buffer_main = post_processing_enabled ? PostProcessor::get_final_frame_buffer() : Renderer::get_frame_buffer();
+    bool debug_view_enabled = GlobalSettings::get_global_setting_value<bool>(GlobalSettingOption::DebugView_DepthTesting);
+
+    FrameBuffer* frame_buffer_main;
+    if (debug_view_enabled)
+    {
+        frame_buffer_main = Renderer::get_depth_buffer();
+    }
+    else
+    {
+        frame_buffer_main = post_processing_enabled ? PostProcessor::get_final_frame_buffer() : Renderer::get_frame_buffer();
+    }
+
     float fb_aspect = frame_buffer_main->get_aspect_ratio();
     float view_aspect = viewport_panel_size.x / viewport_panel_size.y;
 

@@ -25,6 +25,7 @@ THE SOFTWARE.
 #pragma once
 
 #include "buffer.h"
+#include "Core/global_settings.h"
 
 struct GLFWwindow;
 
@@ -36,8 +37,11 @@ class Renderer
 private:
 	static GLFWwindow* r_window;
 
-	static MultisampleFrameBuffer* r_msaa_fbo;
-	static FrameBuffer* r_fbo;
+	static std::unique_ptr<MultisampleFrameBuffer> r_msaa_fbo;
+	static std::unique_ptr<FrameBuffer> r_fbo;
+	static std::unique_ptr<FrameBuffer> r_dbo;
+
+	static std::unique_ptr<UniformBuffer> r_debug_view_ubo;
 public:
 	static void initialize();
 	static void shutdown();
@@ -47,8 +51,11 @@ public:
 	static void end_frame();
 
 	static GLFWwindow* get_window() { return r_window; }
-	static MultisampleFrameBuffer* get_msaa_frame_buffer() { return r_msaa_fbo; }
-	static FrameBuffer* get_frame_buffer() { return r_fbo; }
+	static MultisampleFrameBuffer* get_msaa_frame_buffer() { return r_msaa_fbo.get(); }
+	static FrameBuffer* get_frame_buffer() { return r_fbo.get(); }
+	static FrameBuffer* get_depth_buffer() { return r_dbo.get(); }
+
+	static PagesData get_pages_data();
 
 	static void on_framebuffer_size_callback(GLFWwindow* window, int new_width, int new_height);
 private:

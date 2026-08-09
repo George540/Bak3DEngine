@@ -137,6 +137,10 @@ void ResourceManager::initialize_shaders()
         shader_stage_map.emplace(GL_FRAGMENT_SHADER, shaders_to_match["kernel_effect"].c_str());
         add_shader("kernel_effect", new Shader(shader_stage_map, "kernel_effect"));
 
+        shader_stage_map.emplace(GL_VERTEX_SHADER, shaders_to_match["post_processing_quad"].c_str());
+        shader_stage_map.emplace(GL_FRAGMENT_SHADER, shaders_to_match["debug_view"].c_str());
+        add_shader("debug_view", new Shader(shader_stage_map, "debug_view"));
+
         shader_stage_map.clear();
     }
 

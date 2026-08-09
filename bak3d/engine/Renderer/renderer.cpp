@@ -27,7 +27,6 @@ THE SOFTWARE.
 
 #include "renderer.h"
 
-#include "Core/global_settings.h"
 #include "Input/event_manager.h"
 
 #include "imgui.h"
@@ -36,6 +35,7 @@ THE SOFTWARE.
 #include <GLFW/glfw3.h>
 #include <glm/gtc/type_ptr.hpp>
 
+#include "debug_scope.h"
 #include "post_processor.h"
 #include "renderer_pass.h"
 #include "Scene/scene.h"
@@ -44,12 +44,19 @@ using namespace std;
 
 // Renderer
 GLFWwindow* Renderer::r_window = nullptr;
-MultisampleFrameBuffer* Renderer::r_msaa_fbo = nullptr;
-FrameBuffer* Renderer::r_fbo = nullptr;
+std::unique_ptr<MultisampleFrameBuffer> Renderer::r_msaa_fbo;
+std::unique_ptr<FrameBuffer> Renderer::r_fbo;
+std::unique_ptr<FrameBuffer> Renderer::r_dbo;
+std::unique_ptr<UniformBuffer> Renderer::r_debug_view_ubo;
 
 #ifdef _DEBUG
 constexpr bool IS_OPENGL_DEBUG_VERBOSE = false;
 #endif
+
+namespace
+{
+	PagesData m_pages_data = PagesData();
+}
 
 void Renderer::initialize()
 {
@@ -109,6 +116,11 @@ void Renderer::initialize()
 
 void Renderer::begin_frame()
 {
+	r_debug_view_ubo->bind();
+	r_debug_view_ubo->bind_buffer_sub_data(&m_pages_data.depth_settings, VEC4_SIZE, 0);
+	r_debug_view_ubo->bind_buffer_sub_data(&m_pages_data.depth_settings, VEC4_SIZE, offsetof(PagesData, depth_settings));
+	r_debug_view_ubo->unbind();
+
 	if (GlobalSettings::get_global_setting_value<bool>(GlobalSettingOption::AA_MSAA_Enabled))
 	{
 		if (const int samples_setting = GlobalSettings::get_global_setting_value<int>(GlobalSettingOption::AA_MSAA_Samples);
@@ -133,9 +145,27 @@ void Renderer::begin_frame()
 
 void Renderer::draw_frame()
 {
-	RendererPasses::render_pass_debug_geometry();
-	RendererPasses::render_pass_base_geometry();
-	RendererPasses::render_pass_lighting();
+	const bool show_depth_debug = GlobalSettings::get_global_setting_value<bool>(GlobalSettingOption::DebugView_DepthTesting);
+	if (show_depth_debug)
+	{
+		r_dbo->bind();
+		glClear(GL_DEPTH_BUFFER_BIT);
+		RendererPasses::render_pass_base_geometry();
+		r_dbo->unbind();
+		RendererPasses::render_pass_debug_view();
+
+		// Disable Post Processing when depth testing view is enabled
+		if (GlobalSettings::get_global_setting_value<bool>(GlobalSettingOption::PostProcessing_Enabled))
+		{
+			GlobalSettings::set_global_setting<bool>(GlobalSettingOption::PostProcessing_Enabled, false);
+		}
+	}
+	else
+	{
+		RendererPasses::render_pass_debug_geometry();
+		RendererPasses::render_pass_base_geometry();
+		RendererPasses::render_pass_lighting();
+	}
 
 	// Swap buffers
 	glDisable(GL_DEPTH_TEST);
@@ -144,6 +174,7 @@ void Renderer::draw_frame()
 	// Back to default framebuffer
 	if (GlobalSettings::get_global_setting_value<bool>(GlobalSettingOption::AA_MSAA_Enabled))
 	{
+		DebugScopeGroup scope("MSAA Resolve (Color + Depth/Stencil)");
 		r_msaa_fbo->resolve_to(*r_fbo);
 		r_msaa_fbo->unbind();
 	}
@@ -152,7 +183,10 @@ void Renderer::draw_frame()
 		r_fbo->unbind();
 	}
 
-	RendererPasses::render_pass_post_processing();
+	if (!show_depth_debug)
+	{
+		RendererPasses::render_pass_post_processing();
+	}
 }
 
 void Renderer::end_frame()
@@ -162,12 +196,15 @@ void Renderer::end_frame()
 
 void Renderer::shutdown()
 {
-	delete r_fbo;
-	delete r_msaa_fbo;
-
 	r_window = nullptr;
-	r_fbo = nullptr;
-	r_msaa_fbo = nullptr;
+	r_dbo.reset();
+	r_fbo.reset();
+	r_msaa_fbo.reset();
+}
+
+PagesData Renderer::get_pages_data()
+{
+	return m_pages_data;
 }
 
 void Renderer::on_framebuffer_size_callback(GLFWwindow* window, const int new_width, const int new_height)
@@ -178,13 +215,28 @@ void Renderer::on_framebuffer_size_callback(GLFWwindow* window, const int new_wi
 	}
 	r_msaa_fbo->resize(new_width, new_height);
 	r_fbo->resize(new_width, new_height);
+	r_dbo->resize(new_width, new_height);
 	PostProcessor::resize(new_width, new_height);
 }
 
 void Renderer::initialize_buffers()
 {
-	r_msaa_fbo = new MultisampleFrameBuffer(0, nullptr, EventManager::get_window_width(), EventManager::get_window_height());
-	r_fbo = new FrameBuffer(0, nullptr, EventManager::get_window_width(), EventManager::get_window_height());
+	// Framebuffers
+	r_msaa_fbo = std::make_unique<MultisampleFrameBuffer>(
+		0, nullptr, EventManager::get_window_width(), EventManager::get_window_height(),
+		4, GL_NONE, "Framebuffer_Base_MSAA");
+
+	r_fbo = std::make_unique<FrameBuffer>(
+		0, nullptr, EventManager::get_window_width(), EventManager::get_window_height(),
+		GL_COLOR_ATTACHMENT0, GL_NONE, /*use_depth_texture=*/true, "Framebuffer_Base");
+
+	r_dbo = std::make_unique<FrameBuffer>(
+		0, nullptr, EventManager::get_window_width(), EventManager::get_window_height(),
+		GL_DEPTH_ATTACHMENT, GL_NONE, /*use_depth_texture=*/true, "Depth_Buffer");
+
+	// Uniform Buffers
+	// @TODO: Replace with struct payload instead of manual size
+	r_debug_view_ubo = make_unique<UniformBuffer>(PAGES_DATA_SIZE, nullptr, 2, GL_DYNAMIC_DRAW);
 }
 
 void Renderer::query_gpu_limitations()

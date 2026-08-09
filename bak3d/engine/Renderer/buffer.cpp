@@ -43,7 +43,7 @@ Buffer::Buffer(GLenum target, GLsizeiptr size, const void* data, GLenum usage) :
     {
         glGenBuffers(1, &m_ID);
         glBindBuffer(m_target, m_ID);
-        set_buffer_data(m_data, m_buffer_size);
+        bind_buffer_data(m_data, m_buffer_size);
     }
 }
 
@@ -62,7 +62,7 @@ void Buffer::unbind() const
     glBindBuffer(m_target, 0);
 }
 
-void Buffer::set_buffer_data(const void* buffer_data, const size_t buffer_data_size)
+void Buffer::bind_buffer_data(const void* buffer_data, const size_t buffer_data_size)
 {
     if (m_data != buffer_data || cmp_not_equal(m_buffer_size, buffer_data_size))
     {
@@ -72,12 +72,12 @@ void Buffer::set_buffer_data(const void* buffer_data, const size_t buffer_data_s
     glBufferData(m_target, m_buffer_size, m_data, m_usage);
 }
 
-void Buffer::set_buffer_sub_data(const void* sub_data, const size_t sub_data_size, const size_t sub_data_offset)
+void Buffer::bind_buffer_sub_data(const void* sub_data, const size_t sub_data_size, const size_t sub_data_offset)
 {
     if (sub_data_offset + sub_data_size > m_buffer_size)
     {
         // Prevent out-of-bounds GPU memory write
-        throw runtime_error("Buffer overflow: set_buffer_sub_data(...) exceeds allocated size");
+        throw runtime_error("Buffer overflow: bind_buffer_sub_data(...) exceeds allocated size");
     }
     glBufferSubData(m_target, sub_data_offset, sub_data_size, sub_data);
 }
@@ -90,14 +90,25 @@ void Buffer::insert_memory_barrier(GLbitfield bit_fields)
     }
 }
 
-FrameBuffer::FrameBuffer(GLsizeiptr size, const void* data, const GLuint width, const GLuint height, GLenum usage)
+FrameBuffer::FrameBuffer(
+    GLsizeiptr size,
+    const void* data,
+    const GLuint width,
+    const GLuint height,
+    const GLenum attachment_type,
+    const GLenum usage,
+    const bool use_depth_texture,
+    const char* debug_name)
     : Buffer(GL_FRAMEBUFFER, size, data, usage),
     m_width(width),
-    m_height(height)
+    m_height(height),
+    m_attachment_type(attachment_type),
+    m_use_depth_texture(use_depth_texture),
+    m_debug_name(debug_name ? debug_name : "FrameBuffer")
 {
     create_framebuffer();
     
-    B3D_LOG_INFO("Frame Buffer Object enabled...");
+    B3D_LOG_INFO("Frame Buffer Object '%s' enabled (%s depth)...", m_debug_name.c_str(), m_use_depth_texture ? "sampled" : "renderbuffer");
 }
 
 FrameBuffer::~FrameBuffer()
@@ -142,15 +153,70 @@ void FrameBuffer::create_attachments()
 {
     glGenTextures(1, &m_texture_buffer);
     glBindTexture(GL_TEXTURE_2D, m_texture_buffer);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, m_width, m_height, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glFramebufferTexture2D(m_target, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_texture_buffer, 0);
 
-    glGenRenderbuffers(1, &m_rbo);
-    glBindRenderbuffer(GL_RENDERBUFFER, m_rbo);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, m_width, m_height);
-    glFramebufferRenderbuffer(m_target, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, m_rbo);
+    if (m_attachment_type == GL_COLOR_ATTACHMENT0)
+    {
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, m_width, m_height, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glFramebufferTexture2D(m_target, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_texture_buffer, 0);
+
+        if (m_use_depth_texture)
+        {
+            glGenTextures(1, &m_depth_texture_id);
+            glBindTexture(GL_TEXTURE_2D, m_depth_texture_id);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH24_STENCIL8, m_width, m_height, 0,
+                         GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8, nullptr);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+            glFramebufferTexture2D(m_target, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, m_depth_texture_id, 0);
+        }
+        else
+        {
+            glGenRenderbuffers(1, &m_rbo);
+            glBindRenderbuffer(GL_RENDERBUFFER, m_rbo);
+            glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, m_width, m_height);
+            glFramebufferRenderbuffer(m_target, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, m_rbo);
+        }
+    }
+    else if (m_attachment_type == GL_DEPTH_ATTACHMENT)
+    {
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, m_width, m_height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_RGBA, SWIZZLE_MASK);
+        glFramebufferTexture2D(m_target, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, m_texture_buffer, 0);
+
+        // Explicitly disable color writes for depth buffer
+        glDrawBuffer(GL_NONE);
+        glReadBuffer(GL_NONE);
+    }
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+    label_resources();
+}
+
+void FrameBuffer::label_resources() const
+{
+    glObjectLabel(GL_FRAMEBUFFER, m_ID, -1, m_debug_name.c_str());
+
+    const string color_label = m_debug_name + "_Color";
+    glObjectLabel(GL_TEXTURE, m_texture_buffer, -1, color_label.c_str());
+
+    if (m_use_depth_texture)
+    {
+        const string depth_label = m_debug_name + "_Depth";
+        glObjectLabel(GL_TEXTURE, m_depth_texture_id, -1, depth_label.c_str());
+    }
+    else if (m_rbo != 0)
+    {
+        const string depth_label = m_debug_name + "_DepthStencilRBO";
+        glObjectLabel(GL_RENDERBUFFER, m_rbo, -1, depth_label.c_str());
+    }
 }
 
 void FrameBuffer::create_framebuffer()
@@ -192,10 +258,22 @@ void FrameBuffer::destroy_framebuffer()
         glDeleteRenderbuffers(1, &m_rbo);
         m_rbo = 0;
     }
+    if (m_depth_texture_id != 0)
+    {
+        glDeleteTextures(1, &m_depth_texture_id);
+        m_depth_texture_id = 0;
+    }
 }
 
-MultisampleFrameBuffer::MultisampleFrameBuffer(GLsizeiptr size, const void* data, GLuint width, GLuint height, GLsizei samples, GLenum usage)
-    : FrameBuffer(size, data, width, height, usage),
+MultisampleFrameBuffer::MultisampleFrameBuffer(
+    GLsizeiptr size,
+    const void* data,
+    GLuint width,
+    GLuint height,
+    GLsizei samples,
+    GLenum usage,
+    const char* debug_name)
+    : FrameBuffer(size, data, width, height, GL_COLOR_ATTACHMENT0, usage, false, debug_name),
     m_samples(samples),
     m_max_samples(0)
 {
@@ -260,6 +338,8 @@ void MultisampleFrameBuffer::create_attachments()
     glRenderbufferStorageMultisample(GL_RENDERBUFFER, m_samples, GL_DEPTH24_STENCIL8, m_width, m_height);
     glBindRenderbuffer(GL_RENDERBUFFER, 0);
     glFramebufferRenderbuffer(m_target, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, m_rbo);
+
+    label_resources();
 }
 
 UniformBuffer::UniformBuffer(GLsizeiptr size, const void* data, const GLuint index, GLenum usage)
