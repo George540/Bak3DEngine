@@ -12,7 +12,7 @@ out VS_OUT
 //@TODO: Add to particle config UBO
 uniform float viewport_height;
 
-float point_scale = 0.05; // to be constant
+float point_scale = 0.01; // to be constant
 
 void main()
 {

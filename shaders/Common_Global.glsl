@@ -23,6 +23,7 @@ layout (std140, binding = 1) uniform LightData
     float padding[3];
 } light_data;
 
+// Nathan Reed, "Hash Function for GPU Rendering", 2021, https://www.reedbeta.com/blog/hash-functions-for-gpu-rendering/
 uint pcg_hash(uint input_value)
 {
     uint state = input_value * 747796405u + 2891336453u;
@@ -72,6 +73,31 @@ vec3 get_light_direction(vec3 frag_position)
 vec3 get_view_direction(vec3 frag_position)
 {
     return normalize(camera_data.position.xyz - frag_position);
+}
+
+bool get_point_sphere_normal(vec2 point_coord, mat4 view, out vec3 world_normal)
+{
+    vec2 circle_coord = point_coord * 2.0 - 1.0;
+
+    float r2 = dot(circle_coord, circle_coord);
+    if (r2 > 1.0)
+    {
+        world_normal = vec3(0.0);
+        return false;
+    }
+
+    // Sphere equation based on z:
+    // x^2 + y^2 + z^2 = 1 -> z = sqrt(1.0 - x^2 - y^2)
+    float z = sqrt(1.0 - r2);
+
+    // Camera basis vectors in world space (rows of the view matrix)
+    vec3 camera_right = vec3(view[0][0], view[1][0], view[2][0]);
+    vec3 camera_up = vec3(view[0][1], view[1][1], view[2][1]);
+    vec3 camera_forward = vec3(view[0][2], view[1][2], view[2][2]); // points away from camera into scene
+
+    // Flip forward so normal points toward the camera
+    world_normal = normalize(circle_coord.x * camera_right + circle_coord.y * camera_up - z * camera_forward);
+    return true;
 }
 
 // Smooth radial alpha falloff from opaque center to transparent edges (like default_particle.png)

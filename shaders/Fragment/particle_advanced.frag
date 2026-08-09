@@ -10,7 +10,7 @@ in VS_OUT
 //@TODO: Add to particle config UBO
 uniform vec3 particle_albedo = vec3(1.0);
 uniform float scatter_power = 10.0;
-uniform float edge_softness = 0.6;
+uniform float edge_softness = 0.7;
 
 #include "Common_Global.glsl"
 
@@ -18,7 +18,7 @@ void main()
 {
     vec3 frag_normal;
     float alpha = calculate_point_alpha_falloff(gl_PointCoord, edge_softness);
-    if (alpha <= 0.001)
+    if (alpha <= 0.01)
     {
         discard;
     }
