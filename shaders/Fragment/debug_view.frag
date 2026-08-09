@@ -11,8 +11,11 @@ uniform sampler2D depth_texture;
 
 float linearlize_depth(float depth)
 {
+    float n = page_data.depth_settings.r;
+    float f = page_data.depth_settings.g;
+
     float z = depth * 2.0 - 1.0;
-    return (2.0 * page_data.r * page_data.g) / (page_data.g + page_data.r - z * (page_data.g - page_data.r));
+    return (2.0 * n * f) / (f + n - z * (f - n));
 }
 
 void main()
@@ -28,7 +31,8 @@ void main()
         case 1: // Linear Depth View
             float raw_depth = texture(depth_texture, tex_coords).r;
             float linear_depth = linearlize_depth(raw_depth);
-            frag_color = vec4(vec3(linear_depth), 1.0);
+            float normalized_depth = linear_depth / page_data.depth_settings.g;
+            frag_color = vec4(vec3(normalized_depth), 1.0);
             break;
 
         default:

@@ -117,8 +117,7 @@ void Renderer::initialize()
 void Renderer::begin_frame()
 {
 	r_debug_view_ubo->bind();
-	r_debug_view_ubo->bind_buffer_sub_data(&m_pages_data.depth_settings, VEC4_SIZE, 0);
-	r_debug_view_ubo->bind_buffer_sub_data(&m_pages_data.depth_settings, VEC4_SIZE, offsetof(PagesData, depth_settings));
+	r_debug_view_ubo->bind_buffer_sub_data(&m_pages_data, PAGES_DATA_SIZE, 0);
 	r_debug_view_ubo->unbind();
 
 	if (GlobalSettings::get_global_setting_value<bool>(GlobalSettingOption::AA_MSAA_Enabled))
@@ -145,7 +144,7 @@ void Renderer::begin_frame()
 
 void Renderer::draw_frame()
 {
-	const bool show_depth_debug = GlobalSettings::get_global_setting_value<bool>(GlobalSettingOption::DebugView_DepthTesting);
+	const bool show_depth_debug = GlobalSettings::get_global_setting_value<int>(GlobalSettingOption::ViewSelection) == 1;
 	if (show_depth_debug)
 	{
 		r_dbo->bind();
@@ -205,6 +204,11 @@ void Renderer::shutdown()
 PagesData Renderer::get_pages_data()
 {
 	return m_pages_data;
+}
+
+void Renderer::set_pages_data(const PagesData pages_data)
+{
+	m_pages_data = pages_data;
 }
 
 void Renderer::on_framebuffer_size_callback(GLFWwindow* window, const int new_width, const int new_height)

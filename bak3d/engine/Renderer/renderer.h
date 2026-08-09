@@ -56,6 +56,7 @@ public:
 	static FrameBuffer* get_depth_buffer() { return r_dbo.get(); }
 
 	static PagesData get_pages_data();
+	static void set_pages_data(PagesData pages_data);
 
 	static void on_framebuffer_size_callback(GLFWwindow* window, int new_width, int new_height);
 private:

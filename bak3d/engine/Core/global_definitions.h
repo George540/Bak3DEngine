@@ -74,6 +74,7 @@ enum class GlobalSettingOption : uint32_t
     Vsync,
     GridRendering,
     AxisRendering,
+    ViewSelection,
     BackgroundColor,
     Light_Enabled,
     Light_Type,
@@ -104,7 +105,6 @@ enum class GlobalSettingOption : uint32_t
     PostProcess_KernelEffect_EmbossIntensity,
     PostProcess_KernelEffect_BoxBlurIntensity,
     PostProcess_KernelEffect_LaplacianIntensity,
-    DebugView_DepthTesting,
     Max
 };
 

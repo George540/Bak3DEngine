@@ -36,21 +36,17 @@ void Viewport::update()
         return;
     }
 
-    bool post_processing_enabled = GlobalSettings::get_global_setting_value<bool>(GlobalSettingOption::PostProcessing_Enabled);
-    bool debug_view_enabled = GlobalSettings::get_global_setting_value<bool>(GlobalSettingOption::DebugView_DepthTesting);
+    const bool post_processing_enabled = GlobalSettings::get_global_setting_value<bool>(GlobalSettingOption::PostProcessing_Enabled);
+    const int debug_view = GlobalSettings::get_global_setting_value<int>(GlobalSettingOption::ViewSelection);
 
-    FrameBuffer* frame_buffer_main;
-    if (debug_view_enabled)
+    FrameBuffer* frame_buffer_main = post_processing_enabled ? PostProcessor::get_final_frame_buffer() : Renderer::get_frame_buffer();
+    if (debug_view == 1)
     {
         frame_buffer_main = Renderer::get_depth_buffer();
     }
-    else
-    {
-        frame_buffer_main = post_processing_enabled ? PostProcessor::get_final_frame_buffer() : Renderer::get_frame_buffer();
-    }
 
-    float fb_aspect = frame_buffer_main->get_aspect_ratio();
-    float view_aspect = viewport_panel_size.x / viewport_panel_size.y;
+    const float fb_aspect = frame_buffer_main->get_aspect_ratio();
+    const float view_aspect = viewport_panel_size.x / viewport_panel_size.y;
 
     // Start with Y flipped: top is 1.0f, bottom is 0.0f
     ImVec2 uv0(0.0f, 1.0f);
@@ -59,8 +55,8 @@ void Viewport::update()
     if (view_aspect > fb_aspect)
     {
         // Viewport is wider than the image: Crop the top and bottom
-        float scale = fb_aspect / view_aspect;
-        float delta = (1.0f - scale) * 0.5f;
+        const float scale = fb_aspect / view_aspect;
+        const float delta = (1.0f - scale) * 0.5f;
 
         // Offset from the flipped baseline
         uv0.y = 1.0f - delta; // Start slightly below the top (1.0)
@@ -69,8 +65,8 @@ void Viewport::update()
     else
     {
         // Viewport is taller than the image: Crop the sides instead
-        float scale = view_aspect / fb_aspect;
-        float delta = (1.0f - scale) * 0.5f;
+        const float scale = view_aspect / fb_aspect;
+        const float delta = (1.0f - scale) * 0.5f;
 
         uv0.x = delta;
         uv1.x = 1.0f - delta;
@@ -79,9 +75,9 @@ void Viewport::update()
     // Track whether the drag originated from the viewport window
     static bool drag_started_in_viewport = false;
 
-    bool is_window_resizing = ImGui::IsMouseDragging(ImGuiMouseButton_Left)
-                              && (glm::abs(previous_viewport_size.x - viewport_panel_size.x) > 0.001f 
-                               || glm::abs(previous_viewport_size.y - viewport_panel_size.y) > 0.001f);
+    const bool is_window_resizing = ImGui::IsMouseDragging(ImGuiMouseButton_Left)
+                                  && (glm::abs(previous_viewport_size.x - viewport_panel_size.x) > 0.001f 
+                                  || glm::abs(previous_viewport_size.y - viewport_panel_size.y) > 0.001f);
 
     // Latch: only set true when the click begins in the viewport
     if (ImGui::IsMouseClicked(ImGuiMouseButton_Left) && ImGui::IsWindowHovered())

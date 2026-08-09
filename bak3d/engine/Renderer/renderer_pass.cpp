@@ -89,5 +89,5 @@ void RendererPasses::render_pass_debug_view()
 {
     DebugScopeGroup scope("Debug View Pass");
 
-    ResourceManager::get_shader("debug_view")->set_int("depth_texture", Renderer::get_frame_buffer()->get_depth_texture());
+    ResourceManager::get_shader("debug_view")->set_int("depth_texture", Renderer::get_depth_buffer()->get_render_buffer());
 }

@@ -63,7 +63,7 @@ const char* GlobalSettings::to_string(GlobalSettingOption enum_setting)
         case GlobalSettingOption::PostProcess_KernelEffect_EmbossIntensity: return "Emboss";
         case GlobalSettingOption::PostProcess_KernelEffect_BoxBlurIntensity: return "Box Blur";
         case GlobalSettingOption::PostProcess_KernelEffect_LaplacianIntensity: return "Laplacian";
-        case GlobalSettingOption::DebugView_DepthTesting: return "View Depth Testing";
+        case GlobalSettingOption::ViewSelection: return "View Selection";
         case GlobalSettingOption::Max: return "Max";
         default: return "Unknown";
     }
@@ -76,6 +76,7 @@ void GlobalSettings::initialize()
     global_settings[GlobalSettingOption::Vsync] = false;
     global_settings[GlobalSettingOption::GridRendering] = true;
     global_settings[GlobalSettingOption::AxisRendering] = true;
+    global_settings[GlobalSettingOption::ViewSelection] = 0;
     global_settings[GlobalSettingOption::BackgroundColor] = glm::vec4(0.133f, 0.168f, 0.2f, 1.0f);
     global_settings[GlobalSettingOption::Light_Enabled] = true;
     global_settings[GlobalSettingOption::Light_Type] = static_cast<uint32_t>(1);
@@ -106,7 +107,6 @@ void GlobalSettings::initialize()
     global_settings[GlobalSettingOption::PostProcess_KernelEffect_EmbossIntensity] = 0.0f;
     global_settings[GlobalSettingOption::PostProcess_KernelEffect_BoxBlurIntensity] = 0.0f;
     global_settings[GlobalSettingOption::PostProcess_KernelEffect_LaplacianIntensity] = 0.0f;
-    global_settings[GlobalSettingOption::DebugView_DepthTesting] = true;
 }
 
 void GlobalSettings::shutdown()
