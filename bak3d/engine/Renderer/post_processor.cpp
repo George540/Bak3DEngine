@@ -46,8 +46,9 @@ namespace
 
 void PostProcessor::initialize()
 {
-    m_fbo_a = make_unique<FrameBuffer>(0, nullptr, EventManager::get_window_width(), EventManager::get_window_height());
-    m_fbo_b = make_unique<FrameBuffer>(0, nullptr, EventManager::get_window_width(), EventManager::get_window_height());
+    const GLuint depth_texture = Renderer::get_main_frame_buffer()->get_depth_texture();
+    m_fbo_a = make_unique<FrameBuffer>(EventManager::get_window_width(), EventManager::get_window_height(), depth_texture, "FrameBuffer_PP_A");
+    m_fbo_b = make_unique<FrameBuffer>(EventManager::get_window_width(), EventManager::get_window_height(), depth_texture, "FrameBuffer_PP_B");
 
     // Register passes in execution order
     m_passes.push_back(make_unique<PostProcessPass_KernelEffect>(KernelEffectType::Sharpen));
@@ -115,8 +116,8 @@ FrameBuffer* PostProcessor::get_final_frame_buffer()
     return m_last_written_fbo;
 }
 
-void PostProcessor::resize(GLuint width, GLuint height)
+void PostProcessor::resize(const GLuint width, const GLuint height, const GLuint new_shared_depth_texture)
 {
-    m_fbo_a->resize(width, height);
-    m_fbo_b->resize(width, height);
+    m_fbo_a->resize(width, height, new_shared_depth_texture);
+    m_fbo_b->resize(width, height, new_shared_depth_texture);
 }

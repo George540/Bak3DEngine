@@ -168,6 +168,39 @@ void FrameBuffer::resize(const GLuint new_width, const GLuint new_height, const 
     }
 }
 
+void FrameBuffer::resolve_to(const FrameBuffer& fbo_target) const
+{
+    assert(m_width == fbo_target.get_width() && m_height == fbo_target.get_height());
+
+    glBindFramebuffer(GL_READ_FRAMEBUFFER, m_ID);
+    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fbo_target.get_id());
+
+    // Explicitly resolve the scene color attachment.
+    glReadBuffer(GL_COLOR_ATTACHMENT0);
+    glDrawBuffer(GL_COLOR_ATTACHMENT0);
+
+    glBlitFramebuffer(
+        0, 0,
+        m_width, m_height,
+        0, 0,
+        fbo_target.get_width(),
+        fbo_target.get_height(),
+        GL_COLOR_BUFFER_BIT,
+        GL_NEAREST);
+
+    glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
+}
+
+void FrameBuffer::clear() const
+{
+    // Accum starts at zero (nothing accumulated yet)
+    // Revealage starts at 1.0 (background fully visible) since it's a product accumulator.
+    constexpr float accum_clear[4]  = { 0.0f, 0.0f, 0.0f, 0.0f };
+    constexpr float reveal_clear[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
+    glClearBufferfv(GL_COLOR, 0, accum_clear);
+    glClearBufferfv(GL_COLOR, 1, reveal_clear);
+}
+
 void FrameBuffer::bind_color_attachment(const GLuint index) const
 {
     if (index >= m_color_textures.size())
@@ -210,7 +243,7 @@ std::string FrameBuffer::get_color_attachment_label(const size_t index) const
 
 void FrameBuffer::create_attachments()
 {
-    create_texture_2d_attachment(GL_COLOR_ATTACHMENT0, GL_RGB, GL_RGB, GL_UNSIGNED_BYTE);
+    create_texture_2d_attachment(GL_COLOR_ATTACHMENT0, GL_RGBA8, GL_RGB, GL_UNSIGNED_BYTE);
 
     if (m_use_depth_texture)
     {
@@ -327,9 +360,9 @@ void FrameBuffer::create_framebuffer()
     }
 
     // Verify framebuffer is complete
-    if (GLenum status = glCheckFramebufferStatus(m_target); status != GL_FRAMEBUFFER_COMPLETE)
+    if (const GLenum status = glCheckFramebufferStatus(m_target); status != GL_FRAMEBUFFER_COMPLETE)
     {
-        B3D_LOG_ERROR("Framebuffer is not complete! Status: 0x%x", status);
+        B3D_LOG_ERROR("Framebuffer %s is not complete! Status: 0x%x", m_debug_name, status);
     }
 
     label_resources();
@@ -404,38 +437,12 @@ void MultisampleFrameBuffer::set_samples(const GLsizei new_samples)
     }
 }
 
-void MultisampleFrameBuffer::resolve_to(const FrameBuffer& fbo_target) const
-{
-    assert(m_width == fbo_target.get_width() && m_height == fbo_target.get_height());
-
-    glBindFramebuffer(GL_READ_FRAMEBUFFER, m_ID);
-    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fbo_target.get_id());
-
-    // Explicitly resolve the scene color attachment.
-    glReadBuffer(GL_COLOR_ATTACHMENT0);
-    glDrawBuffer(GL_COLOR_ATTACHMENT0);
-
-    glBlitFramebuffer(
-        0, 0,
-        m_width, m_height,
-        0, 0,
-        fbo_target.get_width(),
-        fbo_target.get_height(),
-        GL_COLOR_BUFFER_BIT |
-        GL_DEPTH_BUFFER_BIT |
-        GL_STENCIL_BUFFER_BIT,
-        GL_NEAREST);
-
-    glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
-    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-}
-
 void MultisampleFrameBuffer::create_attachments()
 {
     GLuint texture_id;
     glGenTextures(1, &texture_id);
     glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, texture_id);
-    glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, m_samples, GL_RGB, m_width, m_height, GL_TRUE);
+    glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, m_samples, GL_RGBA8, m_width, m_height, GL_TRUE);
     glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, 0);
     glFramebufferTexture2D(m_target, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D_MULTISAMPLE, texture_id, 0);
     m_color_textures.push_back(texture_id);
@@ -455,16 +462,6 @@ WBOITFrameBuffer::WBOITFrameBuffer(const GLuint width, const GLuint height, cons
     create_framebuffer();
 
     B3D_LOG_INFO("WBOIT Frame Buffer Object enabled...");
-}
-
-void WBOITFrameBuffer::clear() const
-{
-    // Accum starts at zero (nothing accumulated yet)
-    // Revealage starts at 1.0 (background fully visible) since it's a product accumulator.
-    constexpr float accum_clear[4]  = { 0.0f, 0.0f, 0.0f, 0.0f };
-    constexpr float reveal_clear[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
-    glClearBufferfv(GL_COLOR, 0, accum_clear);
-    glClearBufferfv(GL_COLOR, 1, reveal_clear);
 }
 
 void WBOITFrameBuffer::create_attachments()

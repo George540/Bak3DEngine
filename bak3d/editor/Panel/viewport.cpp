@@ -44,10 +44,10 @@ void Viewport::update()
         ? PostProcessor::get_final_frame_buffer()
         : Renderer::get_main_frame_buffer();
 
-    if (view_mode == DebugViewMode::Depth)
+    /*if (view_mode == DebugViewMode::Depth)
     {
         frame_buffer_main = Renderer::get_debug_view_buffer();
-    }
+    }*/
 
     const float fb_aspect = frame_buffer_main->get_aspect_ratio();
     const float view_aspect = viewport_panel_size.x / viewport_panel_size.y;

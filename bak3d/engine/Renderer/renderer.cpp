@@ -139,6 +139,7 @@ void Renderer::draw_frame()
         }
 
         r_msaa_fbo->bind();
+    	r_msaa_fbo->clear();
     }
     else
     {
@@ -159,26 +160,19 @@ void Renderer::draw_frame()
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
 
-    const auto view_mode = static_cast<DebugViewMode>(GlobalSettings::get_global_setting_value<int>(GlobalSettingOption::ViewSelection));
-    const bool show_depth_debug = view_mode == DebugViewMode::Depth;
+    //const auto view_mode = static_cast<DebugViewMode>(GlobalSettings::get_global_setting_value<int>(GlobalSettingOption::ViewSelection));
+    //const bool show_depth_debug = view_mode == DebugViewMode::Depth;
 
     // ------------------------------------------------------------
     // Opaque geometry
     // ------------------------------------------------------------
-    if (!show_depth_debug)
-    {
-        RendererPasses::render_pass_debug_geometry();
-    }
-
+	RendererPasses::render_pass_debug_geometry();
     RendererPasses::render_pass_base_geometry();
 
     // ------------------------------------------------------------
     // Lighting Pass (Geometry)
     // ------------------------------------------------------------
-    if (!show_depth_debug)
-    {
-        RendererPasses::render_pass_lighting();
-    }
+	RendererPasses::render_pass_lighting();
 
     // ------------------------------------------------------------
     // Resolve MSAA
@@ -203,14 +197,14 @@ void Renderer::draw_frame()
     // ------------------------------------------------------------
     // Debug view / transparency
     // ------------------------------------------------------------
-    if (show_depth_debug)
+    /*if (show_depth_debug)
     {
         RendererPasses::render_pass_debug_view();
     	return;
-    }
+    }*/
 
 	// WBOIT now composites onto the already-resolved main framebuffer.
-	RendererPasses::render_pass_transparency();
+	//RendererPasses::render_pass_transparency();
 	RendererPasses::render_pass_post_processing();
 }
 
@@ -256,7 +250,7 @@ void Renderer::on_framebuffer_size_callback(GLFWwindow* window, const int new_wi
 	r_msaa_fbo->resize(new_width, new_height, r_main_fbo->get_depth_texture());
 	r_dbo->resize(new_width, new_height, r_main_fbo->get_depth_texture());
 	r_wboit_fbo->resize(new_width, new_height, r_main_fbo->get_depth_texture());
-	PostProcessor::resize(new_width, new_height);
+	PostProcessor::resize(new_width, new_height, r_main_fbo->get_depth_texture());
 }
 
 void Renderer::initialize_buffers()

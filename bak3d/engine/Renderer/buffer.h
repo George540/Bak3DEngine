@@ -107,7 +107,10 @@ public:
 
     void bind() const override;
     void unbind() const override;
+
     void resize(GLuint new_width, GLuint new_height, GLuint new_shared_depth_texture = 0);
+    void resolve_to(const FrameBuffer& fbo_target) const;
+    void clear() const;
 
     void bind_color_attachment(GLuint index = 0) const;
 
@@ -163,8 +166,6 @@ public:
     void set_samples(const GLsizei new_samples);
     GLsizei get_samples() const { return m_samples; }
     GLsizei get_max_samples () const { return m_max_samples; }
-
-    void resolve_to(const FrameBuffer& fbo_target) const;
 protected:
     void create_attachments() override;
 
@@ -180,8 +181,6 @@ public:
 
     GLuint get_accum_texture() const { return get_color_texture(0); }
     GLuint get_revealage_texture() const { return get_color_texture(1); }
-
-    void clear() const;
 protected:
     void create_attachments() override;
     std::vector<GLenum> get_draw_buffers() const override;

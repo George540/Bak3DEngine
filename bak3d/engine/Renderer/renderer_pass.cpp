@@ -103,19 +103,28 @@ void RendererPasses::render_pass_transparency()
     }
 
     WBOITFrameBuffer* wboit_fbo = Renderer::get_wboit_frame_buffer();
-    FrameBuffer* main_fbo = Renderer::get_main_frame_buffer();
+    FrameBuffer* resolved_base_fbo = Renderer::get_main_frame_buffer();
 
-    if (!wboit_fbo || !main_fbo)
+    if (!wboit_fbo || !resolved_base_fbo)
     {
         return;
+    }
+
+    // Copy the resolved opaque depth into the WBOIT framebuffer.
+    // This allows transparent particles to be depth-tested against the
+    // already-rendered opaque scene without writing their own depth.
+    {
+        DebugScopeGroup depth_scope("WBOIT Depth Copy");
+
+        //resolved_base_fbo->resolve_to(*wboit_fbo);
     }
     
     // Accumulate: particles write into accum + revealage targets
     {
         DebugScopeGroup accumulate_scope("WBOIT Accumulate");
 
-        wboit_fbo->bind();
-        wboit_fbo->clear();
+        //wboit_fbo->bind();
+        //wboit_fbo->clear();
 
         glEnable(GL_DEPTH_TEST);
         glDepthFunc(GL_LESS);
@@ -133,12 +142,12 @@ void RendererPasses::render_pass_transparency()
         glDepthMask(GL_TRUE);
         glDepthFunc(GL_LESS);
 
-        wboit_fbo->unbind();
+        //wboit_fbo->unbind();
     }
 
     // Composite: merge accumulate/revealage back onto the resolved opaque frame
     {
-        DebugScopeGroup composite_scope("WBOIT Composite");
+        /*DebugScopeGroup composite_scope("WBOIT Composite");
 
         const ShaderRef composite_shader = ResourceManager::get_shader("wboit_composite");
         if (!composite_shader || !composite_shader->is_shader_compiled())
@@ -146,7 +155,7 @@ void RendererPasses::render_pass_transparency()
             return;
         }
 
-        main_fbo->bind();
+        resolved_base_fbo->bind();
 
         glDisable(GL_DEPTH_TEST);
 
@@ -168,7 +177,7 @@ void RendererPasses::render_pass_transparency()
 
         glDisable(GL_BLEND);
 
-        main_fbo->unbind();
+        resolved_base_fbo->unbind();*/
     }
 }
 
