@@ -35,6 +35,8 @@ void RendererPasses::render_pass_debug_geometry()
 {
     DebugScopeGroup scope("Debug Geometry Pass");
 
+    glDepthFunc(GL_ALWAYS);
+
     const bool is_grid_rendering = GlobalSettings::get_global_setting_value<bool>(GlobalSettingOption::GridRendering);
     const bool is_axis_rendering = GlobalSettings::get_global_setting_value<bool>(GlobalSettingOption::AxisRendering);
     if (is_grid_rendering)
@@ -45,6 +47,8 @@ void RendererPasses::render_pass_debug_geometry()
     {
         Scene::instance->get_object_in_scene(SceneObjectType::Axis)->draw();
     }
+
+    glDepthFunc(GL_LESS);
 }
 
 void RendererPasses::render_pass_base_geometry()
@@ -57,7 +61,16 @@ void RendererPasses::render_pass_base_geometry()
     }
     if (const ParticleSystem* particle_system = Scene::instance->get_particle_system())
     {
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        glDepthMask(GL_FALSE);
+        glDisable(GL_CULL_FACE);
+
         particle_system->draw();
+
+        glDepthMask(GL_TRUE);
+        glDisable(GL_BLEND);
+        glEnable(GL_CULL_FACE);
     }
 }
 
@@ -99,10 +112,10 @@ void RendererPasses::render_pass_transparency()
         wboit_fbo->clear();
 
         glEnable(GL_DEPTH_TEST); // still occluded by opaque geometry
-        glDepthMask(GL_FALSE); // never write depth on order-independene pass
+        glDepthMask(GL_FALSE); // never write depth on order-independenent pass
 
         glEnable(GL_BLEND);
-        glBlendFunci(0, GL_ONE, GL_ONE); // accum target: additive
+        glBlendFunci(0, GL_ONE, GL_ONE); // accumulation target: additive
         glBlendFunci(1, GL_ZERO, GL_ONE_MINUS_SRC_COLOR); // revealage target: product of (1 - alpha)
         glBlendEquation(GL_FUNC_ADD);
 

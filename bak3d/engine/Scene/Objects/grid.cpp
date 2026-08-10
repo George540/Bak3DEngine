@@ -79,14 +79,10 @@ Grid::Grid(MaterialRef material)
 
 void Grid::draw() const
 {
-	glDepthFunc(GL_ALWAYS);
-
 	(*m_material_slot)->set_vec4("color", glm::vec4(0.5f));
 	RenderableObject::draw();
 
 	m_vao->bind();
 	glDrawElements(GL_LINES, m_number_of_elements, GL_UNSIGNED_INT, nullptr);
 	m_vao->unbind();
-
-	glDepthFunc(GL_LESS);
 }

@@ -156,15 +156,12 @@ void Renderer::draw_frame()
 	
 	if (!show_depth_debug)
 	{
-		RendererPasses::render_pass_debug_geometry();
+		RendererPasses::render_pass_debug_geometry(); // Opaque geometry (Non-Depth-Tested)
 	}
-	RendererPasses::render_pass_base_geometry();
+	RendererPasses::render_pass_base_geometry(); // Opaque geometry (Depth-Tested)
 	if (!show_depth_debug)
 	{
 		RendererPasses::render_pass_transparency();
-	}
-	if (!show_depth_debug)
-	{
 		RendererPasses::render_pass_lighting();
 	}
 
