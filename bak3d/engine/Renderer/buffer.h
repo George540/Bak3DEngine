@@ -109,10 +109,12 @@ public:
     void unbind() const override;
     void resize(GLuint new_width, GLuint new_height, GLuint new_shared_depth_texture = 0);
 
+    void bind_color_attachment(GLuint index = 0) const;
+
     GLuint get_width() const { return m_width; }
     GLuint get_height() const { return m_height; }
     float get_aspect_ratio() const;
-    GLuint get_color_texture(size_t index = 0) const;
+    GLuint get_color_texture(GLuint index = 0) const;
     GLuint get_buffer() const { return m_rbo; }
     GLuint get_depth_texture() const { return m_depth_texture; }
     bool is_using_depth_texture() const { return m_use_depth_texture && m_depth_texture > 0; }

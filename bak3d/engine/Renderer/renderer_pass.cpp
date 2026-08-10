@@ -102,7 +102,13 @@ void RendererPasses::render_pass_transparency()
         return;
     }
 
-    const WBOITFrameBuffer* wboit_fbo = Renderer::get_wboit_frame_buffer();
+    WBOITFrameBuffer* wboit_fbo = Renderer::get_wboit_frame_buffer();
+    FrameBuffer* main_fbo = Renderer::get_main_frame_buffer();
+
+    if (!wboit_fbo || !main_fbo)
+    {
+        return;
+    }
     
     // Accumulate: particles write into accum + revealage targets
     {
@@ -111,19 +117,21 @@ void RendererPasses::render_pass_transparency()
         wboit_fbo->bind();
         wboit_fbo->clear();
 
-        glEnable(GL_DEPTH_TEST); // still occluded by opaque geometry
-        glDepthMask(GL_FALSE); // never write depth on order-independenent pass
-
+        glEnable(GL_DEPTH_TEST);
+        glDepthFunc(GL_LESS);
+        glDepthMask(GL_FALSE);
         glEnable(GL_BLEND);
+        
         glBlendFunci(0, GL_ONE, GL_ONE); // accumulation target: additive
         glBlendFunci(1, GL_ZERO, GL_ONE_MINUS_SRC_COLOR); // revealage target: product of (1 - alpha)
-        glBlendEquation(GL_FUNC_ADD);
+        glBlendEquationi(0, GL_FUNC_ADD);
+        glBlendEquationi(1, GL_FUNC_ADD);
 
         advanced_particles->draw();
 
         glDisable(GL_BLEND);
         glDepthMask(GL_TRUE);
-        glDisable(GL_DEPTH_TEST);
+        glDepthFunc(GL_LESS);
 
         wboit_fbo->unbind();
     }
@@ -138,20 +146,20 @@ void RendererPasses::render_pass_transparency()
             return;
         }
 
-        const FrameBuffer* opaque_fbo = Renderer::get_main_frame_buffer();
-        opaque_fbo->bind();
+        main_fbo->bind();
+
+        glDisable(GL_DEPTH_TEST);
 
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        glBlendEquation(GL_FUNC_ADD);
 
         composite_shader->use();
 
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, wboit_fbo->get_accum_texture());
+        wboit_fbo->bind_color_attachment(0);
         composite_shader->set_int("accumulation_texture", 0);
 
-        glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, wboit_fbo->get_revealage_texture());
+        wboit_fbo->bind_color_attachment(1);
         composite_shader->set_int("revealage_texture", 1);
 
         Renderer::draw_quad();
@@ -160,7 +168,7 @@ void RendererPasses::render_pass_transparency()
 
         glDisable(GL_BLEND);
 
-        opaque_fbo->unbind();
+        main_fbo->unbind();
     }
 }
 

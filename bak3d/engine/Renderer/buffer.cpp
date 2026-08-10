@@ -168,6 +168,17 @@ void FrameBuffer::resize(const GLuint new_width, const GLuint new_height, const 
     }
 }
 
+void FrameBuffer::bind_color_attachment(const GLuint index) const
+{
+    if (index >= m_color_textures.size())
+    {
+        B3D_LOG_ERROR("FrameBuffer '%s': color texture index %zu out of range (%zu attachments).", m_debug_name.c_str(), index, m_color_textures.size());
+        return;
+    }
+    glActiveTexture(GL_TEXTURE0 + index);
+    glBindTexture(GL_TEXTURE_2D, get_color_texture(index));
+}
+
 float FrameBuffer::get_aspect_ratio() const
 {
     if (m_height == 0)
@@ -177,7 +188,7 @@ float FrameBuffer::get_aspect_ratio() const
     return static_cast<float>(m_width) / static_cast<float>(m_height);
 }
 
-GLuint FrameBuffer::get_color_texture(size_t index) const
+GLuint FrameBuffer::get_color_texture(const GLuint index) const
 {
     if (index >= m_color_textures.size())
     {
@@ -395,17 +406,25 @@ void MultisampleFrameBuffer::set_samples(const GLsizei new_samples)
 
 void MultisampleFrameBuffer::resolve_to(const FrameBuffer& fbo_target) const
 {
-    // Ensure both intermediate FBO and MSAA FBO are the same size.
     assert(m_width == fbo_target.get_width() && m_height == fbo_target.get_height());
 
     glBindFramebuffer(GL_READ_FRAMEBUFFER, m_ID);
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fbo_target.get_id());
+
+    // Explicitly resolve the scene color attachment.
+    glReadBuffer(GL_COLOR_ATTACHMENT0);
+    glDrawBuffer(GL_COLOR_ATTACHMENT0);
+
     glBlitFramebuffer(
-        0, 0, m_width, m_height,
-        0, 0, fbo_target.get_width(), fbo_target.get_height(),
-        GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT,
-        GL_NEAREST
-    );
+        0, 0,
+        m_width, m_height,
+        0, 0,
+        fbo_target.get_width(),
+        fbo_target.get_height(),
+        GL_COLOR_BUFFER_BIT |
+        GL_DEPTH_BUFFER_BIT |
+        GL_STENCIL_BUFFER_BIT,
+        GL_NEAREST);
 
     glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);

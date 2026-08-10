@@ -71,8 +71,6 @@ void AdvancedParticleSystem::draw() const
     const ShaderRef particle_shader = (*m_material_slot)->get_shader();
     if (!particle_shader || !particle_shader->is_shader_compiled())
     {
-        glDepthMask(GL_TRUE);
-        glDisable(GL_BLEND);
         return;
     }
     particle_shader->use();
@@ -85,6 +83,8 @@ void AdvancedParticleSystem::draw() const
     m_vao->bind();
     glDrawArrays(GL_POINTS, 0, NUM_ELEMENTS);
     m_vao->unbind();
+
+    glDisable(GL_PROGRAM_POINT_SIZE);
 }
 
 void AdvancedParticleSystem::simulate() const

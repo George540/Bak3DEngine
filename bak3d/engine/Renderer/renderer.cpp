@@ -128,66 +128,90 @@ void Renderer::begin_frame()
 
 void Renderer::draw_frame()
 {
-	const bool msaa_enabled = GlobalSettings::get_global_setting_value<bool>(GlobalSettingOption::AA_MSAA_Enabled);
+    const bool msaa_enabled = GlobalSettings::get_global_setting_value<bool>(GlobalSettingOption::AA_MSAA_Enabled);
 
-	if (msaa_enabled)
-	{
-		if (const int samples_setting = GlobalSettings::get_global_setting_value<int>(GlobalSettingOption::AA_MSAA_Samples);
-			r_msaa_fbo->get_samples() != samples_setting)
-		{
-			r_msaa_fbo->set_samples(samples_setting);
-		}
-		r_msaa_fbo->bind();
-	}
-	else
-	{
-		r_main_fbo->bind();
-	}
+    if (msaa_enabled)
+    {
+        if (const int samples_setting =GlobalSettings::get_global_setting_value<int>(GlobalSettingOption::AA_MSAA_Samples);
+        	r_msaa_fbo->get_samples() != samples_setting)
+        {
+            r_msaa_fbo->set_samples(samples_setting);
+        }
 
-	const auto background_color = GlobalSettings::get_global_setting_value<glm::vec4>(GlobalSettingOption::BackgroundColor);
-	glClearColor(background_color.r, background_color.g, background_color.b, background_color.a);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-	glEnable(GL_DEPTH_TEST);
-	glEnable(GL_CULL_FACE);
-	glCullFace(GL_BACK);
+        r_msaa_fbo->bind();
+    }
+    else
+    {
+        r_main_fbo->bind();
+    }
 
-	const auto view_mode = static_cast<DebugViewMode>(GlobalSettings::get_global_setting_value<int>(GlobalSettingOption::ViewSelection));
-	const bool show_depth_debug = view_mode == DebugViewMode::Depth;
-	
-	if (!show_depth_debug)
-	{
-		RendererPasses::render_pass_debug_geometry(); // Opaque geometry (Non-Depth-Tested)
-	}
-	RendererPasses::render_pass_base_geometry(); // Opaque geometry (Depth-Tested)
-	if (!show_depth_debug)
-	{
-		RendererPasses::render_pass_transparency();
-		RendererPasses::render_pass_lighting();
-	}
+    // ------------------------------------------------------------
+    // Initial state
+    // ------------------------------------------------------------
+    const auto background_color = GlobalSettings::get_global_setting_value<glm::vec4>(GlobalSettingOption::BackgroundColor);
 
-	// Swap buffers
-	glDisable(GL_DEPTH_TEST);
-	glDisable(GL_CULL_FACE);
+    glClearColor(background_color.r, background_color.g, background_color.b, background_color.a);
 
-	DebugScopeGroup scope("MSAA Resolve (Color + Depth/Stencil)");
-	if (msaa_enabled)
-	{
-		r_msaa_fbo->resolve_to(*r_main_fbo);
-		r_msaa_fbo->unbind();
-	}
-	else
-	{
-		r_main_fbo->unbind();
-	}
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
-	if (view_mode != DebugViewMode::Default)
-	{
-		RendererPasses::render_pass_debug_view();
-	}
-	else
-	{
-		RendererPasses::render_pass_post_processing();
-	}
+    glEnable(GL_DEPTH_TEST);
+	glDepthFunc(GL_LESS);
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_BACK);
+
+    const auto view_mode = static_cast<DebugViewMode>(GlobalSettings::get_global_setting_value<int>(GlobalSettingOption::ViewSelection));
+    const bool show_depth_debug = view_mode == DebugViewMode::Depth;
+
+    // ------------------------------------------------------------
+    // Opaque geometry
+    // ------------------------------------------------------------
+    if (!show_depth_debug)
+    {
+        RendererPasses::render_pass_debug_geometry();
+    }
+
+    RendererPasses::render_pass_base_geometry();
+
+    // ------------------------------------------------------------
+    // Lighting Pass (Geometry)
+    // ------------------------------------------------------------
+    if (!show_depth_debug)
+    {
+        RendererPasses::render_pass_lighting();
+    }
+
+    // ------------------------------------------------------------
+    // Resolve MSAA
+    // ------------------------------------------------------------
+    glDisable(GL_DEPTH_TEST);
+    glDisable(GL_CULL_FACE);
+
+    {
+        DebugScopeGroup scope("MSAA Resolve (Color + Depth/Stencil)");
+
+        if (msaa_enabled)
+        {
+            r_msaa_fbo->resolve_to(*r_main_fbo);
+            r_msaa_fbo->unbind();
+        }
+        else
+        {
+            r_main_fbo->unbind();
+        }
+    }
+
+    // ------------------------------------------------------------
+    // Debug view / transparency
+    // ------------------------------------------------------------
+    if (show_depth_debug)
+    {
+        RendererPasses::render_pass_debug_view();
+    	return;
+    }
+
+	// WBOIT now composites onto the already-resolved main framebuffer.
+	RendererPasses::render_pass_transparency();
+	RendererPasses::render_pass_post_processing();
 }
 
 void Renderer::end_frame()
