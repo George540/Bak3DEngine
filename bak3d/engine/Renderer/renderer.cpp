@@ -119,8 +119,6 @@ void Renderer::initialize()
 
 void Renderer::begin_frame()
 {
-	m_pages_data.debug_mode = GlobalSettings::get_global_setting_value<int>(GlobalSettingOption::ViewSelection);
-
 	r_debug_view_ubo->bind();
 	r_debug_view_ubo->bind_buffer_sub_data(&m_pages_data, PAGES_DATA_SIZE, 0);
 	r_debug_view_ubo->unbind();

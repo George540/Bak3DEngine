@@ -108,7 +108,7 @@ FrameBuffer::FrameBuffer(
 {
     create_framebuffer();
     
-    B3D_LOG_INFO("Frame Buffer Object '%s' enabled (%s depth)...", m_debug_name.c_str(), m_use_depth_texture ? "sampled" : "renderbuffer");
+    B3D_LOG_INFO("Frame Buffer Object '%s' with ID %d enabled (%s depth)...", m_debug_name.c_str(), m_ID, m_use_depth_texture ? "sampled" : "renderbuffer");
 }
 
 FrameBuffer::~FrameBuffer()

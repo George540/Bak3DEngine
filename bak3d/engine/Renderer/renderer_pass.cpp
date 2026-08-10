@@ -90,26 +90,23 @@ void RendererPasses::render_pass_debug_view()
     DebugScopeGroup scope("Debug View Pass");
 
     const ShaderRef debug_view_shader = ResourceManager::get_shader("debug_view");
+
     if (!debug_view_shader || !debug_view_shader->is_shader_compiled())
     {
         return;
     }
 
-    glDisable(GL_DEPTH_TEST);
-    glDisable(GL_CULL_FACE);
-
     Renderer::get_debug_view_buffer()->bind();
-    glClear(GL_COLOR_BUFFER_BIT);
 
     debug_view_shader->use();
 
+    const int depth_texture = static_cast<int>(Renderer::get_frame_buffer()->get_depth_texture());
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, Renderer::get_frame_buffer()->get_depth_texture());
-    debug_view_shader->set_int("depth_texture", 0); // texture UNIT 0, not the GL handle
+    glBindTexture(GL_TEXTURE_2D, depth_texture);
+    debug_view_shader->set_int("depth_texture", 0);
 
     Renderer::draw_quad();
-    
-    glBindTexture(GL_TEXTURE_2D, 0);
+
     debug_view_shader->unuse();
 
     Renderer::get_debug_view_buffer()->unbind();
