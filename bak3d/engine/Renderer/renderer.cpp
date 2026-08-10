@@ -45,10 +45,12 @@ using namespace std;
 
 // Renderer
 GLFWwindow* Renderer::r_window = nullptr;
-std::unique_ptr<MultisampleFrameBuffer> Renderer::r_msaa_fbo;
-std::unique_ptr<FrameBuffer> Renderer::r_fbo;
-std::unique_ptr<FrameBuffer> Renderer::r_dbo;
-std::unique_ptr<UniformBuffer> Renderer::r_debug_view_ubo;
+unique_ptr<MultisampleFrameBuffer> Renderer::r_msaa_fbo;
+unique_ptr<FrameBuffer> Renderer::r_main_fbo;
+unique_ptr<FrameBuffer> Renderer::r_dbo;
+unique_ptr<UniformBuffer> Renderer::r_debug_view_ubo;
+unique_ptr<WBOITFrameBuffer> Renderer::r_wboit_fbo;
+
 
 #ifdef _DEBUG
 constexpr bool IS_OPENGL_DEBUG_VERBOSE = false;
@@ -139,7 +141,7 @@ void Renderer::draw_frame()
 	}
 	else
 	{
-		r_fbo->bind();
+		r_main_fbo->bind();
 	}
 
 	const auto background_color = GlobalSettings::get_global_setting_value<glm::vec4>(GlobalSettingOption::BackgroundColor);
@@ -159,6 +161,10 @@ void Renderer::draw_frame()
 	RendererPasses::render_pass_base_geometry();
 	if (!show_depth_debug)
 	{
+		RendererPasses::render_pass_transparency();
+	}
+	if (!show_depth_debug)
+	{
 		RendererPasses::render_pass_lighting();
 	}
 
@@ -169,12 +175,12 @@ void Renderer::draw_frame()
 	DebugScopeGroup scope("MSAA Resolve (Color + Depth/Stencil)");
 	if (msaa_enabled)
 	{
-		r_msaa_fbo->resolve_to(*r_fbo);
+		r_msaa_fbo->resolve_to(*r_main_fbo);
 		r_msaa_fbo->unbind();
 	}
 	else
 	{
-		r_fbo->unbind();
+		r_main_fbo->unbind();
 	}
 
 	if (view_mode != DebugViewMode::Default)
@@ -204,8 +210,9 @@ void Renderer::shutdown()
 {
 	r_window = nullptr;
 	r_dbo.reset();
-	r_fbo.reset();
+	r_main_fbo.reset();
 	r_msaa_fbo.reset();
+	r_debug_view_ubo.reset();
 }
 
 PagesData Renderer::get_pages_data()
@@ -224,29 +231,52 @@ void Renderer::on_framebuffer_size_callback(GLFWwindow* window, const int new_wi
 	{
 		return;
 	}
-	r_msaa_fbo->resize(new_width, new_height);
-	r_fbo->resize(new_width, new_height);
-	r_dbo->resize(new_width, new_height);
+	r_main_fbo->resize(new_width, new_height);
+	r_msaa_fbo->resize(new_width, new_height, r_main_fbo->get_depth_texture());
+	r_dbo->resize(new_width, new_height, r_main_fbo->get_depth_texture());
+	r_wboit_fbo->resize(new_width, new_height, r_main_fbo->get_depth_texture());
 	PostProcessor::resize(new_width, new_height);
 }
 
 void Renderer::initialize_buffers()
 {
-	// Framebuffers
-	r_msaa_fbo = std::make_unique<MultisampleFrameBuffer>(
-		0, nullptr, EventManager::get_window_width(), EventManager::get_window_height(),
-		4, GL_NONE, "Framebuffer_Base_MSAA");
+	// ========== FRAME BUFFERS ==========
 
-	r_fbo = std::make_unique<FrameBuffer>(
-		0, nullptr, EventManager::get_window_width(), EventManager::get_window_height(),
-		GL_COLOR_ATTACHMENT0, GL_NONE, /*use_depth_texture=*/true, "Framebuffer_Base");
+	// Base Frame Buffer (also creates global depth attachment)
+	r_main_fbo = make_unique<FrameBuffer>(
+		0,
+		nullptr,
+		EventManager::get_window_width(),
+		EventManager::get_window_height(),
+		GL_NONE,
+		true,
+		"Framebuffer_Base");
 
-	r_dbo = std::make_unique<FrameBuffer>(
-		0, nullptr, EventManager::get_window_width(), EventManager::get_window_height(),
-		GL_COLOR_ATTACHMENT0, GL_NONE, /*use_depth_texture=*/false, "DebugView_Output");
+	// Debug View Frame Buffer: translate non-color attachments such as depth and AO into colored attachments)
+	r_dbo = make_unique<FrameBuffer>(
+		EventManager::get_window_width(),
+		EventManager::get_window_height(),
+		r_main_fbo->get_depth_texture(),
+		"DebugView_Output");
 
-	// Uniform Buffers
-	// @TODO: Replace with struct payload instead of manual size
+	// MSAA Frame Buffer: Anti-Aliasing buffer on the rasterization level (before post-processing)
+	r_msaa_fbo = make_unique<MultisampleFrameBuffer>(
+		EventManager::get_window_width(),
+		EventManager::get_window_height(),
+		4,
+		"Framebuffer_Base_MSAA");
+
+	// WBOIT Frame Buffer: Used for transparency accumulation and revealage geometry
+	r_wboit_fbo = make_unique<WBOITFrameBuffer>(
+		EventManager::get_window_width(),
+		EventManager::get_window_height(),
+		r_main_fbo->get_depth_texture(),
+		"WBOIT_Transparency"
+		);
+
+	// ========== GLOBAL UNIFORM BUFFERS (owned by the Renderer) ==========
+
+	// Pages Data (Debug View) Uniform Buffer: Store debug data for different debug views and other debugging options
 	r_debug_view_ubo = make_unique<UniformBuffer>(PAGES_DATA_SIZE, nullptr, 2, GL_DYNAMIC_DRAW);
 
 	m_quad = new Quad();

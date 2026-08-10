@@ -30,7 +30,7 @@ THE SOFTWARE.
 
 using namespace std;
 
-static constexpr GLuint NUM_ELEMENTS = 10000000;
+static constexpr GLuint NUM_ELEMENTS = 2000000;
 
 AdvancedParticleSystem::AdvancedParticleSystem(const std::string& name)
     : RenderableObject(ResourceManager::get_material("particle_advanced"),
@@ -68,10 +68,6 @@ void AdvancedParticleSystem::draw() const
         return;
     }
 
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glDepthMask(GL_FALSE);
-
     const ShaderRef particle_shader = (*m_material_slot)->get_shader();
     if (!particle_shader || !particle_shader->is_shader_compiled())
     {
@@ -89,10 +85,6 @@ void AdvancedParticleSystem::draw() const
     m_vao->bind();
     glDrawArrays(GL_POINTS, 0, NUM_ELEMENTS);
     m_vao->unbind();
-
-    glDisable(GL_PROGRAM_POINT_SIZE);
-    glDepthMask(GL_TRUE);
-    glDisable(GL_BLEND);
 }
 
 void AdvancedParticleSystem::simulate() const

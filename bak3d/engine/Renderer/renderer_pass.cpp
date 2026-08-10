@@ -59,19 +59,95 @@ void RendererPasses::render_pass_base_geometry()
     {
         particle_system->draw();
     }
-    if (const AdvancedParticleSystem* advanced_particle_system = Scene::instance->get_advanced_particle_system())
-    {
-        advanced_particle_system->draw();
-    }
 }
 
 void RendererPasses::render_pass_lighting()
 {
     DebugScopeGroup scope("Lighting (Geometry) Pass");
 
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glDisable(GL_DEPTH_TEST);
+
     if (GlobalSettings::get_global_setting_value<bool>(GlobalSettingOption::Light_Enabled))
     {
         Scene::instance->get_active_light()->draw();
+    }
+
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glDisable(GL_BLEND);
+    glEnable(GL_DEPTH_TEST);
+}
+
+void RendererPasses::render_pass_transparency()
+{
+    DebugScopeGroup scope("Transparency Pass (WBOIT)");
+
+    AdvancedParticleSystem* advanced_particles = Scene::instance->get_advanced_particle_system();
+    if (!advanced_particles)
+    {
+        return;
+    }
+
+    const WBOITFrameBuffer* wboit_fbo = Renderer::get_wboit_frame_buffer();
+    
+    // Accumulate: particles write into accum + revealage targets
+    {
+        DebugScopeGroup accumulate_scope("WBOIT Accumulate");
+
+        wboit_fbo->bind();
+        wboit_fbo->clear();
+
+        glEnable(GL_DEPTH_TEST); // still occluded by opaque geometry
+        glDepthMask(GL_FALSE); // never write depth on order-independene pass
+
+        glEnable(GL_BLEND);
+        glBlendFunci(0, GL_ONE, GL_ONE); // accum target: additive
+        glBlendFunci(1, GL_ZERO, GL_ONE_MINUS_SRC_COLOR); // revealage target: product of (1 - alpha)
+        glBlendEquation(GL_FUNC_ADD);
+
+        advanced_particles->draw();
+
+        glDisable(GL_BLEND);
+        glDepthMask(GL_TRUE);
+        glDisable(GL_DEPTH_TEST);
+
+        wboit_fbo->unbind();
+    }
+
+    // Composite: merge accumulate/revealage back onto the resolved opaque frame
+    {
+        DebugScopeGroup composite_scope("WBOIT Composite");
+
+        const ShaderRef composite_shader = ResourceManager::get_shader("wboit_composite");
+        if (!composite_shader || !composite_shader->is_shader_compiled())
+        {
+            return;
+        }
+
+        const FrameBuffer* opaque_fbo = Renderer::get_main_frame_buffer();
+        opaque_fbo->bind();
+
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+        composite_shader->use();
+
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, wboit_fbo->get_accum_texture());
+        composite_shader->set_int("accumulation_texture", 0);
+
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, wboit_fbo->get_revealage_texture());
+        composite_shader->set_int("revealage_texture", 1);
+
+        Renderer::draw_quad();
+
+        composite_shader->unuse();
+
+        glDisable(GL_BLEND);
+
+        opaque_fbo->unbind();
     }
 }
 
@@ -81,7 +157,7 @@ void RendererPasses::render_pass_post_processing()
 
     if (GlobalSettings::get_global_setting_value<bool>(GlobalSettingOption::PostProcessing_Enabled))
     {
-        PostProcessor::process_frame(*Renderer::get_frame_buffer());
+        PostProcessor::process_frame(*Renderer::get_main_frame_buffer());
     }
 }
 
@@ -100,7 +176,7 @@ void RendererPasses::render_pass_debug_view()
 
     debug_view_shader->use();
 
-    const int depth_texture = static_cast<int>(Renderer::get_frame_buffer()->get_depth_texture());
+    const int depth_texture = static_cast<int>(Renderer::get_main_frame_buffer()->get_depth_texture());
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, depth_texture);
     debug_view_shader->set_int("depth_texture", 0);

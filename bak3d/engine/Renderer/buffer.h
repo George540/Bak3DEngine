@@ -26,6 +26,7 @@ THE SOFTWARE.
 
 #include <glad/glad.h>
 #include <stdexcept>
+#include <vector>
 
 #include "globject.h"
 
@@ -95,36 +96,53 @@ public:
         const void* data,
         const GLuint width,
         const GLuint height,
-        const GLenum attachment_type = GL_COLOR_ATTACHMENT0,
         const GLenum usage = GL_NONE,
         const bool use_depth_texture = false,
         const char* debug_name = nullptr);
+    // Share externally-owned depth texture instead of creating one.
+    // Subclasses are expected to override create_attachments(), get_draw_buffers()
+    FrameBuffer(GLuint width, GLuint height, GLuint shared_depth_texture, const char* debug_name = nullptr);
+
     ~FrameBuffer() override;
+
     void bind() const override;
     void unbind() const override;
-    void resize(GLuint new_width, GLuint new_height);
+    void resize(GLuint new_width, GLuint new_height, GLuint new_shared_depth_texture = 0);
 
     GLuint get_width() const { return m_width; }
     GLuint get_height() const { return m_height; }
     float get_aspect_ratio() const;
-    GLuint get_color_texture() const { return m_color_texture; }
+    GLuint get_color_texture(size_t index = 0) const;
     GLuint get_buffer() const { return m_rbo; }
     GLuint get_depth_texture() const { return m_depth_texture; }
     bool is_using_depth_texture() const { return m_use_depth_texture && m_depth_texture > 0; }
 
 protected:
+    virtual std::vector<GLenum> get_draw_buffers() const;
+    virtual std::string get_color_attachment_label(size_t index) const;
     virtual void create_attachments();
+
+    GLuint create_texture_2d_attachment(
+        GLenum attachment_slot,
+        GLenum internal_format,
+        GLenum format,
+       GLenum type,
+       GLenum min_filter = GL_LINEAR,
+       GLenum mag_filter = GL_LINEAR,
+       bool track_as_output = true);
+    void attach_shared_depth_texture() const;
+
     void create_framebuffer();
     void destroy_framebuffer();
     void label_resources() const;
 
     GLuint m_width;
     GLuint m_height;
-    GLuint m_color_texture;
+    std::vector<GLuint> m_color_textures;
     GLuint m_rbo;
-    GLuint m_depth_texture = 0;
-    GLenum m_attachment_type;
+    GLuint m_depth_texture = -1;
     bool m_use_depth_texture = false;
+    bool m_owns_depth_texture = true;
     std::string m_debug_name;
 };
 
@@ -135,12 +153,9 @@ class MultisampleFrameBuffer : public FrameBuffer
 {
 public:
     MultisampleFrameBuffer(
-        GLsizeiptr size,
-        const void* data,
         GLuint width,
         GLuint height,
         GLsizei samples = 4,
-        GLenum usage = GL_NONE,
         const char* debug_name = nullptr);
 
     void set_samples(const GLsizei new_samples);
@@ -154,6 +169,21 @@ protected:
 private:
     GLsizei m_samples;
     GLsizei m_max_samples;
+};
+
+class WBOITFrameBuffer : public FrameBuffer
+{
+public:
+    WBOITFrameBuffer(const GLuint width, const GLuint height, const GLuint shared_depth_texture, const char* debug_name = nullptr);
+
+    GLuint get_accum_texture() const { return get_color_texture(0); }
+    GLuint get_revealage_texture() const { return get_color_texture(1); }
+
+    void clear() const;
+protected:
+    void create_attachments() override;
+    std::vector<GLenum> get_draw_buffers() const override;
+    std::string get_color_attachment_label(size_t index) const override;
 };
 
 /*

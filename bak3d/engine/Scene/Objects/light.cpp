@@ -103,10 +103,6 @@ void Light::update(float dt)
 
 void Light::draw() const
 {
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glDisable(GL_DEPTH_TEST);
-
 	RenderableObject::draw();
 
 	(*m_material_slot)->set_vec4("diffuseColor", glm::vec4(m_diffuse, 1.0f));
@@ -118,10 +114,6 @@ void Light::draw() const
 	m_vao->unbind();
 
 	Texture2D::unbind();
-
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glDisable(GL_BLEND);
-	glEnable(GL_DEPTH_TEST);
 }
 
 void Light::set_attenuation(const float radius)

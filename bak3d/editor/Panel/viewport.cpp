@@ -42,7 +42,7 @@ void Viewport::update()
     const FrameBuffer* frame_buffer_main =
         post_processing_enabled
         ? PostProcessor::get_final_frame_buffer()
-        : Renderer::get_frame_buffer();
+        : Renderer::get_main_frame_buffer();
 
     if (view_mode == DebugViewMode::Depth)
     {

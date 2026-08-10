@@ -135,14 +135,15 @@ float process_attenuation(vec3 frag_position)
 float calculate_translucency(vec3 view_direction, vec3 light_direction, float scatter_power)
 {
     float back_scatter = max(dot(-view_direction, light_direction), 0.0);
-    return pow(back_scatter, scatter_power);
+    float front_scatter = max(dot(view_direction, light_direction), 0.0);
+    return pow(back_scatter + front_scatter, scatter_power);
 }
 
 vec3 process_particle_light(vec3 frag_position, vec3 view_direction, float scatter_power)
 {
     vec3 light_direction;
     float attenuation = 1.0;
-    float spot_intensity = 1.0;
+    float light_intensity = 1.0;
 
     if (light_data.type == LIGHT_TYPE_DIRECTIONAL)
     {
@@ -160,7 +161,7 @@ vec3 process_particle_light(vec3 frag_position, vec3 view_direction, float scatt
             float cut_off = light_data.position.a;
             float outer_cut_off  = light_data.direction.a;
             float epsilon = cut_off - outer_cut_off;
-            spot_intensity = clamp((theta - outer_cut_off) / max(epsilon, 0.001), 0.0, 1.0);
+            light_intensity = clamp((theta - outer_cut_off) / max(epsilon, 0.001), 0.0, 1.0);
         }
     }
 
@@ -169,5 +170,5 @@ vec3 process_particle_light(vec3 frag_position, vec3 view_direction, float scatt
     vec3 ambient = light_data.ambient.rgb;
     vec3 scattered = light_data.diffuse.rgb * translucency;
 
-    return (ambient + scattered) * attenuation * spot_intensity * light_data.diffuse.a;
+    return (ambient + scattered) * attenuation * light_intensity * light_data.diffuse.a;
 }

@@ -141,6 +141,10 @@ void ResourceManager::initialize_shaders()
         shader_stage_map.emplace(GL_FRAGMENT_SHADER, shaders_to_match["debug_view"].c_str());
         add_shader("debug_view", new Shader(shader_stage_map, "debug_view"));
 
+        shader_stage_map.emplace(GL_VERTEX_SHADER, shaders_to_match["quad"].c_str());
+        shader_stage_map.emplace(GL_FRAGMENT_SHADER, shaders_to_match["wboit_composite"].c_str());
+        add_shader("wboit_composite", new Shader(shader_stage_map, "wboit_composite"));
+
         shader_stage_map.clear();
     }
 
