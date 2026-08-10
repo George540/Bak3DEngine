@@ -107,9 +107,10 @@ public:
     GLuint get_width() const { return m_width; }
     GLuint get_height() const { return m_height; }
     float get_aspect_ratio() const;
-    GLuint get_render_buffer() const { return m_texture_buffer; }
+    GLuint get_color_texture() const { return m_color_texture; }
     GLuint get_buffer() const { return m_rbo; }
-    GLuint get_depth_texture() const { return m_depth_texture_id; }
+    GLuint get_depth_texture() const { return m_depth_texture; }
+    bool is_using_depth_texture() const { return m_use_depth_texture && m_depth_texture > 0; }
 
 protected:
     virtual void create_attachments();
@@ -119,9 +120,9 @@ protected:
 
     GLuint m_width;
     GLuint m_height;
-    GLuint m_texture_buffer;
+    GLuint m_color_texture;
     GLuint m_rbo;
-    GLuint m_depth_texture_id = 0;
+    GLuint m_depth_texture = 0;
     GLenum m_attachment_type;
     bool m_use_depth_texture = false;
     std::string m_debug_name;

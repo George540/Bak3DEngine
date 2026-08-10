@@ -25,6 +25,7 @@ THE SOFTWARE.
 #include "post_processor.h"
 
 #include "post_process_pass.h"
+#include "renderer.h"
 #include "vertex_array.h"
 #include "Asset/resource_manager.h"
 #include "Core/global_settings.h"
@@ -41,18 +42,12 @@ namespace
     FrameBuffer* m_last_written_fbo;
 
     vector<unique_ptr<PostProcessPass>> m_passes;
-
-    VertexArray* m_vao;
-    VertexBuffer* m_vbo;
-    ElementBuffer* m_ebo;
 }
 
 void PostProcessor::initialize()
 {
     m_fbo_a = make_unique<FrameBuffer>(0, nullptr, EventManager::get_window_width(), EventManager::get_window_height());
     m_fbo_b = make_unique<FrameBuffer>(0, nullptr, EventManager::get_window_width(), EventManager::get_window_height());
-
-    create_quad();
 
     // Register passes in execution order
     m_passes.push_back(make_unique<PostProcessPass_KernelEffect>(KernelEffectType::Sharpen));
@@ -72,8 +67,6 @@ void PostProcessor::shutdown()
     m_fbo_a.reset();
     m_fbo_b.reset();
     m_last_written_fbo = nullptr;
-
-    destroy_quad();
 }
 
 void PostProcessor::process_frame(const FrameBuffer& resolved_fbo)
@@ -98,12 +91,12 @@ void PostProcessor::process_frame(const FrameBuffer& resolved_fbo)
         shader->use();
 
         glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, static_cast<int>(ping->get_render_buffer()));
+        glBindTexture(GL_TEXTURE_2D, static_cast<int>(ping->get_color_texture()));
         shader->set_int("screenTexture", 0);
 
         pass->process(); // let the pass upload its own uniforms
 
-        draw_quad();
+        Renderer::draw_quad();
 
         shader->unuse();
         pong->unbind();
@@ -126,32 +119,4 @@ void PostProcessor::resize(GLuint width, GLuint height)
 {
     m_fbo_a->resize(width, height);
     m_fbo_b->resize(width, height);
-}
-
-void PostProcessor::create_quad()
-{
-    m_vao = new VertexArray();
-    m_vao->bind();
-
-    m_vbo = new VertexBuffer(static_cast<GLsizei>(QUAD_VERTICES.size()) * VEC4_SIZE, QUAD_VERTICES.data());
-    m_ebo = new ElementBuffer(static_cast<GLsizei>(QUAD_INDICES.size()) * UINT_SIZE, QUAD_INDICES.data());
-
-    m_vao->set_attrib_pointer(0, 4, GL_FLOAT, GL_FALSE, VEC4_SIZE, nullptr);
-    m_vao->set_attrib_pointer(1, 2, GL_FLOAT, GL_FALSE, VEC4_SIZE, reinterpret_cast<void*>(2 * sizeof(float)));
-
-    m_vao->unbind();
-}
-
-void PostProcessor::draw_quad()
-{
-    m_vao->bind();
-    glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(QUAD_INDICES.size()), GL_UNSIGNED_INT, nullptr);
-    m_vao->unbind();
-}
-
-void PostProcessor::destroy_quad()
-{
-    delete m_ebo;
-    delete m_vbo;
-    delete m_vao;
 }

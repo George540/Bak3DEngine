@@ -129,15 +129,15 @@ void ResourceManager::initialize_shaders()
     if (!shaders_to_match.empty())
     {
         ShaderStageMap shader_stage_map;
-        shader_stage_map.emplace(GL_VERTEX_SHADER, shaders_to_match["post_processing_quad"].c_str());
+        shader_stage_map.emplace(GL_VERTEX_SHADER, shaders_to_match["quad"].c_str());
         shader_stage_map.emplace(GL_FRAGMENT_SHADER, shaders_to_match["color_grading"].c_str());
         add_shader("color_grading", new Shader(shader_stage_map, "color_grading"));
 
-        shader_stage_map.emplace(GL_VERTEX_SHADER, shaders_to_match["post_processing_quad"].c_str());
+        shader_stage_map.emplace(GL_VERTEX_SHADER, shaders_to_match["quad"].c_str());
         shader_stage_map.emplace(GL_FRAGMENT_SHADER, shaders_to_match["kernel_effect"].c_str());
         add_shader("kernel_effect", new Shader(shader_stage_map, "kernel_effect"));
 
-        shader_stage_map.emplace(GL_VERTEX_SHADER, shaders_to_match["post_processing_quad"].c_str());
+        shader_stage_map.emplace(GL_VERTEX_SHADER, shaders_to_match["quad"].c_str());
         shader_stage_map.emplace(GL_FRAGMENT_SHADER, shaders_to_match["debug_view"].c_str());
         add_shader("debug_view", new Shader(shader_stage_map, "debug_view"));
 

@@ -41,8 +41,4 @@ public:
     static FrameBuffer* get_final_frame_buffer();
     
     static void resize(GLuint width, GLuint height);
-private:
-    static void create_quad();
-    static void draw_quad();
-    static void destroy_quad();
 };

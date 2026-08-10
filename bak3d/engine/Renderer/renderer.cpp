@@ -39,6 +39,7 @@ THE SOFTWARE.
 #include "post_processor.h"
 #include "renderer_pass.h"
 #include "Scene/scene.h"
+#include "Scene/Objects/quad.h"
 
 using namespace std;
 
@@ -56,6 +57,8 @@ constexpr bool IS_OPENGL_DEBUG_VERBOSE = false;
 namespace
 {
 	PagesData m_pages_data = PagesData();
+
+	Quad* m_quad = nullptr;
 }
 
 void Renderer::initialize()
@@ -116,11 +119,18 @@ void Renderer::initialize()
 
 void Renderer::begin_frame()
 {
+	m_pages_data.debug_mode = GlobalSettings::get_global_setting_value<int>(GlobalSettingOption::ViewSelection);
+
 	r_debug_view_ubo->bind();
 	r_debug_view_ubo->bind_buffer_sub_data(&m_pages_data, PAGES_DATA_SIZE, 0);
 	r_debug_view_ubo->unbind();
+}
 
-	if (GlobalSettings::get_global_setting_value<bool>(GlobalSettingOption::AA_MSAA_Enabled))
+void Renderer::draw_frame()
+{
+	const bool msaa_enabled = GlobalSettings::get_global_setting_value<bool>(GlobalSettingOption::AA_MSAA_Enabled);
+
+	if (msaa_enabled)
 	{
 		if (const int samples_setting = GlobalSettings::get_global_setting_value<int>(GlobalSettingOption::AA_MSAA_Samples);
 			r_msaa_fbo->get_samples() != samples_setting)
@@ -136,33 +146,21 @@ void Renderer::begin_frame()
 
 	const auto background_color = GlobalSettings::get_global_setting_value<glm::vec4>(GlobalSettingOption::BackgroundColor);
 	glClearColor(background_color.r, background_color.g, background_color.b, background_color.a);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_CULL_FACE);
 	glCullFace(GL_BACK);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-}
 
-void Renderer::draw_frame()
-{
-	const bool show_depth_debug = GlobalSettings::get_global_setting_value<int>(GlobalSettingOption::ViewSelection) == 1;
-	if (show_depth_debug)
-	{
-		r_dbo->bind();
-		glClear(GL_DEPTH_BUFFER_BIT);
-		RendererPasses::render_pass_base_geometry();
-		r_dbo->unbind();
-		RendererPasses::render_pass_debug_view();
-
-		// Disable Post Processing when depth testing view is enabled
-		if (GlobalSettings::get_global_setting_value<bool>(GlobalSettingOption::PostProcessing_Enabled))
-		{
-			GlobalSettings::set_global_setting<bool>(GlobalSettingOption::PostProcessing_Enabled, false);
-		}
-	}
-	else
+	const auto view_mode = static_cast<DebugViewMode>(GlobalSettings::get_global_setting_value<int>(GlobalSettingOption::ViewSelection));
+	const bool show_depth_debug = view_mode == DebugViewMode::Depth;
+	
+	if (!show_depth_debug)
 	{
 		RendererPasses::render_pass_debug_geometry();
-		RendererPasses::render_pass_base_geometry();
+	}
+	RendererPasses::render_pass_base_geometry();
+	if (!show_depth_debug)
+	{
 		RendererPasses::render_pass_lighting();
 	}
 
@@ -170,10 +168,9 @@ void Renderer::draw_frame()
 	glDisable(GL_DEPTH_TEST);
 	glDisable(GL_CULL_FACE);
 
-	// Back to default framebuffer
-	if (GlobalSettings::get_global_setting_value<bool>(GlobalSettingOption::AA_MSAA_Enabled))
+	DebugScopeGroup scope("MSAA Resolve (Color + Depth/Stencil)");
+	if (msaa_enabled)
 	{
-		DebugScopeGroup scope("MSAA Resolve (Color + Depth/Stencil)");
 		r_msaa_fbo->resolve_to(*r_fbo);
 		r_msaa_fbo->unbind();
 	}
@@ -182,7 +179,11 @@ void Renderer::draw_frame()
 		r_fbo->unbind();
 	}
 
-	if (!show_depth_debug)
+	if (view_mode != DebugViewMode::Default)
+	{
+		RendererPasses::render_pass_debug_view();
+	}
+	else
 	{
 		RendererPasses::render_pass_post_processing();
 	}
@@ -191,6 +192,14 @@ void Renderer::draw_frame()
 void Renderer::end_frame()
 {
 
+}
+
+void Renderer::draw_quad()
+{
+	if (m_quad)
+	{
+		m_quad->draw();
+	}
 }
 
 void Renderer::shutdown()
@@ -236,11 +245,13 @@ void Renderer::initialize_buffers()
 
 	r_dbo = std::make_unique<FrameBuffer>(
 		0, nullptr, EventManager::get_window_width(), EventManager::get_window_height(),
-		GL_DEPTH_ATTACHMENT, GL_NONE, /*use_depth_texture=*/true, "Depth_Buffer");
+		GL_COLOR_ATTACHMENT0, GL_NONE, /*use_depth_texture=*/false, "DebugView_Output");
 
 	// Uniform Buffers
 	// @TODO: Replace with struct payload instead of manual size
 	r_debug_view_ubo = make_unique<UniformBuffer>(PAGES_DATA_SIZE, nullptr, 2, GL_DYNAMIC_DRAW);
+
+	m_quad = new Quad();
 }
 
 void Renderer::query_gpu_limitations()

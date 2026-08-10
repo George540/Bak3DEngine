@@ -37,12 +37,16 @@ void Viewport::update()
     }
 
     const bool post_processing_enabled = GlobalSettings::get_global_setting_value<bool>(GlobalSettingOption::PostProcessing_Enabled);
-    const int debug_view = GlobalSettings::get_global_setting_value<int>(GlobalSettingOption::ViewSelection);
+    const auto view_mode = static_cast<DebugViewMode>(GlobalSettings::get_global_setting_value<int>(GlobalSettingOption::ViewSelection));
 
-    FrameBuffer* frame_buffer_main = post_processing_enabled ? PostProcessor::get_final_frame_buffer() : Renderer::get_frame_buffer();
-    if (debug_view == 1)
+    const FrameBuffer* frame_buffer_main =
+        post_processing_enabled
+        ? PostProcessor::get_final_frame_buffer()
+        : Renderer::get_frame_buffer();
+
+    if (view_mode == DebugViewMode::Depth)
     {
-        frame_buffer_main = Renderer::get_depth_buffer();
+        frame_buffer_main = Renderer::get_debug_view_buffer();
     }
 
     const float fb_aspect = frame_buffer_main->get_aspect_ratio();
@@ -94,7 +98,7 @@ void Viewport::update()
     EventManager::is_dragging_enabled = drag_started_in_viewport && !is_window_resizing;
     EventManager::is_scrolling_enabled = ImGui::IsWindowHovered();
 
-    void* viewport_texture = reinterpret_cast<void*>(static_cast<intptr_t>(frame_buffer_main->get_render_buffer()));
+    void* viewport_texture = reinterpret_cast<void*>(static_cast<intptr_t>(frame_buffer_main->get_color_texture()));
     ImGui::Image(viewport_texture, viewport_panel_size, uv0, uv1);
 
     previous_viewport_size = viewport_panel_size;

@@ -50,10 +50,12 @@ public:
 	static void draw_frame();
 	static void end_frame();
 
+	static void draw_quad();
+
 	static GLFWwindow* get_window() { return r_window; }
 	static MultisampleFrameBuffer* get_msaa_frame_buffer() { return r_msaa_fbo.get(); }
 	static FrameBuffer* get_frame_buffer() { return r_fbo.get(); }
-	static FrameBuffer* get_depth_buffer() { return r_dbo.get(); }
+	static FrameBuffer* get_debug_view_buffer() { return r_dbo.get(); }
 
 	static PagesData get_pages_data();
 	static void set_pages_data(PagesData pages_data);

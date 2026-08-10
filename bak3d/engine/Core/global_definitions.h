@@ -43,21 +43,29 @@ THE SOFTWARE.
  */
 
 constexpr static std::string_view B3D_LOG_FILE = "B3D_Logs.log";
-constexpr static int MAX_LOG_ENTRIES = 64;
+constexpr static int MAX_LOG_ENTRIES = 128;
 constexpr static float POST_PROCESS_COLORING_SLIDER_CLAMP = 10.0f;
 
 /*
  * Uniform Data struct for debug views and other page-related data.
- * Note: These are NOT post processing data.
+ * Note: These are NOT post-processing data.
  */
 struct PagesData
 {
-    glm::vec4 depth_settings = glm::vec4(0.1f, 10.0f, 0.0f, 0.0f);
+    glm::vec4 depth_settings = glm::vec4(0.1f, 1.0f, 0.0f, 0.0f);
     int debug_mode = 1;
     float _padding[3]; 
 };
 static constexpr GLsizei PAGES_DATA_SIZE = sizeof(PagesData);
 // @TODO: Make a sizeof constexpr for every custom sturct that is used as a size
+
+enum class DebugViewMode : int32_t
+{
+    Default = 0,
+    Depth = 1,
+    AO = 2,
+    Max
+};
 
 using GlobalSettingValueType = std::variant<
     bool,

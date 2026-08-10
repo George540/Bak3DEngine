@@ -3,6 +3,10 @@
 #define LIGHT_TYPE_SPOT        2
 #define LIGHT_TYPE_AREA        3
 
+#define DEBUG_VIEW_DEFAULT 0
+#define DEBUG_VIEW_DEPTH   1
+#define DEBUG_VIEW_AO      2
+
 layout (std140, binding = 0) uniform Camera
 {
     mat4 projection;

@@ -1,15 +1,16 @@
 ﻿#version 460
 
-in vec2 tex_coords;
+in vec2 TextCoords;
 
 out vec4 frag_color;
 
 #include "Common_Global.glsl"
 
 uniform sampler2D depth_texture;
+uniform sampler2D ao_texture;
 // Add more textures for different views
 
-float linearlize_depth(float depth)
+float linearize_depth(float depth)
 {
     float n = page_data.depth_settings.r;
     float f = page_data.depth_settings.g;
@@ -20,22 +21,24 @@ float linearlize_depth(float depth)
 
 void main()
 {
-    switch(u_DebugMode)
+    switch (page_data.debug_mode)
     {
-        case 0: // Standard Color View
-            // NOTE: Ideally it's best to not make another FBO pass if it's going to look the same as before,
-            //       so this might not even happen. It's mostly to align the selection indices with the switch case.
-            frag_color = texture(color_texture, tex_coords);
-            break;
-
-        case 1: // Linear Depth View
-            float raw_depth = texture(depth_texture, tex_coords).r;
-            float linear_depth = linearlize_depth(raw_depth);
+        case DEBUG_VIEW_DEPTH:
+        {
+            float raw_depth = texture(depth_texture, TextCoords).r;
+            float linear_depth = linearize_depth(raw_depth);
             float normalized_depth = linear_depth / page_data.depth_settings.g;
             frag_color = vec4(vec3(normalized_depth), 1.0);
             break;
-
+        }
+        // case DEBUG_VIEW_AO:
+        // {
+        //     float ao = texture(ao_texture, TextCoords).r;
+        //     frag_color = vec4(vec3(ao), 1.0);
+        //     break;
+        // }
         default:
-            frag_color = texture(color_texture, tex_coords);
+            // Unhandled mode. Shouldn't be reached. Easy to spot with magenta color
+            frag_color = vec4(1.0, 0.0, 1.0, 1.0);
     }
 }
