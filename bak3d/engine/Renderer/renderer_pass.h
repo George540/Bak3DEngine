@@ -27,10 +27,11 @@ THE SOFTWARE.
 class RendererPasses
 {
 public:
-    static void render_pass_debug_geometry(); // fake debug pass, still geometry
-    static void render_pass_base_geometry();
-    static void render_pass_lighting(); // fake lighting pass, still geometry
-    static void render_pass_transparency(); // WBOIT pass
-    static void render_pass_post_processing();
-    static void render_pass_debug_view();
+    static void render_pass_debug_geometry();   // axis / grid gizmos (skipped in debug view)
+    static void render_pass_opaque_geometry();  // depth-writing scene geometry (model)
+    static void render_pass_sprites(); // basic alpha-blended sprite ParticleSystem (skipped in debug view)
+    static void render_pass_editor_overlays();         // light gizmo sprite - always drawn last, on top
+    static void render_pass_transparency();     // WBOIT accumulate + composite (skipped in debug view)
+    static void render_pass_post_processing();  // skipped in debug view
+    static void render_pass_debug_view();       // depth (and future AO/etc) visualization
 };

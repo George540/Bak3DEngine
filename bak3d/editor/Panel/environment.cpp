@@ -167,6 +167,7 @@ void Environment::draw_debug_settings()
         GlobalSettings::set_global_setting<int>(GlobalSettingOption::ViewSelection, view_selection);
 
         PagesData pages_data = Renderer::get_pages_data();
+        pages_data.debug_mode = view_selection;
 
         // Depth Test Near and Far
         if (view_selection == 1)

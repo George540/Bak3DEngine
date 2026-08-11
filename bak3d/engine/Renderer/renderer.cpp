@@ -129,53 +129,57 @@ void Renderer::begin_frame()
 void Renderer::draw_frame()
 {
     const bool msaa_enabled = GlobalSettings::get_global_setting_value<bool>(GlobalSettingOption::AA_MSAA_Enabled);
+    const auto view_mode = static_cast<DebugViewMode>(GlobalSettings::get_global_setting_value<int>(GlobalSettingOption::ViewSelection));
+    const bool debug_view_active = view_mode != DebugViewMode::Default;
 
     if (msaa_enabled)
     {
-        if (const int samples_setting =GlobalSettings::get_global_setting_value<int>(GlobalSettingOption::AA_MSAA_Samples);
-        	r_msaa_fbo->get_samples() != samples_setting)
+        if (const int samples_setting = GlobalSettings::get_global_setting_value<int>(GlobalSettingOption::AA_MSAA_Samples);
+            r_msaa_fbo->get_samples() != samples_setting)
         {
             r_msaa_fbo->set_samples(samples_setting);
         }
-
-        r_msaa_fbo->bind();
-    	r_msaa_fbo->clear();
-    }
-    else
-    {
-        r_main_fbo->bind();
     }
 
     // ------------------------------------------------------------
-    // Initial state
+    // Bind opaque target (MSAA or single-sample) and clear
     // ------------------------------------------------------------
+    FrameBuffer* opaque_target = msaa_enabled
+        ? static_cast<FrameBuffer*>(r_msaa_fbo.get())
+        : r_main_fbo.get();
+
+    opaque_target->bind();
+
     const auto background_color = GlobalSettings::get_global_setting_value<glm::vec4>(GlobalSettingOption::BackgroundColor);
-
     glClearColor(background_color.r, background_color.g, background_color.b, background_color.a);
-
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
     glEnable(GL_DEPTH_TEST);
-	glDepthFunc(GL_LESS);
+    glDepthFunc(GL_LESS);
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
 
-    //const auto view_mode = static_cast<DebugViewMode>(GlobalSettings::get_global_setting_value<int>(GlobalSettingOption::ViewSelection));
-    //const bool show_depth_debug = view_mode == DebugViewMode::Depth;
+    // ------------------------------------------------------------
+    // Opaque geometry. In debug view, only depth-writing scene geometry
+    // renders, gizmos and sprites don't get to influence the depth buffer.
+    // ------------------------------------------------------------
+    if (!debug_view_active)
+    {
+        RendererPasses::render_pass_debug_geometry();
+    }
+
+    RendererPasses::render_pass_opaque_geometry();
+
+    if (!debug_view_active)
+    {
+        RendererPasses::render_pass_sprites();
+    }
 
     // ------------------------------------------------------------
-    // Opaque geometry
-    // ------------------------------------------------------------
-	RendererPasses::render_pass_debug_geometry();
-    RendererPasses::render_pass_base_geometry();
-
-    // ------------------------------------------------------------
-    // Lighting Pass (Geometry)
-    // ------------------------------------------------------------
-	RendererPasses::render_pass_lighting();
-
-    // ------------------------------------------------------------
-    // Resolve MSAA
+    // The ONLY resolve/blit in the whole pipeline. Every other FBO
+    // (WBOIT, debug-view, post-process ping-pong) shares r_main_fbo's
+    // depth-stencil texture object directly, so this single blit is all
+    // that's needed for depth to be correct everywhere downstream.
     // ------------------------------------------------------------
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_CULL_FACE);
@@ -194,18 +198,33 @@ void Renderer::draw_frame()
         }
     }
 
-    // ------------------------------------------------------------
-    // Debug view / transparency
-    // ------------------------------------------------------------
-    /*if (show_depth_debug)
+    if (debug_view_active)
     {
         RendererPasses::render_pass_debug_view();
-    	return;
-    }*/
+        return;
+    }
 
-	// WBOIT now composites onto the already-resolved main framebuffer.
-	//RendererPasses::render_pass_transparency();
-	RendererPasses::render_pass_post_processing();
+	r_main_fbo->bind();
+
+    // ------------------------------------------------------------
+    // Transparency (WBOIT) composites directly onto r_main_fbo
+    // ------------------------------------------------------------
+    RendererPasses::render_pass_transparency();
+
+    // ------------------------------------------------------------
+    // Post processing (ping-pongs off r_main_fbo's color texture)
+    // ------------------------------------------------------------
+    RendererPasses::render_pass_post_processing();
+
+	// ------------------------------------------------------------
+	// Editor Overlays - always drawn last, on top of transparency
+	// ------------------------------------------------------------
+	RendererPasses::render_pass_editor_overlays();
+
+    // Guarantee we end the frame on the default framebuffer, regardless of
+    // which optional passes above ran - ImGui renders next and needs the
+    // real backbuffer bound, not r_main_fbo.
+    r_main_fbo->unbind();
 }
 
 void Renderer::end_frame()

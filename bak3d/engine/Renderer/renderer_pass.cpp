@@ -51,45 +51,55 @@ void RendererPasses::render_pass_debug_geometry()
     glDepthFunc(GL_LESS);
 }
 
-void RendererPasses::render_pass_base_geometry()
+void RendererPasses::render_pass_opaque_geometry()
 {
-    DebugScopeGroup scope("Base Geometry Pass");
+    DebugScopeGroup scope("Opaque Geometry Pass");
 
     if (const Model* model = Scene::instance->get_model())
     {
         model->draw();
     }
-    if (const ParticleSystem* particle_system = Scene::instance->get_particle_system())
-    {
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        glDepthMask(GL_FALSE);
-        glDisable(GL_CULL_FACE);
-
-        particle_system->draw();
-
-        glDepthMask(GL_TRUE);
-        glDisable(GL_BLEND);
-        glEnable(GL_CULL_FACE);
-    }
 }
 
-void RendererPasses::render_pass_lighting()
+void RendererPasses::render_pass_sprites()
 {
-    DebugScopeGroup scope("Lighting (Geometry) Pass");
+    DebugScopeGroup scope("Sprites Pass");
+
+    const ParticleSystem* particle_system = Scene::instance->get_particle_system();
+    if (!particle_system)
+    {
+        return;
+    }
 
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glDepthMask(GL_FALSE);
+    glDisable(GL_CULL_FACE);
+
+    particle_system->draw();
+
+    glDepthMask(GL_TRUE);
+    glDisable(GL_BLEND);
+    glEnable(GL_CULL_FACE);
+}
+
+void RendererPasses::render_pass_editor_overlays()
+{
+    DebugScopeGroup scope("Editor Overlays pass");
+
+    // Editor-only visualization icon, drawn last so it's never covered by
+    // transparency, and deliberately left with depth test disabled since
+    // everything after this (post-processing) is screen-space only.
     glDisable(GL_DEPTH_TEST);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     if (GlobalSettings::get_global_setting_value<bool>(GlobalSettingOption::Light_Enabled))
     {
         Scene::instance->get_active_light()->draw();
     }
 
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glDisable(GL_BLEND);
-    glEnable(GL_DEPTH_TEST);
 }
 
 void RendererPasses::render_pass_transparency()
@@ -110,28 +120,23 @@ void RendererPasses::render_pass_transparency()
         return;
     }
 
-    // Copy the resolved opaque depth into the WBOIT framebuffer.
-    // This allows transparent particles to be depth-tested against the
-    // already-rendered opaque scene without writing their own depth.
-    {
-        DebugScopeGroup depth_scope("WBOIT Depth Copy");
+    // wboit_fbo shares r_main_fbo's depth-stencil TEXTURE object directly.
+    // No copy/resolve needed for opaque occlusion to already be visible here.
 
-        //resolved_base_fbo->resolve_to(*wboit_fbo);
-    }
-    
-    // Accumulate: particles write into accum + revealage targets
+    // Accumulate: particles write into accum + revealage, depth-tested
+    // against (but not writing) the already-resolved opaque depth.
     {
         DebugScopeGroup accumulate_scope("WBOIT Accumulate");
 
-        //wboit_fbo->bind();
-        //wboit_fbo->clear();
+        wboit_fbo->bind();
+        wboit_fbo->clear();
 
         glEnable(GL_DEPTH_TEST);
         glDepthFunc(GL_LESS);
         glDepthMask(GL_FALSE);
         glEnable(GL_BLEND);
-        
-        glBlendFunci(0, GL_ONE, GL_ONE); // accumulation target: additive
+
+        glBlendFunci(0, GL_ONE, GL_ONE);                  // accumulation target: additive
         glBlendFunci(1, GL_ZERO, GL_ONE_MINUS_SRC_COLOR); // revealage target: product of (1 - alpha)
         glBlendEquationi(0, GL_FUNC_ADD);
         glBlendEquationi(1, GL_FUNC_ADD);
@@ -140,14 +145,15 @@ void RendererPasses::render_pass_transparency()
 
         glDisable(GL_BLEND);
         glDepthMask(GL_TRUE);
-        glDepthFunc(GL_LESS);
 
-        //wboit_fbo->unbind();
+        wboit_fbo->unbind();
     }
 
-    // Composite: merge accumulate/revealage back onto the resolved opaque frame
+    // Composite: blend accum/revealage onto the resolved opaque frame via a
+    // full-screen quad (shader read, not a blit). Deliberately does NOT
+    // unbind resolved_base_fbo - render_pass_editor_overlays() draws into it next.
     {
-        /*DebugScopeGroup composite_scope("WBOIT Composite");
+        DebugScopeGroup composite_scope("WBOIT Composite");
 
         const ShaderRef composite_shader = ResourceManager::get_shader("wboit_composite");
         if (!composite_shader || !composite_shader->is_shader_compiled())
@@ -158,17 +164,16 @@ void RendererPasses::render_pass_transparency()
         resolved_base_fbo->bind();
 
         glDisable(GL_DEPTH_TEST);
-
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         glBlendEquation(GL_FUNC_ADD);
 
         composite_shader->use();
 
-        wboit_fbo->bind_color_attachment(0);
+        wboit_fbo->bind_color_attachment(0); // accumulation_texture -> unit 0
         composite_shader->set_int("accumulation_texture", 0);
 
-        wboit_fbo->bind_color_attachment(1);
+        wboit_fbo->bind_color_attachment(1); // revealage_texture -> unit 1
         composite_shader->set_int("revealage_texture", 1);
 
         Renderer::draw_quad();
@@ -176,8 +181,6 @@ void RendererPasses::render_pass_transparency()
         composite_shader->unuse();
 
         glDisable(GL_BLEND);
-
-        resolved_base_fbo->unbind();*/
     }
 }
 

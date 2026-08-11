@@ -185,10 +185,11 @@ void FrameBuffer::resolve_to(const FrameBuffer& fbo_target) const
         0, 0,
         fbo_target.get_width(),
         fbo_target.get_height(),
-        GL_COLOR_BUFFER_BIT,
+        GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT,
         GL_NEAREST);
 
     glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
+    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
 }
 
 void FrameBuffer::clear() const
@@ -388,11 +389,16 @@ void FrameBuffer::destroy_framebuffer()
         glDeleteRenderbuffers(1, &m_rbo);
         m_rbo = 0;
     }
-    if (m_depth_texture != 0)
+
+    // Only delete the depth-stencil texture if THIS framebuffer owns it.
+    // Non-owning framebuffers merely reference r_main_fbo's depth texture.
+    // Deleting it here would silently invalidate every framebuffer sharing that same GL resource,
+    // where no other framebuffer gets notified of it.
+    if (m_owns_depth_texture && m_depth_texture != 0)
     {
         glDeleteTextures(1, &m_depth_texture);
+        m_depth_texture = 0;
     }
-    m_depth_texture = 0;
 }
 
 MultisampleFrameBuffer::MultisampleFrameBuffer(
