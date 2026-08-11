@@ -100,6 +100,7 @@ void RendererPasses::render_pass_editor_overlays()
     }
 
     glDisable(GL_BLEND);
+    glEnable(GL_DEPTH_TEST);
 }
 
 void RendererPasses::render_pass_transparency()
@@ -181,6 +182,10 @@ void RendererPasses::render_pass_transparency()
         composite_shader->unuse();
 
         glDisable(GL_BLEND);
+        glDisable(GL_DEPTH_TEST);
+        glDepthMask(GL_TRUE);
+
+        // Unbind in the next pass(es)
     }
 }
 
@@ -190,7 +195,7 @@ void RendererPasses::render_pass_post_processing()
 
     if (GlobalSettings::get_global_setting_value<bool>(GlobalSettingOption::PostProcessing_Enabled))
     {
-        PostProcessor::process_frame(*Renderer::get_main_frame_buffer());
+        PostProcessor::process_frame(Renderer::get_main_frame_buffer());
     }
 }
 

@@ -109,7 +109,7 @@ public:
     void unbind() const override;
 
     void resize(GLuint new_width, GLuint new_height, GLuint new_shared_depth_texture = 0);
-    void resolve_to(const FrameBuffer& fbo_target) const;
+    void resolve_to(const FrameBuffer* fbo_target) const;
     void clear() const;
 
     void bind_color_attachment(GLuint index = 0) const;

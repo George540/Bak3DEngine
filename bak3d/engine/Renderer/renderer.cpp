@@ -144,8 +144,8 @@ void Renderer::draw_frame()
     // ------------------------------------------------------------
     // Bind opaque target (MSAA or single-sample) and clear
     // ------------------------------------------------------------
-    FrameBuffer* opaque_target = msaa_enabled
-        ? static_cast<FrameBuffer*>(r_msaa_fbo.get())
+    const FrameBuffer* opaque_target = msaa_enabled
+        ? dynamic_cast<FrameBuffer*>(r_msaa_fbo.get())
         : r_main_fbo.get();
 
     opaque_target->bind();
@@ -189,7 +189,7 @@ void Renderer::draw_frame()
 
         if (msaa_enabled)
         {
-            r_msaa_fbo->resolve_to(*r_main_fbo);
+            r_msaa_fbo->resolve_to(r_main_fbo.get());
             r_msaa_fbo->unbind();
         }
         else
@@ -217,7 +217,7 @@ void Renderer::draw_frame()
     RendererPasses::render_pass_post_processing();
 
 	// ------------------------------------------------------------
-	// Editor Overlays - always drawn last, on top of transparency
+	// Editor Overlays: always drawn last, on top of transparency
 	// ------------------------------------------------------------
 	RendererPasses::render_pass_editor_overlays();
 

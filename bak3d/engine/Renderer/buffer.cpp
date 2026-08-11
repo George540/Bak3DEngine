@@ -168,12 +168,12 @@ void FrameBuffer::resize(const GLuint new_width, const GLuint new_height, const 
     }
 }
 
-void FrameBuffer::resolve_to(const FrameBuffer& fbo_target) const
+void FrameBuffer::resolve_to(const FrameBuffer* fbo_target) const
 {
-    assert(m_width == fbo_target.get_width() && m_height == fbo_target.get_height());
+    assert(m_width == fbo_target->get_width() && m_height == fbo_target->get_height());
 
     glBindFramebuffer(GL_READ_FRAMEBUFFER, m_ID);
-    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fbo_target.get_id());
+    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fbo_target->get_id());
 
     // Explicitly resolve the scene color attachment.
     glReadBuffer(GL_COLOR_ATTACHMENT0);
@@ -183,8 +183,8 @@ void FrameBuffer::resolve_to(const FrameBuffer& fbo_target) const
         0, 0,
         m_width, m_height,
         0, 0,
-        fbo_target.get_width(),
-        fbo_target.get_height(),
+        fbo_target->get_width(),
+        fbo_target->get_height(),
         GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT,
         GL_NEAREST);
 

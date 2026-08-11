@@ -36,7 +36,7 @@ public:
     static void initialize();
     static void shutdown();
 
-    static void process_frame(const FrameBuffer& resolved_fbo);
+    static void process_frame(FrameBuffer* resolved_main_fbo);
 
     static FrameBuffer* get_final_frame_buffer();
     

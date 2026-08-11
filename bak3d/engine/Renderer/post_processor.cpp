@@ -70,14 +70,14 @@ void PostProcessor::shutdown()
     m_last_written_fbo = nullptr;
 }
 
-void PostProcessor::process_frame(const FrameBuffer& resolved_fbo)
+void PostProcessor::process_frame(FrameBuffer* resolved_main_fbo)
 {
     // Ping: Read from
     // Pong: Write to
-    FrameBuffer* ping = const_cast<FrameBuffer*>(&resolved_fbo); // first read is the scene
+    FrameBuffer* ping = resolved_main_fbo; // first read is the scene
     FrameBuffer* pong = m_fbo_a.get();
 
-    bool first_write_to_a = true;
+    bool first_write_to_a = false;
 
     for (const auto& pass : m_passes)
     {
@@ -109,6 +109,14 @@ void PostProcessor::process_frame(const FrameBuffer& resolved_fbo)
     }
 
     m_last_written_fbo = ping; // the FBO holding the final result
+
+    // If last framebuffer is not the same as incoming framebuffer
+    // Resolve post process result into it.
+    if (resolved_main_fbo->get_id() != m_last_written_fbo->get_id())
+    {
+        m_last_written_fbo->resolve_to(resolved_main_fbo);
+        m_last_written_fbo->unbind();
+    }
 }
 
 FrameBuffer* PostProcessor::get_final_frame_buffer()

@@ -40,14 +40,9 @@ void Viewport::update()
     const auto view_mode = static_cast<DebugViewMode>(GlobalSettings::get_global_setting_value<int>(GlobalSettingOption::ViewSelection));
 
     const FrameBuffer* frame_buffer_main =
-        post_processing_enabled
-        ? PostProcessor::get_final_frame_buffer()
+        view_mode != DebugViewMode::Default
+        ? Renderer::get_debug_view_buffer()
         : Renderer::get_main_frame_buffer();
-
-    if (view_mode != DebugViewMode::Default)
-    {
-        frame_buffer_main = Renderer::get_debug_view_buffer();
-    }
 
     const float fb_aspect = frame_buffer_main->get_aspect_ratio();
     const float view_aspect = viewport_panel_size.x / viewport_panel_size.y;
