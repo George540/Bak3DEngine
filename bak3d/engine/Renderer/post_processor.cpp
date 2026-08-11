@@ -70,14 +70,19 @@ void PostProcessor::shutdown()
     m_last_written_fbo = nullptr;
 }
 
-void PostProcessor::process_frame(FrameBuffer* resolved_main_fbo)
+void PostProcessor::process_frame()
 {
     // Ping: Read from
     // Pong: Write to
-    FrameBuffer* ping = resolved_main_fbo; // first read is the scene
+    FrameBuffer* main_fbo = Renderer::get_main_frame_buffer();
+    FrameBuffer* ping = main_fbo; // first read is the scene
+
+    // Resolve main buffer to ping-pong buffers, so they start with the same input
+    main_fbo->resolve_to(m_fbo_a.get());
+    main_fbo->resolve_to(m_fbo_b.get());
     FrameBuffer* pong = m_fbo_a.get();
 
-    bool first_write_to_a = false;
+    bool first_write_to_a = true;
 
     for (const auto& pass : m_passes)
     {
@@ -100,7 +105,6 @@ void PostProcessor::process_frame(FrameBuffer* resolved_main_fbo)
         Renderer::draw_quad();
 
         shader->unuse();
-        pong->unbind();
 
         // swap: last output becomes next input
         ping = pong;
@@ -110,18 +114,8 @@ void PostProcessor::process_frame(FrameBuffer* resolved_main_fbo)
 
     m_last_written_fbo = ping; // the FBO holding the final result
 
-    // If last framebuffer is not the same as incoming framebuffer
-    // Resolve post process result into it.
-    if (resolved_main_fbo->get_id() != m_last_written_fbo->get_id())
-    {
-        m_last_written_fbo->resolve_to(resolved_main_fbo);
-        m_last_written_fbo->unbind();
-    }
-}
-
-FrameBuffer* PostProcessor::get_final_frame_buffer()
-{
-    return m_last_written_fbo;
+    m_last_written_fbo->resolve_to(main_fbo);
+    main_fbo->bind();
 }
 
 void PostProcessor::resize(const GLuint width, const GLuint height, const GLuint new_shared_depth_texture)

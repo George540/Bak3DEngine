@@ -24,7 +24,6 @@ THE SOFTWARE.
 
 #pragma once
 
-#include "buffer.h"
 #include "Asset/shader.h"
 
 /*
@@ -36,9 +35,7 @@ public:
     static void initialize();
     static void shutdown();
 
-    static void process_frame(FrameBuffer* resolved_main_fbo);
-
-    static FrameBuffer* get_final_frame_buffer();
+    static void process_frame();
     
     static void resize(GLuint width, GLuint height, GLuint new_shared_depth_texture);
 };

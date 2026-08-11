@@ -108,11 +108,6 @@ void Renderer::initialize()
 	// Somehow, glewInit triggers a glInvalidEnum... Let's ignore it
 	glGetError();
 
-	// Enable depth test
-	glEnable(GL_DEPTH_TEST);
-	glDepthFunc(GL_LESS);
-	B3D_LOG_INFO("Enabling depth test...");
-
 	initialize_buffers();
 	query_gpu_limitations();
 
@@ -155,7 +150,6 @@ void Renderer::draw_frame()
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
     glEnable(GL_DEPTH_TEST);
-    glDepthFunc(GL_LESS);
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
 
@@ -190,11 +184,7 @@ void Renderer::draw_frame()
         if (msaa_enabled)
         {
             r_msaa_fbo->resolve_to(r_main_fbo.get());
-            r_msaa_fbo->unbind();
-        }
-        else
-        {
-            r_main_fbo->unbind();
+        	r_main_fbo->bind();
         }
     }
 

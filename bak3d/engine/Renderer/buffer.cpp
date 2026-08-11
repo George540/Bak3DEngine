@@ -189,7 +189,6 @@ void FrameBuffer::resolve_to(const FrameBuffer* fbo_target) const
         GL_NEAREST);
 
     glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
-    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
 }
 
 void FrameBuffer::clear() const

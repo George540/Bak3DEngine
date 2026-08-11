@@ -36,6 +36,7 @@ void RendererPasses::render_pass_debug_geometry()
     DebugScopeGroup scope("Debug Geometry Pass");
 
     glDepthFunc(GL_ALWAYS);
+    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_FALSE); 
 
     const bool is_grid_rendering = GlobalSettings::get_global_setting_value<bool>(GlobalSettingOption::GridRendering);
     const bool is_axis_rendering = GlobalSettings::get_global_setting_value<bool>(GlobalSettingOption::AxisRendering);
@@ -48,6 +49,7 @@ void RendererPasses::render_pass_debug_geometry()
         Scene::instance->get_object_in_scene(SceneObjectType::Axis)->draw();
     }
 
+    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE); 
     glDepthFunc(GL_LESS);
 }
 
@@ -75,32 +77,14 @@ void RendererPasses::render_pass_sprites()
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glDepthMask(GL_FALSE);
     glDisable(GL_CULL_FACE);
+    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_FALSE); 
 
     particle_system->draw();
 
+    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE); 
     glDepthMask(GL_TRUE);
     glDisable(GL_BLEND);
     glEnable(GL_CULL_FACE);
-}
-
-void RendererPasses::render_pass_editor_overlays()
-{
-    DebugScopeGroup scope("Editor Overlays pass");
-
-    // Editor-only visualization icon, drawn last so it's never covered by
-    // transparency, and deliberately left with depth test disabled since
-    // everything after this (post-processing) is screen-space only.
-    glDisable(GL_DEPTH_TEST);
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-    if (GlobalSettings::get_global_setting_value<bool>(GlobalSettingOption::Light_Enabled))
-    {
-        Scene::instance->get_active_light()->draw();
-    }
-
-    glDisable(GL_BLEND);
-    glEnable(GL_DEPTH_TEST);
 }
 
 void RendererPasses::render_pass_transparency()
@@ -139,8 +123,7 @@ void RendererPasses::render_pass_transparency()
 
         glBlendFunci(0, GL_ONE, GL_ONE);                  // accumulation target: additive
         glBlendFunci(1, GL_ZERO, GL_ONE_MINUS_SRC_COLOR); // revealage target: product of (1 - alpha)
-        glBlendEquationi(0, GL_FUNC_ADD);
-        glBlendEquationi(1, GL_FUNC_ADD);
+        glBlendEquation(GL_FUNC_ADD);
 
         advanced_particles->draw();
 
@@ -182,8 +165,6 @@ void RendererPasses::render_pass_transparency()
         composite_shader->unuse();
 
         glDisable(GL_BLEND);
-        glDisable(GL_DEPTH_TEST);
-        glDepthMask(GL_TRUE);
 
         // Unbind in the next pass(es)
     }
@@ -195,8 +176,27 @@ void RendererPasses::render_pass_post_processing()
 
     if (GlobalSettings::get_global_setting_value<bool>(GlobalSettingOption::PostProcessing_Enabled))
     {
-        PostProcessor::process_frame(Renderer::get_main_frame_buffer());
+        PostProcessor::process_frame();
     }
+}
+
+void RendererPasses::render_pass_editor_overlays()
+{
+    DebugScopeGroup scope("Editor Overlays pass");
+
+    // Editor-only visualization icon, drawn last so it's never covered by
+    // transparency, and deliberately left with depth test disabled since
+    // everything after this (post-processing) is screen-space only.
+    glDisable(GL_DEPTH_TEST);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    if (GlobalSettings::get_global_setting_value<bool>(GlobalSettingOption::Light_Enabled))
+    {
+        Scene::instance->get_active_light()->draw();
+    }
+
+    glDisable(GL_BLEND);
 }
 
 void RendererPasses::render_pass_debug_view()

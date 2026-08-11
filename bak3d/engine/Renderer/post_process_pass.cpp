@@ -63,6 +63,11 @@ void PostProcessPass_ColorGrading::process()
 
 void PostProcessPass_KernelEffect::process()
 {
+    if (!m_is_enabled)
+    {
+        return;
+    }
+
     switch (m_kernel_type)
     {
         case KernelEffectType::Sharpen:
