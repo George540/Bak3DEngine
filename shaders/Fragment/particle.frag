@@ -7,6 +7,8 @@ out vec4 color;
 
 uniform sampler2D sprite;
 
+#include "Common_Global.glsl"
+
 void main()
 {
     vec4 tex_color = texture(sprite, TexCoords);

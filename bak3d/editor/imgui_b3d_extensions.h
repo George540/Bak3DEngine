@@ -128,6 +128,12 @@ public:
                         continue;
 
                     const auto texture_asset = dynamic_cast<Texture2D*>(asset);
+
+                    if (texture_asset->is_editor_texture())
+                    {
+                        continue;
+                    }
+
                     ImTextureID text_id = 0;
                     if (texture_asset)
                     {

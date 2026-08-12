@@ -2,7 +2,7 @@
   "shader": "particle",
   "uniforms": {
     "sprite": { "type": "sampler2D",  "value": "particle_default.png" },
-    "model": { "type": "mat4",  "value": [
+	"model": { "type": "mat4",  "value": [
       1,0,0,0,
       0,1,0,0,
       0,0,1,0,

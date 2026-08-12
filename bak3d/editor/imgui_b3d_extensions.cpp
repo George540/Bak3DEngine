@@ -250,6 +250,7 @@ void ImGuiB3D::AssetTooltip(const Asset* asset)
     {
         ImGui::Text("Resolution: %d x %d", texture->get_width(), texture->get_height());
         ImGui::Text("Channels:   %d", texture->get_nb_color_channels());
+        ImGui::Text("Texture ID: %d", texture->get_texture_id());
     }
     else if (const auto* model = dynamic_cast<const Model*>(asset))
     {
