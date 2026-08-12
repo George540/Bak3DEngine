@@ -189,6 +189,7 @@ void FrameBuffer::resolve_to(const FrameBuffer* fbo_target) const
         GL_NEAREST);
 
     glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
+    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
 }
 
 void FrameBuffer::clear() const
@@ -243,7 +244,7 @@ std::string FrameBuffer::get_color_attachment_label(const size_t index) const
 
 void FrameBuffer::create_attachments()
 {
-    create_texture_2d_attachment(GL_COLOR_ATTACHMENT0, GL_RGBA8, GL_RGB, GL_UNSIGNED_BYTE);
+    create_texture_2d_attachment(GL_COLOR_ATTACHMENT0, GL_RGBA16F, GL_RGBA, GL_UNSIGNED_BYTE);
 
     if (m_use_depth_texture)
     {
@@ -447,7 +448,7 @@ void MultisampleFrameBuffer::create_attachments()
     GLuint texture_id;
     glGenTextures(1, &texture_id);
     glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, texture_id);
-    glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, m_samples, GL_RGBA8, m_width, m_height, GL_TRUE);
+    glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, m_samples, GL_RGBA16F, m_width, m_height, GL_TRUE);
     glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, 0);
     glFramebufferTexture2D(m_target, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D_MULTISAMPLE, texture_id, 0);
     m_color_textures.push_back(texture_id);

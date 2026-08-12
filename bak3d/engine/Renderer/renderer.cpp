@@ -124,6 +124,7 @@ void Renderer::begin_frame()
 void Renderer::draw_frame()
 {
     const bool msaa_enabled = GlobalSettings::get_global_setting_value<bool>(GlobalSettingOption::AA_MSAA_Enabled);
+	const bool post_process_enabled = GlobalSettings::get_global_setting_value<bool>(GlobalSettingOption::PostProcessing_Enabled);
     const auto view_mode = static_cast<DebugViewMode>(GlobalSettings::get_global_setting_value<int>(GlobalSettingOption::ViewSelection));
     const bool debug_view_active = view_mode != DebugViewMode::Default;
 
@@ -157,7 +158,7 @@ void Renderer::draw_frame()
     // Opaque geometry. In debug view, only depth-writing scene geometry
     // renders, gizmos and sprites don't get to influence the depth buffer.
     // ------------------------------------------------------------
-    if (!debug_view_active)
+    if (!debug_view_active || !post_process_enabled)
     {
         RendererPasses::render_pass_debug_geometry();
     }
@@ -204,7 +205,10 @@ void Renderer::draw_frame()
     // ------------------------------------------------------------
     // Post processing (ping-pongs off r_main_fbo's color texture)
     // ------------------------------------------------------------
-    RendererPasses::render_pass_post_processing();
+	if (post_process_enabled)
+	{
+		RendererPasses::render_pass_post_processing();
+	}
 
 	// ------------------------------------------------------------
 	// Editor Overlays: always drawn last, on top of transparency
