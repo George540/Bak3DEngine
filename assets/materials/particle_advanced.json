@@ -1,6 +1,5 @@
 {
   "shader": "particle_advanced",
   "uniforms": {
-	"point_scale": { "type": "float",  "value": 1.0 }
   }
 }

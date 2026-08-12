@@ -124,28 +124,24 @@ void ResourceManager::initialize_shaders()
     }
 
     // If shaders that did not automatically match are found, manually match them with caution!
-    // NOTE: This is used so far to match post process fragment shaders with the post_processing_quad.vert vertex shader.
+    // NOTE: This is used so far to match post process fragment shaders with the quad.vert vertex shader.
     //       See shader files for reference.
     if (!shaders_to_match.empty())
     {
-        ShaderStageMap shader_stage_map;
-        shader_stage_map.emplace(GL_VERTEX_SHADER, shaders_to_match["quad"].c_str());
-        shader_stage_map.emplace(GL_FRAGMENT_SHADER, shaders_to_match["color_grading"].c_str());
-        add_shader("color_grading", new Shader(shader_stage_map, "color_grading"));
+        // Past issues occured when every shader-to-match did not have stages assigned to it.
+        // Create new shader stage map for each shader creation fixes this issue.
+        const auto make_quad_paired_shader = [&](const std::string& fragment_name)
+        {
+            ShaderStageMap map;
+            map.emplace(GL_VERTEX_SHADER, shaders_to_match["quad"]);
+            map.emplace(GL_FRAGMENT_SHADER, shaders_to_match[fragment_name]);
+            add_shader(fragment_name, new Shader(map, fragment_name));
+        };
 
-        shader_stage_map.emplace(GL_VERTEX_SHADER, shaders_to_match["quad"].c_str());
-        shader_stage_map.emplace(GL_FRAGMENT_SHADER, shaders_to_match["kernel_effect"].c_str());
-        add_shader("kernel_effect", new Shader(shader_stage_map, "kernel_effect"));
-
-        shader_stage_map.emplace(GL_VERTEX_SHADER, shaders_to_match["quad"].c_str());
-        shader_stage_map.emplace(GL_FRAGMENT_SHADER, shaders_to_match["debug_view"].c_str());
-        add_shader("debug_view", new Shader(shader_stage_map, "debug_view"));
-
-        shader_stage_map.emplace(GL_VERTEX_SHADER, shaders_to_match["quad"].c_str());
-        shader_stage_map.emplace(GL_FRAGMENT_SHADER, shaders_to_match["wboit_composite"].c_str());
-        add_shader("wboit_composite", new Shader(shader_stage_map, "wboit_composite"));
-
-        shader_stage_map.clear();
+        make_quad_paired_shader("color_grading");
+        make_quad_paired_shader("kernel_effect");
+        make_quad_paired_shader("debug_view");
+        make_quad_paired_shader("wboit_composite");
     }
 
     for (const auto& [file_name, file_path] : compute_shader_files)

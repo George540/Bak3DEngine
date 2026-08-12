@@ -123,15 +123,25 @@ namespace
 
         return resolve_includes(stream_buffer.str(), shader_dir);
     }
+
+    GLint get_uniform_location_checked(const GLuint program_id, const string& uniform_name, const string& shader_name)
+    {
+        const GLint location = glGetUniformLocation(program_id, uniform_name.c_str());
+        if (location == -1)
+        {
+            B3D_LOG_WARNING("Uniform '%s' not found (wrong shader program, optimized out, or typo'd uniform name) in shader %s with ID %u.", uniform_name.c_str(), shader_name.c_str(), program_id);
+        }
+        return location;
+    }
 }
 
 Shader::Shader()
-    : Asset(filesystem::absolute("shaders/LineShader.vert").string(), "LineShader")
+    : Asset(filesystem::absolute("shaders/line.vert").string(), "line")
     , m_compiled(false)
 {
     ShaderStageMap shader_stage_sources;
-    shader_stage_sources.emplace(GL_VERTEX_SHADER, filesystem::absolute("shaders/LineShader.vert").string());
-    shader_stage_sources.emplace(GL_FRAGMENT_SHADER, filesystem::absolute("shaders/LineShader.frag").string());
+    shader_stage_sources.emplace(GL_VERTEX_SHADER, filesystem::absolute("shaders/line.vert").string());
+    shader_stage_sources.emplace(GL_FRAGMENT_SHADER, filesystem::absolute("shaders/line.frag").string());
 }
 
 Shader::Shader(const ShaderStageMap& shader_stage_sources, const std::string& shader_name)
@@ -229,100 +239,100 @@ void Shader::dispatch_compute_1d(const GLuint total, const GLuint work_group_loc
 
 void Shader::set_bool(const string& name, bool value) const
 {
-    glUniform1i(glGetUniformLocation(m_object_id, name.c_str()), static_cast<int>(value));
+    glUniform1i(get_uniform_location_checked(m_object_id, name, m_object_name), static_cast<int>(value));
 }
 
 void Shader::set_uint(const string& name, unsigned int value) const
 {
-    glUniform1ui(glGetUniformLocation(m_object_id, name.c_str()), value); // Warning: DO NOT use for texture samplers. Use integer instead
+    glUniform1ui(get_uniform_location_checked(m_object_id, name, m_object_name), value);
 }
 
 void Shader::set_int(const string& name, int value) const
 {
-    glUniform1i(glGetUniformLocation(m_object_id, name.c_str()), value);
+    glUniform1i(get_uniform_location_checked(m_object_id, name, m_object_name), value);
 }
 
 void Shader::set_float(const string& name, GLfloat value) const
 {
-	glUniform1f(glGetUniformLocation(m_object_id, name.c_str()), value);
+    glUniform1f(get_uniform_location_checked(m_object_id, name, m_object_name), value);
 }
 
 void Shader::set_vec2(const string& name, const glm::vec2& value) const
 {
-    glUniform2fv(glGetUniformLocation(m_object_id, name.c_str()), 1, &value[0]);
+    glUniform2fv(get_uniform_location_checked(m_object_id, name, m_object_name), 1, &value[0]);
 }
 
 void Shader::set_vec2(const string& name, float x, float y) const
 {
-    glUniform2f(glGetUniformLocation(m_object_id, name.c_str()), x, y);
+    glUniform2f(get_uniform_location_checked(m_object_id, name, m_object_name), x, y);
 }
 
 void Shader::set_vec3(const string& name, const glm::vec3& value) const
 {
-    glUniform3fv(glGetUniformLocation(m_object_id, name.c_str()), 1, &value[0]);
+    glUniform3fv(get_uniform_location_checked(m_object_id, name, m_object_name), 1, &value[0]);
 }
 
 void Shader::set_vec3(const string& name, float x, float y, float z) const
 {
-    glUniform3f(glGetUniformLocation(m_object_id, name.c_str()), x, y, z);
+    glUniform3f(get_uniform_location_checked(m_object_id, name, m_object_name), x, y, z);
 }
 
 void Shader::set_vec4(const string& name, const glm::vec4& value) const
 {
-    glUniform4fv(glGetUniformLocation(m_object_id, name.c_str()), 1, &value[0]);
+    glUniform4fv(get_uniform_location_checked(m_object_id, name, m_object_name), 1, &value[0]);
 }
 
 void Shader::set_vec4(const string& name, float x, float y, float z, float w) const
 {
-    glUniform4f(glGetUniformLocation(m_object_id, name.c_str()), x, y, z, w);
+    glUniform4f(get_uniform_location_checked(m_object_id, name, m_object_name), x, y, z, w);
 }
 
 void Shader::set_mat2(const string& name, const glm::mat2& mat) const
 {
-    glUniformMatrix2fv(glGetUniformLocation(m_object_id, name.c_str()), 1, GL_FALSE, &mat[0][0]);
+    glUniformMatrix2fv(get_uniform_location_checked(m_object_id, name, m_object_name), 1, GL_FALSE, &mat[0][0]);
 }
 
 void Shader::set_mat3(const string& name, const glm::mat3& mat) const
 {
-    glUniformMatrix3fv(glGetUniformLocation(m_object_id, name.c_str()), 1, GL_FALSE, &mat[0][0]);
+    glUniformMatrix3fv(get_uniform_location_checked(m_object_id, name, m_object_name), 1, GL_FALSE, &mat[0][0]);
 }
 
 void Shader::set_mat4(const string& name, const glm::mat4& mat) const
 {
-    glUniformMatrix4fv(glGetUniformLocation(m_object_id, name.c_str()), 1, GL_FALSE, &mat[0][0]);
+    glUniformMatrix4fv(get_uniform_location_checked(m_object_id, name, m_object_name), 1, GL_FALSE, &mat[0][0]);
 }
 
 void Shader::set_float_array(const string& name, const float* values, const GLsizei count) const
 {
-    glUniform1fv(glGetUniformLocation(m_object_id, name.c_str()), count, values);
+    glUniform1fv(get_uniform_location_checked(m_object_id, name, m_object_name), count, values);
 }
 
 void Shader::set_int_array(const string& name, const int* values, const GLsizei count) const
 {
-    glUniform1iv(glGetUniformLocation(m_object_id, name.c_str()), count, values);
+    glUniform1iv(get_uniform_location_checked(m_object_id, name, m_object_name), count, values);
 }
 
 void Shader::set_vec2_array(const string& name, const glm::vec2* values, const GLsizei count) const
 {
-    glUniform2fv(glGetUniformLocation(m_object_id, name.c_str()), count, glm::value_ptr(values[0]));
+    glUniform2fv(get_uniform_location_checked(m_object_id, name, m_object_name), count, glm::value_ptr(values[0]));
 }
 
 void Shader::set_vec3_array(const string& name, const glm::vec3* values, const GLsizei count) const
 {
-    glUniform3fv(glGetUniformLocation(m_object_id, name.c_str()), count, glm::value_ptr(values[0]));
+    glUniform3fv(get_uniform_location_checked(m_object_id, name, m_object_name), count, glm::value_ptr(values[0]));
 }
 
 void Shader::set_vec4_array(const string& name, const glm::vec4* values, const GLsizei count) const
 {
-    glUniform4fv(glGetUniformLocation(m_object_id, name.c_str()), count, glm::value_ptr(values[0]));
+    glUniform4fv(get_uniform_location_checked(m_object_id, name, m_object_name), count, glm::value_ptr(values[0]));
 }
 
 void Shader::set_mat3_array(const string& name, const glm::mat3* values, const GLsizei count) const
 {
-    glUniformMatrix3fv(glGetUniformLocation(m_object_id, name.c_str()), count, GL_FALSE, glm::value_ptr(values[0]));
+    glUniformMatrix3fv(get_uniform_location_checked(m_object_id, name, m_object_name), count, GL_FALSE, glm::value_ptr(values[0]));
 }
 
 void Shader::set_mat4_array(const string& name, const glm::mat4* values, const GLsizei count) const
 {
-    glUniformMatrix4fv(glGetUniformLocation(m_object_id, name.c_str()), count, GL_FALSE, glm::value_ptr(values[0]));
+    glUniformMatrix4fv(get_uniform_location_checked(m_object_id, name, m_object_name), count, GL_FALSE, glm::value_ptr(values[0]));
 }

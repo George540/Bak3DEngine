@@ -172,9 +172,9 @@ void Environment::draw_debug_settings()
         // Depth Test Near and Far
         if (view_selection == 1)
         {
-            ImGuiB3D::PropertySliderFloat("Near", &pages_data.depth_settings.r, 0.1f, 10.0f, "%.1f", "Set the depth testing near distance with black color.\nThis determines how near the pixel is to the viewpoint.");
+            ImGuiB3D::PropertySliderFloat("Near", &pages_data.depth_settings.r, 0.1f, pages_data.depth_settings.g + 0.01f, "%.1f", "Set the depth testing near distance with black color.\nThis determines how near the pixel is to the viewpoint.");
 
-            ImGuiB3D::PropertySliderFloat("Far", &pages_data.depth_settings.g, pages_data.depth_settings.r, 100.0f, "%.1f", "Set the depth testing far distance with white color.\nThis determines how far the pixel is to the viewpoint.");
+            ImGuiB3D::PropertySliderFloat("Far", &pages_data.depth_settings.g, pages_data.depth_settings.r, 10.0f, "%.1f", "Set the depth testing far distance with white color.\nThis determines how far the pixel is to the viewpoint.");
         }
 
         Renderer::set_pages_data(pages_data);

@@ -8,7 +8,7 @@
 	"material.diffuse_texture": { "type": "sampler2D",  "value": "backpack_diffuse.jpg" },
     "material.specular_texture": { "type": "sampler2D",  "value": "backpack_specular.jpg" },
     "material.normal_texture": { "type": "sampler2D",  "value": "backpack_normal.jpg" },
-    "material.gamma_texture": { "type": "float",  "value": 2.2 },
+    "material.gamma": { "type": "float",  "value": 2.2 },
     "material.surface_parameters": { "type": "vec4",  "value": [1.0, 0.5, 0.5, 1.0] },
     "model": { "type": "mat4",  "value": [
       1,0,0,0,

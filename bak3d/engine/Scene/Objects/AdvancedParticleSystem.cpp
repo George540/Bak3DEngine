@@ -75,7 +75,6 @@ void AdvancedParticleSystem::draw() const
     }
     particle_shader->use();
     particle_shader->set_float("viewport_height", static_cast<float>(EventManager::get_viewport_height()));
-    (*m_material_slot)->set_float("point_scale", 1.0f);
     apply_material();
 
     glEnable(GL_PROGRAM_POINT_SIZE);

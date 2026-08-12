@@ -51,12 +51,27 @@ Texture2D::Texture2D(const string& path, const string& file_name, const bool is_
     if (const auto data = stbi_load(m_path.c_str(), &m_width, &m_height, &m_nb_color_channels, 0))
     {
         GLenum format;
+        GLenum internal_format;
+        
         switch (m_nb_color_channels)
         {
-            case 1: format = GL_RED;  break;
-            case 3: format = GL_RGB;  break;
-            case 4: format = GL_RGBA; break;
-            default: B3D_LOG_ERROR("Invalid texture format for texture %s with ID %d", file_name, m_texture_id); break;
+        case 1: 
+            format = GL_RED;  
+            internal_format = GL_RED; 
+            break;
+        case 3: 
+            format = GL_RGB;  
+            // Use GL_SRGB to enable hardware gamma correction for color maps
+            internal_format = GL_SRGB; 
+            break;
+        case 4: 
+            format = GL_RGBA; 
+            internal_format = GL_SRGB_ALPHA; 
+            break;
+        default: 
+            B3D_LOG_ERROR("Invalid texture format for texture %s with ID %d", file_name, m_texture_id); 
+            stbi_image_free(data);
+            return;
         }
 
         glBindTexture(GL_TEXTURE_2D, m_texture_id);
