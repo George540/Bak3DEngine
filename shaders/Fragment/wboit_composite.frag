@@ -12,7 +12,7 @@ void main()
     float reveal = texture(revealage_texture, TextCoords).r;
 
     // Fully uncovered pixel. Skip compositing.
-    if (reveal >= 0.999)
+    if (reveal > 0.999)
     {
         discard;
     }

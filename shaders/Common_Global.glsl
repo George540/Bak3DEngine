@@ -86,6 +86,17 @@ vec3 get_view_direction(vec3 frag_position)
     return normalize(camera_data.position.xyz - frag_position);
 }
 
+float get_linear_depth(vec3 frag_position)
+{
+    return distance(frag_position, camera_data.position.xyz);
+}
+
+float calculate_wboit_weight(float depth, float alpha)
+{
+    float weight = alpha * max(1e-2, min(3e3, 0.03 / (1e-5 + pow(depth / 5.0, 4.0))));
+    return weight;
+}
+
 bool get_point_sphere_normal(vec2 point_coord, mat4 view, out vec3 world_normal)
 {
     vec2 circle_coord = point_coord * 2.0 - 1.0;
@@ -130,13 +141,23 @@ float process_attenuation(vec3 frag_position)
     return 1.0 / (c + l * distance + q * (distance * distance));
 }
 
-// Forward scatter: cheap translucency effect where light passes through semi-transparent particle and lights it from behind.
-// Normal not applied here since it is not a surface-based position.
+// Enhanced translucency handling peak alignment and side profile lighting
 float calculate_translucency(vec3 view_direction, vec3 light_direction, float scatter_power)
 {
-    float back_scatter = max(dot(-view_direction, light_direction), 0.0);
-    float front_scatter = max(dot(view_direction, light_direction), 0.0);
-    return pow(back_scatter + front_scatter, scatter_power);
+    float alignment = dot(view_direction, light_direction);
+
+    // Narrow peaks: Handles back-lit and front-lit edge highlights
+    float back_scatter = max(-alignment, 0.0);
+    float front_scatter = max(alignment, 0.0);
+    float directional_scatter = pow(back_scatter + front_scatter, scatter_power);
+
+    // Isotropic base: Simulates internally bounced light that escapes through the sides
+    // When alignment is 0.0 (exact side view), this provides a solid 0.5 baseline contribution
+    float isotropic_scatter = alignment * 0.5 + 0.5;
+
+    // Linearly blend the two phases
+    // 0.2 gives a subtle volumetric density look from the side without flattening your highlights
+    return mix(isotropic_scatter, directional_scatter, 0.8);
 }
 
 vec3 process_particle_light(vec3 frag_position, vec3 view_direction, float scatter_power)
@@ -165,10 +186,19 @@ vec3 process_particle_light(vec3 frag_position, vec3 view_direction, float scatt
         }
     }
 
+    // Directional translucent scattering
     float translucency = calculate_translucency(view_direction, light_direction, scatter_power);
 
+    // Add an isotropic/wrapped diffuse component for side angles (90 degrees)
+    // This simulates multi-scattering where light scatters evenly out the sides of the volume.
+    float side_scattering = clamp(dot(light_direction, view_direction) * 0.5 + 0.5, 0.0, 1.0);
+
+    // Smoothly blend directional translucency with all-around side scattering
+    // Using 0.15 to 0.3 as a baseline ensures the particle doesn't go pitch black from the side.
+    float final_scattering = max(translucency, side_scattering * 0.25); // @TODO: To UBO
+
     vec3 ambient = light_data.ambient.rgb;
-    vec3 scattered = light_data.diffuse.rgb * translucency;
+    vec3 scattered = light_data.diffuse.rgb * final_scattering;
 
     return (ambient + scattered) * attenuation * light_intensity * light_data.diffuse.a;
 }
