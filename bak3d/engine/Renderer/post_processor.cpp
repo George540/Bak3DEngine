@@ -26,7 +26,8 @@ THE SOFTWARE.
 
 #include "post_process_pass.h"
 #include "renderer.h"
-#include "vertex_array.h"
+#include "Buffers/vertex_array.h"
+#include "Buffers/frame_buffer.h"
 #include "Asset/resource_manager.h"
 #include "Core/global_settings.h"
 #include "Core/logger.h"

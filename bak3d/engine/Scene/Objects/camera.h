@@ -27,7 +27,7 @@ THE SOFTWARE.
 #include <glm/fwd.hpp>
 #include <glm/vec3.hpp>
 
-#include "Renderer/buffer.h"
+#include "Renderer/Buffers/data_buffer.h"
 #include "Scene/scene_object.h"
 
 /*

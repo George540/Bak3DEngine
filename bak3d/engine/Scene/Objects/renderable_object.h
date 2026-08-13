@@ -27,8 +27,8 @@ THE SOFTWARE.
 #include "Asset/material.h"
 #include "Core/global_definitions.h"
 #include "Core/core_interface.h"
-#include "Renderer/buffer.h"
-#include "Renderer/vertex_array.h"
+#include "Renderer/Buffers/buffer.h"
+#include "Renderer/Buffers/vertex_array.h"
 #include "Scene/scene_object.h"
 
 /*

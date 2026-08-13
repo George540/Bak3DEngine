@@ -11,7 +11,7 @@ in VS_OUT
 //@TODO: Add to particle config UBO
 uniform vec3 particle_albedo = vec3(1.0);
 uniform float scatter_power = 25.0;
-uniform float edge_softness = 0.8;
+uniform float edge_softness = 0.6;
 
 #include "Common_Global.glsl"
 
@@ -36,5 +36,5 @@ void main()
     accumulation_color = vec4(color * alpha, alpha) * weight;
 
     // Revealage must be transmittance
-    revealage = 1.0 - alpha;
+    revealage = alpha;
 }

@@ -129,7 +129,7 @@ namespace
         const GLint location = glGetUniformLocation(program_id, uniform_name.c_str());
         if (location == -1)
         {
-            B3D_LOG_WARNING("Uniform '%s' not found (wrong shader program, optimized out, or typo'd uniform name) in shader %s with ID %u.", uniform_name.c_str(), shader_name.c_str(), program_id);
+           //B3D_LOG_WARNING("Uniform '%s' not found (wrong shader program, optimized out, or typo'd uniform name) in shader %s with ID %u.", uniform_name.c_str(), shader_name.c_str(), program_id);
         }
         return location;
     }

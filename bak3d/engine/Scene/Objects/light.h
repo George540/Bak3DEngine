@@ -25,6 +25,7 @@ THE SOFTWARE.
 #pragma once
 
 #include "renderable_object.h"
+#include "Renderer/Buffers/data_buffer.h"
 
 enum class LightType : int
 {

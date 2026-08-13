@@ -24,7 +24,8 @@ THE SOFTWARE.
 
 #pragma once
 
-#include "buffer.h"
+#include "Buffers/data_buffer.h"
+#include "Buffers/frame_buffer.h"
 #include "Core/global_settings.h"
 
 struct GLFWwindow;

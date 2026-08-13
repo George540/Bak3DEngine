@@ -26,7 +26,7 @@ THE SOFTWARE.
 
 #include <glm/glm.hpp>
 
-#include "buffer.h"
+#include "Buffers/buffer.h"
 #include "Asset/resource_manager.h"
 #include "Asset/shader.h"
 #include "Core/global_definitions.h"
