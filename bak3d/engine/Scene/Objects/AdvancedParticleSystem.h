@@ -25,6 +25,7 @@ THE SOFTWARE.
 #pragma once
 
 #include "renderable_object.h"
+#include "Renderer/Buffers/command_buffer.h"
 #include "Renderer/Buffers/data_buffer.h"
 
 /*
@@ -42,7 +43,10 @@ public:
 private:
     void simulate() const override;
 
-    ShaderRef m_comp_test_shader = nullptr;
+    ShaderRef m_emit_compute_shader = nullptr;
 
     std::unique_ptr<ShaderStorageBuffer> m_ssbo_in;
+
+    std::unique_ptr<IndirectCommandBuffer> m_draw_indirect_command_buffer;
+    std::unique_ptr<IndirectCommandBuffer> m_dispatch_emit_indirect_command_buffer;
 };

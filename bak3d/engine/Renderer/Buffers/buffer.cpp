@@ -86,6 +86,6 @@ void Buffer::insert_memory_barrier(GLbitfield bit_fields)
 {
     if (bit_fields != 0)
     {
-        glMemoryBarrier(bit_fields);
+        glMemoryBarrier(bit_fields); // Barrier for the next command
     }
 }

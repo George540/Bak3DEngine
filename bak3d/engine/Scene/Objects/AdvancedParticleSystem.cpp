@@ -30,26 +30,34 @@ THE SOFTWARE.
 
 using namespace std;
 
-static constexpr GLuint NUM_ELEMENTS = 2000000;
+static constexpr GLuint PARTICLE_INITIAL_COUNT = 10000000;
+static constexpr GLuint PARTICLE_COMMAND_SLOT = 0; // single batch for now (expand for multiple emitters later)
+static constexpr GLuint EMIT_WORK_GROUP_COUNT = (PARTICLE_INITIAL_COUNT + WORK_GROUP_LOCAL_SIZE - 1) / WORK_GROUP_LOCAL_SIZE;
 
 AdvancedParticleSystem::AdvancedParticleSystem(const std::string& name)
     : RenderableObject(ResourceManager::get_material("particle_advanced"),
                 glm::vec3(0.0f),
                         name)
 {
-    m_comp_test_shader = ResourceManager::get_shader("particle_advanced_emit");
-    if (!m_comp_test_shader || !m_comp_test_shader->is_shader_compiled())
+    m_emit_compute_shader = ResourceManager::get_shader("particle_advanced_emit");
+    if (!m_emit_compute_shader || !m_emit_compute_shader->is_shader_compiled())
     {
         B3D_LOG_ERROR("Compute shader missing or failed to compile.");
     }
 
-    m_ssbo_in = make_unique<ShaderStorageBuffer>(NUM_ELEMENTS * VEC4_SIZE, nullptr, 16);
+    m_ssbo_in = make_unique<ShaderStorageBuffer>(PARTICLE_INITIAL_COUNT * VEC4_SIZE, nullptr, 16);
 
     m_vao->bind();
     m_ssbo_in->bind_to_target(GL_ARRAY_BUFFER);
     m_vao->set_attrib_pointer(0, 4, GL_FLOAT, GL_FALSE, VEC4_SIZE, nullptr);
     m_ssbo_in->unbind_from_target(GL_ARRAY_BUFFER);
     m_vao->unbind();
+
+    m_draw_indirect_command_buffer = make_unique<IndirectCommandBuffer>(1, IndirectCommandType::DrawArraysIndirect, "IndirectCommandBuffer - Advanced Particle System - Draw");
+    m_draw_indirect_command_buffer->set_command(PARTICLE_COMMAND_SLOT, DrawArraysIndirectCommand{ PARTICLE_INITIAL_COUNT, 1, 0, 0 });
+
+    m_dispatch_emit_indirect_command_buffer = make_unique<IndirectCommandBuffer>(1, IndirectCommandType::DispatchIndirect, "IndirectCommandBuffer - Advanced Particles System - Compute Emit");
+    m_dispatch_emit_indirect_command_buffer->set_command(PARTICLE_COMMAND_SLOT, DispatchIndirectCommand{EMIT_WORK_GROUP_COUNT, 1, 1});
 
     B3D_LOG_INFO("Advanced Particle System '%s' created.", name.c_str());
 }
@@ -80,7 +88,7 @@ void AdvancedParticleSystem::draw() const
     glEnable(GL_PROGRAM_POINT_SIZE);
 
     m_vao->bind();
-    glDrawArrays(GL_POINTS, 0, NUM_ELEMENTS);
+    m_draw_indirect_command_buffer->draw_command(GL_POINTS, PARTICLE_COMMAND_SLOT);
     m_vao->unbind();
 
     glDisable(GL_PROGRAM_POINT_SIZE);
@@ -88,18 +96,18 @@ void AdvancedParticleSystem::draw() const
 
 void AdvancedParticleSystem::simulate() const
 {
-    if (!m_comp_test_shader || !m_comp_test_shader->is_shader_compiled())
+    if (!m_emit_compute_shader || !m_emit_compute_shader->is_shader_compiled())
     {
         return;
     }
 
     DebugScopeGroup scope("GPU Particles: Emit Compute Dispatch");
 
-    m_comp_test_shader->use();
-    m_comp_test_shader->set_int("particle_count", NUM_ELEMENTS); // @TODO: Add to UBO
-    m_comp_test_shader->set_float("spawn_extent", 5.0f);
+    m_emit_compute_shader->use();
+    m_emit_compute_shader->set_int("particle_count", PARTICLE_INITIAL_COUNT); // @TODO: Add to UBO
+    m_emit_compute_shader->set_float("spawn_extent", 5.0f);
     m_ssbo_in->bind_to_binding_point(16);
-    m_comp_test_shader->dispatch_compute_1d(NUM_ELEMENTS, WORK_GROUP_LOCAL_SIZE);
-    Buffer::insert_memory_barrier(GL_SHADER_STORAGE_BARRIER_BIT | GL_VERTEX_ATTRIB_ARRAY_BARRIER_BIT);
-    m_comp_test_shader->unuse();
+    m_dispatch_emit_indirect_command_buffer->dispatch_command(PARTICLE_COMMAND_SLOT);
+    Buffer::insert_memory_barrier(GL_SHADER_STORAGE_BARRIER_BIT);
+    m_emit_compute_shader->unuse();
 }
