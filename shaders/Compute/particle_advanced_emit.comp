@@ -2,19 +2,11 @@
 
 layout(local_size_x = 64, local_size_y = 1, local_size_z = 1) in;
 
-struct Particle
-{
-    vec4 position; // XYZ = world-space position, W = world-space particle size (radius units)
-};
-
 //@TODO: Add to particle config UBO
 uniform int particle_count;
 uniform float spawn_extent = 2.0; // half-extent of the world-space scatter cube, in world units
 
-layout(std430, binding = 16) buffer ParticleBuffer
-{
-    Particle particles[];
-};
+layout(std430, binding = 16) buffer ParticleBuffer { vec4 position[]; }; // XYZ = world-space position, W = world-space particle size (radius units)
 
 #include "Common_Global.glsl"
 
@@ -32,5 +24,5 @@ void main()
     float z = (pcg_hash_rand01(index * 3u + 2u) * 2.0 - 1.0) * spawn_extent;
     float size = 0.05 + pcg_hash_rand01(index * 3u + 2u ^ 0x9E3779B9u) * 0.3;
 
-    particles[index].position = vec4(x, y, z, 1.0);
+    position[index] = vec4(x, y, z, 1.0);
 }

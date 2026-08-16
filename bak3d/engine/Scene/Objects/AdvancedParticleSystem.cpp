@@ -30,7 +30,7 @@ THE SOFTWARE.
 
 using namespace std;
 
-static constexpr GLuint PARTICLE_INITIAL_COUNT = 10000000;
+static constexpr GLuint PARTICLE_INITIAL_COUNT = 30000000;
 static constexpr GLuint PARTICLE_COMMAND_SLOT = 0; // single batch for now (expand for multiple emitters later)
 static constexpr GLuint EMIT_WORK_GROUP_COUNT = (PARTICLE_INITIAL_COUNT + WORK_GROUP_LOCAL_SIZE - 1) / WORK_GROUP_LOCAL_SIZE;
 
@@ -45,19 +45,15 @@ AdvancedParticleSystem::AdvancedParticleSystem(const std::string& name)
         B3D_LOG_ERROR("Compute shader missing or failed to compile.");
     }
 
-    m_ssbo_in = make_unique<ShaderStorageBuffer>(PARTICLE_INITIAL_COUNT * VEC4_SIZE, nullptr, 16);
-
-    m_vao->bind();
-    m_ssbo_in->bind_to_target(GL_ARRAY_BUFFER);
-    m_vao->set_attrib_pointer(0, 4, GL_FLOAT, GL_FALSE, VEC4_SIZE, nullptr);
-    m_ssbo_in->unbind_from_target(GL_ARRAY_BUFFER);
-    m_vao->unbind();
+    m_positions_ssbo = make_unique<ShaderStorageBuffer>(PARTICLE_INITIAL_COUNT * VEC4_SIZE, nullptr, 16);
 
     m_draw_indirect_command_buffer = make_unique<IndirectCommandBuffer>(1, IndirectCommandType::DrawArraysIndirect, "IndirectCommandBuffer - Advanced Particle System - Draw");
     m_draw_indirect_command_buffer->set_command(PARTICLE_COMMAND_SLOT, DrawArraysIndirectCommand{ PARTICLE_INITIAL_COUNT, 1, 0, 0 });
 
     m_dispatch_emit_indirect_command_buffer = make_unique<IndirectCommandBuffer>(1, IndirectCommandType::DispatchIndirect, "IndirectCommandBuffer - Advanced Particles System - Compute Emit");
     m_dispatch_emit_indirect_command_buffer->set_command(PARTICLE_COMMAND_SLOT, DispatchIndirectCommand{EMIT_WORK_GROUP_COUNT, 1, 1});
+
+    AdvancedParticleSystem::simulate();
 
     B3D_LOG_INFO("Advanced Particle System '%s' created.", name.c_str());
 }
@@ -69,8 +65,6 @@ void AdvancedParticleSystem::update(float dt)
 
 void AdvancedParticleSystem::draw() const
 {
-    simulate();
-
     if (!has_material())
     {
         return;
@@ -106,7 +100,7 @@ void AdvancedParticleSystem::simulate() const
     m_emit_compute_shader->use();
     m_emit_compute_shader->set_int("particle_count", PARTICLE_INITIAL_COUNT); // @TODO: Add to UBO
     m_emit_compute_shader->set_float("spawn_extent", 5.0f);
-    m_ssbo_in->bind_to_binding_point(16);
+    m_positions_ssbo->bind_to_binding_point(16);
     m_dispatch_emit_indirect_command_buffer->dispatch_command(PARTICLE_COMMAND_SLOT);
     Buffer::insert_memory_barrier(GL_SHADER_STORAGE_BARRIER_BIT);
     m_emit_compute_shader->unuse();

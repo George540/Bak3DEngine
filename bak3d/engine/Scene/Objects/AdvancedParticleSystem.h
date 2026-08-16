@@ -45,7 +45,7 @@ private:
 
     ShaderRef m_emit_compute_shader = nullptr;
 
-    std::unique_ptr<ShaderStorageBuffer> m_ssbo_in;
+    std::unique_ptr<ShaderStorageBuffer> m_positions_ssbo;
 
     std::unique_ptr<IndirectCommandBuffer> m_draw_indirect_command_buffer;
     std::unique_ptr<IndirectCommandBuffer> m_dispatch_emit_indirect_command_buffer;
