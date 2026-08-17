@@ -42,5 +42,6 @@ class ISimulatable
 public:
     virtual ~ISimulatable() = default;
 private:
+    virtual void emit() const = 0;
     virtual void simulate() const = 0;
 };

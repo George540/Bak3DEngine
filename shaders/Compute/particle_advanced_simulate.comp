@@ -1,0 +1,62 @@
+﻿#version 460 core
+
+layout(local_size_x = 64, local_size_y = 1, local_size_z = 1) in;
+
+//@TODO: Add to particle config UBO
+uniform int particle_count;
+uniform float dt;
+uniform float elapsed_time; // Accumulated elapses time in seconds, which drives the wobble (might be replaced by particle lifetime)
+uniform float base_angular_speed = 1.0; // Rads per second baseline orbit rate
+uniform float angular_speed_variance = 1.0; // Speed variance (plus or minus randomization)
+
+layout(std430, binding = 16) buffer ParticleBuffer { vec4 position[]; }; // XYZ = world-space position, W = world-space particle size (radius units)
+
+#include "Common_Global.glsl"
+
+// Deterministic per-particle random unit vector
+vec3 random_unit_vector(uint seed)
+{
+    float z = pcg_hash_rand01(seed) * 2.0 - 1.0;
+    float a = pcg_hash_rand01(seed ^ 0x68bc21ebu) * 6.28318530718; // 2 * pie
+    float r = sqrt(max(0.0, 1.0 - z * z));
+    return vec3(r * cos(a), r * sin(a), z);
+}
+
+// Two-octave sine wobble (cheap substitute for perlin noise)
+float angular_speed_wobble(uint seed, float t)
+{
+    float freq1  = 0.3 + pcg_hash_rand01(seed ^ 0x1u) * 0.4;
+    float freq2  = 0.9 + pcg_hash_rand01(seed ^ 0x2u) * 0.6;
+    float phase1 = pcg_hash_rand01(seed ^ 0x3u) * 6.28318530718;
+    float phase2 = pcg_hash_rand01(seed ^ 0x4u) * 6.28318530718;
+
+    return sin(t * freq1 + phase1) * 0.6 + sin(t * freq2 + phase2) * 0.4;
+}
+
+// Rodrigues' rotation formula: rotate v about unit axis k by angle (radians)
+vec3 rotate_about_axis(vec3 v, vec3 k, float angle)
+{
+    float c = cos(angle);
+    float s = sin(angle);
+    return v * c + cross(k, v) * s + k * dot(k, v) * (1.0 - c);
+}
+
+void main()
+{
+    uint index = gl_GlobalInvocationID.x;
+    if (index >= particle_count) // NUM_PARTICLES needs to be passed in via a uniform or UBO
+    {
+        return;
+    }
+
+    vec4 particle_position_data = position[index];
+    vec3 particle_position = position[index].xyz;
+    
+    vec3 axis = random_unit_vector(index * 9781u + 17u);
+
+    float wobble = angular_speed_wobble(index, elapsed_time);
+    float angular_speed = base_angular_speed + angular_speed_variance * wobble;
+    float angle_step = angular_speed * dt;
+
+    position[index] = vec4(rotate_about_axis(particle_position, axis, angle_step), particle_position_data.w);
+}

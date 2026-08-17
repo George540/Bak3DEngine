@@ -244,7 +244,7 @@ void Environment::draw_light_settings()
 
                 // Distance Offset
                 float light_origin_distance = GlobalSettings::get_global_setting_value<float>(GlobalSettingOption::Light_OriginDistance);
-                ImGuiB3D::PropertySliderFloat("Distance", &light_origin_distance, 2.0f, 10.0f, "%.3f", "Light distance from origin (center of axis).");
+                ImGuiB3D::PropertySliderFloat("Distance", &light_origin_distance, 2.0f, 20.0f, "%.3f", "Light distance from origin (center of axis).");
                 GlobalSettings::set_global_setting<float>(GlobalSettingOption::Light_OriginDistance, light_origin_distance);
 
                 ImGui::TreePop();

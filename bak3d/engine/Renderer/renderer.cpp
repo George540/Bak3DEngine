@@ -214,16 +214,11 @@ void Renderer::draw_frame()
 	// Editor Overlays: always drawn last, on top of transparency
 	// ------------------------------------------------------------
 	RendererPasses::render_pass_editor_overlays();
-
-    // Guarantee we end the frame on the default framebuffer, regardless of
-    // which optional passes above ran - ImGui renders next and needs the
-    // real backbuffer bound, not r_main_fbo.
-    r_main_fbo->unbind();
 }
 
 void Renderer::end_frame()
 {
-
+	r_main_fbo->unbind();
 }
 
 void Renderer::draw_quad()

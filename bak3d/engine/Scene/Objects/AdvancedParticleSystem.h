@@ -41,9 +41,11 @@ public:
     void draw() const override;
 
 private:
+    void emit() const override;
     void simulate() const override;
 
     ShaderRef m_emit_compute_shader = nullptr;
+    ShaderRef m_simulate_compute_shader = nullptr;
 
     std::unique_ptr<ShaderStorageBuffer> m_positions_ssbo;
 

@@ -42,7 +42,13 @@ AdvancedParticleSystem::AdvancedParticleSystem(const std::string& name)
     m_emit_compute_shader = ResourceManager::get_shader("particle_advanced_emit");
     if (!m_emit_compute_shader || !m_emit_compute_shader->is_shader_compiled())
     {
-        B3D_LOG_ERROR("Compute shader missing or failed to compile.");
+        B3D_LOG_ERROR("Emit compute shader missing or failed to compile.");
+    }
+
+    m_simulate_compute_shader = ResourceManager::get_shader("particle_advanced_simulate");
+    if (!m_simulate_compute_shader || !m_simulate_compute_shader->is_shader_compiled())
+    {
+        B3D_LOG_ERROR("Simulate compute shader missing or failed to compile.");
     }
 
     m_positions_ssbo = make_unique<ShaderStorageBuffer>(PARTICLE_INITIAL_COUNT * VEC4_SIZE, nullptr, 16);
@@ -50,10 +56,10 @@ AdvancedParticleSystem::AdvancedParticleSystem(const std::string& name)
     m_draw_indirect_command_buffer = make_unique<IndirectCommandBuffer>(1, IndirectCommandType::DrawArraysIndirect, "IndirectCommandBuffer - Advanced Particle System - Draw");
     m_draw_indirect_command_buffer->set_command(PARTICLE_COMMAND_SLOT, DrawArraysIndirectCommand{ PARTICLE_INITIAL_COUNT, 1, 0, 0 });
 
-    m_dispatch_emit_indirect_command_buffer = make_unique<IndirectCommandBuffer>(1, IndirectCommandType::DispatchIndirect, "IndirectCommandBuffer - Advanced Particles System - Compute Emit");
+    m_dispatch_emit_indirect_command_buffer = make_unique<IndirectCommandBuffer>(1, IndirectCommandType::DispatchIndirect, "IndirectCommandBuffer - Advanced Particles System - Compute Emit+Simulate");
     m_dispatch_emit_indirect_command_buffer->set_command(PARTICLE_COMMAND_SLOT, DispatchIndirectCommand{EMIT_WORK_GROUP_COUNT, 1, 1});
 
-    AdvancedParticleSystem::simulate();
+    AdvancedParticleSystem::emit();
 
     B3D_LOG_INFO("Advanced Particle System '%s' created.", name.c_str());
 }
@@ -65,6 +71,8 @@ void AdvancedParticleSystem::update(float dt)
 
 void AdvancedParticleSystem::draw() const
 {
+    simulate();
+
     if (!has_material())
     {
         return;
@@ -88,7 +96,7 @@ void AdvancedParticleSystem::draw() const
     glDisable(GL_PROGRAM_POINT_SIZE);
 }
 
-void AdvancedParticleSystem::simulate() const
+void AdvancedParticleSystem::emit() const
 {
     if (!m_emit_compute_shader || !m_emit_compute_shader->is_shader_compiled())
     {
@@ -99,9 +107,27 @@ void AdvancedParticleSystem::simulate() const
 
     m_emit_compute_shader->use();
     m_emit_compute_shader->set_int("particle_count", PARTICLE_INITIAL_COUNT); // @TODO: Add to UBO
-    m_emit_compute_shader->set_float("spawn_extent", 5.0f);
+    m_emit_compute_shader->set_float("spawn_extent", 10.0f);
     m_positions_ssbo->bind_to_binding_point(16);
     m_dispatch_emit_indirect_command_buffer->dispatch_command(PARTICLE_COMMAND_SLOT);
     Buffer::insert_memory_barrier(GL_SHADER_STORAGE_BARRIER_BIT);
     m_emit_compute_shader->unuse();
+}
+
+void AdvancedParticleSystem::simulate() const
+{
+    if (!m_simulate_compute_shader || !m_simulate_compute_shader->is_shader_compiled())
+    {
+        return;
+    }
+
+    DebugScopeGroup scope("GPU Particles: Simulate Compute Dispatch");
+
+    m_simulate_compute_shader->use();
+    m_simulate_compute_shader->set_int("particle_count", PARTICLE_INITIAL_COUNT);
+    m_simulate_compute_shader->set_float("dt", EventManager::get_frame_time());
+    m_positions_ssbo->bind_to_binding_point(16);
+    m_dispatch_emit_indirect_command_buffer->dispatch_command(PARTICLE_COMMAND_SLOT);
+    Buffer::insert_memory_barrier(GL_SHADER_STORAGE_BARRIER_BIT);
+    m_simulate_compute_shader->unuse();
 }
