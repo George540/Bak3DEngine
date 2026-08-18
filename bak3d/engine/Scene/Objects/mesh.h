@@ -43,6 +43,7 @@ public:
     // constructor
     Mesh(std::vector<Vertex> vertices, std::vector<GLuint> indices, const std::string& name);
     ~Mesh() override = default;
+    void update(float dt) override;
     void draw() const override;
 };
 

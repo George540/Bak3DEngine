@@ -84,14 +84,10 @@ void Light::update(float dt)
 	position *= m_distance_offset;
 	glm::vec3 scale = glm::vec3(sprite_scaling, sprite_scaling, sprite_scaling);
 
-	if (position != transform.get_local_position() || scale != transform.get_local_scale())
-	{
-		transform.set_local_position(position);
-		transform.set_local_scale(scale);
-		transform.compute_model_matrix();
-
-		m_direction = glm::normalize(glm::vec3(0.0f) - position);
-	}
+	transform.set_local_position(position);
+	transform.set_local_scale(scale);
+	transform.compute_model_matrix();
+	m_direction = glm::normalize(glm::vec3(0.0f) - position);
 
 	const glm::vec4 diffuse = GlobalSettings::get_global_setting_value<glm::vec4>(GlobalSettingOption::Light_Color);
 	m_diffuse = glm::vec3(diffuse.r, diffuse.g, diffuse.b);
@@ -105,6 +101,8 @@ void Light::update(float dt)
 	m_outer_cut_off = glm::cos(glm::radians(GlobalSettings::get_global_setting_value<float>(GlobalSettingOption::Light_Spot_ConeAngle_Outer_CutOff) + m_cone_size));
 
 	update_light_data_ubo();
+
+	RenderableObject::update(dt);
 }
 
 void Light::draw() const
@@ -137,9 +135,10 @@ void Light::update_light_data_ubo() const
 {
 	m_light_data_ubo->bind();
 
+	glm::vec3 position = transform.get_global_position();
 	// vec4 position
-	m_light_data_ubo->bind_buffer_sub_data(&transform.get_global_position(), VEC3_SIZE,  0 * VEC4_SIZE + 0);
-	m_light_data_ubo->bind_buffer_sub_data(&m_inner_cut_off,                 FLOAT_SIZE, 0 * VEC4_SIZE + VEC3_SIZE);
+	m_light_data_ubo->bind_buffer_sub_data(&position,        VEC3_SIZE,  0 * VEC4_SIZE + 0);
+	m_light_data_ubo->bind_buffer_sub_data(&m_inner_cut_off, FLOAT_SIZE, 0 * VEC4_SIZE + VEC3_SIZE);
 
 	// vec4 direction
 	m_light_data_ubo->bind_buffer_sub_data(&m_direction,			 VEC3_SIZE,  1 * VEC4_SIZE + 0);

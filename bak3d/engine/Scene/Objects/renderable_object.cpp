@@ -54,7 +54,7 @@ RenderableObject::~RenderableObject()
 
 void RenderableObject::update(float dt)
 {
-	
+	SceneObject::update(dt);
 }
 
 void RenderableObject::draw() const

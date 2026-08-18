@@ -52,6 +52,11 @@ Mesh::Mesh(vector<Vertex> vertices, vector<GLuint> indices, const std::string& n
     m_vao->unbind();
 }
 
+void Mesh::update(float dt)
+{
+    RenderableObject::update(dt);
+}
+
 void Mesh::draw() const
 {
     RenderableObject::draw();

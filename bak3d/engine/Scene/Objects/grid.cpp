@@ -74,6 +74,8 @@ Grid::Grid(MaterialRef material)
 
 	m_number_of_elements = static_cast<GLuint>(indices.size()) * 4;
 
+	update_self_and_children();
+
 	B3D_LOG_INFO("Setting up grid...");
 }
 

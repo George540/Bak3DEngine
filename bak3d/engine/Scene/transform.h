@@ -43,41 +43,51 @@ class Transform
 {
 public:
     // Matrix Data
-    void compute_model_matrix() { m_global_model_matrix = get_local_model_matrix(); m_is_dirty = false;}
-    void compute_model_matrix(const glm::mat4& parent_global_model_matrix) { m_global_model_matrix = parent_global_model_matrix * m_global_model_matrix; m_is_dirty = false;}
+    void compute_model_matrix() { compute_local_model_matrix(); m_global_model_matrix = m_local_model_matrix; }
+    void compute_model_matrix(const glm::mat4& parent_global_model_matrix) { compute_local_model_matrix(); m_global_model_matrix = parent_global_model_matrix * m_local_model_matrix; }
     glm::mat4 get_global_model_matrix() const { return m_global_model_matrix; }
+    glm::mat4 get_local_model_matrix() const { return m_local_model_matrix; }
 
     // Local
-    void set_local_position(const glm::vec3& new_position) { m_local_position = new_position; m_is_dirty = false; }
+    void set_local_position(const glm::vec3& new_position) { m_local_position = new_position; m_is_dirty = true; }
     const glm::vec3& get_local_position() const { return m_local_position; }
     
-    void set_local_euler_rotation(const glm::vec3& new_euler_rotation) { m_local_euler_rotation = new_euler_rotation; m_is_dirty = false; }
+    void set_local_euler_rotation(const glm::vec3& new_euler_rotation) { m_local_euler_rotation = new_euler_rotation; m_is_dirty = true; }
     const glm::vec3& get_local_euler_rotation() const { return m_local_euler_rotation; }
     
-    void set_local_scale(const glm::vec3& new_scale) { m_local_scale = new_scale; m_is_dirty = false; }
+    void set_local_scale(const glm::vec3& new_scale) { m_local_scale = new_scale; m_is_dirty = true; }
     const glm::vec3& get_local_scale() const { return m_local_scale; }
 
     // Global
-    const glm::vec3& get_global_position() const { return m_global_model_matrix[3]; }
-    const glm::vec3& get_global_scale() const { return { glm::length(get_right()), glm::length(get_up()), glm::length(get_back()) }; }
-    const glm::vec3& get_right() const { return m_global_model_matrix[0]; }
-    const glm::vec3& get_up() const { return m_global_model_matrix[1]; }
-    const glm::vec3& get_back() const { return m_global_model_matrix[2]; }
-    const glm::vec3& get_forward() const { return -m_global_model_matrix[2]; }
+    glm::vec3 get_global_position() const { return m_global_model_matrix[3]; }
+    glm::vec3 get_global_scale() const { return { glm::length(get_right()), glm::length(get_up()), glm::length(get_back()) }; }
+    glm::vec3 get_right() const { return m_global_model_matrix[0]; }
+    glm::vec3 get_up() const { return m_global_model_matrix[1]; }
+    glm::vec3 get_back() const { return m_global_model_matrix[2]; }
+    glm::vec3 get_forward() const { return -m_global_model_matrix[2]; }
 
     bool is_dirty() const { return m_is_dirty; }
+    void mark_dirty() { m_is_dirty = true; }
 
 protected:
-    const glm::mat4& get_local_model_matrix() const { return m_local_model_matrix; }
     void compute_local_model_matrix()
     {
-        const glm::mat4 transform_x = glm::rotate(glm::mat4(1.0f), glm::radians(m_local_euler_rotation.x), glm::vec3(1.0f, 0.0f, 0.0f));
-        const glm::mat4 transform_y = glm::rotate(glm::mat4(1.0f), glm::radians(m_local_euler_rotation.y), glm::vec3(0.0f, 1.0f, 0.0f));
-        const glm::mat4 transform_z = glm::rotate(glm::mat4(1.0f), glm::radians(m_local_euler_rotation.z), glm::vec3(0.0f, 0.0f, 1.0f));
+        if (!m_is_dirty)
+        {
+            return;
+        }
 
-        const glm::mat4 rotation_matrix = transform_y * transform_x * transform_z;
+        const glm::mat4 rotation_x = glm::rotate(glm::mat4(1.0f), glm::radians(m_local_euler_rotation.x), glm::vec3(1.0f, 0.0f, 0.0f));
+        const glm::mat4 rotation_y = glm::rotate(glm::mat4(1.0f), glm::radians(m_local_euler_rotation.y), glm::vec3(0.0f, 1.0f, 0.0f));
+        const glm::mat4 rotation_z = glm::rotate(glm::mat4(1.0f), glm::radians(m_local_euler_rotation.z), glm::vec3(0.0f, 0.0f, 1.0f));
 
-        m_local_model_matrix = glm::translate(glm::mat4(1.0f), m_local_position) * rotation_matrix * glm::scale(glm::mat4(1.0f), m_local_scale);
+        const glm::mat4 rotation_matrix = rotation_y * rotation_x * rotation_z;
+
+        m_local_model_matrix = glm::translate(glm::mat4(1.0f), m_local_position)
+                                * rotation_matrix
+                                * glm::scale(glm::mat4(1.0f), m_local_scale);
+
+        m_is_dirty = false;
     }
     
     glm::vec3 m_local_position = glm::vec3(0.0f);

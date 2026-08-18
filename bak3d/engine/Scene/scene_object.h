@@ -45,7 +45,7 @@ class SceneObject : public Bak3DObject
 public:
     Transform transform;
 
-    SceneObject* parent;
+    SceneObject* parent = nullptr;
     std::vector<std::unique_ptr<SceneObject>> children;
 
     SceneObject() : SceneObject(glm::vec3(0.0f, 0.0f, 0.0f), "SceneObject") {}
@@ -53,11 +53,17 @@ public:
     virtual ~SceneObject() override = 0;
 
     // If no arguments, default constructor is called instead for the called class.
-    template<typename... TArgs>
-    void add_child(TArgs&... args)
+    template<typename T>
+    T* add_child(std::unique_ptr<T> child)
     {
-        children.emplace_back(std::make_unique<SceneObject>(args...));
-        children.back()->parent = this;
+        static_assert(std::is_base_of_v<SceneObject, T>, "Incorrect child class type. SceneObject-derived type is required.");
+
+        T* child_raw = child.get();
+        child_raw->parent = this;
+        child_raw->transform.mark_dirty();
+        children.emplace_back(std::move(child));
+
+        return child_raw;
     }
 
     void update_self_and_children()
@@ -91,7 +97,10 @@ public:
         }
     }
 
-    virtual void update(float dt) = 0;
+    virtual void update(float dt)
+    {
+        update_self_and_children();
+    }
 };
 
 inline SceneObject::~SceneObject() = default;

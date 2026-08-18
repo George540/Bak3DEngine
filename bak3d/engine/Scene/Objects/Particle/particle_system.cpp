@@ -96,6 +96,8 @@ void ParticleSystem::update(const float dt)
             0);
         gpu_data.ibo->unbind();
     }
+
+    RenderableObject::update(dt);
 }
 
 void ParticleSystem::draw() const

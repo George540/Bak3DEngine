@@ -80,6 +80,7 @@ void Camera::update(float dt)
 	glm::vec3 position = glm::vec3(cosf(phi) * cosf(theta), sinf(phi), -cosf(phi) * sinf(theta));
 	// Set zoom based on camera scroll offset
 	position *= EventManager::get_camera_scroll_offset();
+	transform.set_local_position(position);
 
 	m_camera_data_ubo->bind();
 	m_camera_data_ubo->bind_buffer_sub_data(glm::value_ptr(get_projection_matrix()), MAT4_SIZE, 0);
@@ -87,11 +88,7 @@ void Camera::update(float dt)
 	m_camera_data_ubo->bind_buffer_sub_data(glm::value_ptr(glm::vec4(position, 1.0f)), VEC4_SIZE, 2 * MAT4_SIZE);
 	m_camera_data_ubo->unbind();
 
-	if (position != transform.get_local_position())
-	{
-		transform.set_local_position(position);
-		transform.compute_model_matrix();
-	}
+	SceneObject::update(dt);
 }
 
 glm::mat4 Camera::get_view_matrix() const
