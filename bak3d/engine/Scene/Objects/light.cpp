@@ -40,8 +40,8 @@ THE SOFTWARE.
 Light::Light(glm::vec3 position, glm::vec3 scaling, const MaterialRef& material) :
 	RenderableObject(material, position, "Light")
 {
-	m_position = position;
-	m_scaling = scaling;
+	transform.set_local_scale(scaling);
+	transform.compute_model_matrix();
 
 	m_vbo = new VertexBuffer(static_cast<GLsizei>(QUAD_VERTICES.size()) * VEC4_SIZE, QUAD_VERTICES.data());
 	m_ebo = new ElementBuffer(static_cast<GLsizei>(QUAD_INDICES.size()) * UINT_SIZE, QUAD_INDICES.data());
@@ -62,9 +62,9 @@ Light::Light(glm::vec3 position, glm::vec3 scaling, const MaterialRef& material)
 	m_inner_cut_off = glm::cos(glm::radians(12.5f));
 	m_outer_cut_off = glm::cos(glm::radians(17.5f));
 
-	m_horizontal_angle = m_position.x;
-	m_vertical_angle = m_position.y;
-	m_distance_offset = glm::distance(m_position, glm::vec3(0.0f));
+	m_horizontal_angle = transform.get_global_position().x;
+	m_vertical_angle = transform.get_global_position().y;
+	m_distance_offset = glm::distance(transform.get_global_position(), glm::vec3(0.0f));
 
 	B3D_LOG_INFO("Light created.");
 }
@@ -79,13 +79,19 @@ void Light::update(float dt)
 
 	const auto theta = glm::radians(m_horizontal_angle);
 	const auto phi = glm::radians(m_vertical_angle);
-	m_position = glm::vec3(cosf(phi) * cosf(theta), sinf(phi), -cosf(phi) * sinf(theta));
+	glm::vec3 position = glm::vec3(cosf(phi) * cosf(theta), sinf(phi), -cosf(phi) * sinf(theta));
 
-	m_position *= m_distance_offset;
-	m_scaling = glm::vec3(sprite_scaling, sprite_scaling, sprite_scaling);
-	m_direction = glm::normalize(glm::vec3(0.0f) - m_position);
+	position *= m_distance_offset;
+	glm::vec3 scale = glm::vec3(sprite_scaling, sprite_scaling, sprite_scaling);
 
-	set_model_matrix(m_position, m_scaling, m_euler_rotation, 0.0f);
+	if (position != transform.get_local_position() || scale != transform.get_local_scale())
+	{
+		transform.set_local_position(position);
+		transform.set_local_scale(scale);
+		transform.compute_model_matrix();
+
+		m_direction = glm::normalize(glm::vec3(0.0f) - position);
+	}
 
 	const glm::vec4 diffuse = GlobalSettings::get_global_setting_value<glm::vec4>(GlobalSettingOption::Light_Color);
 	m_diffuse = glm::vec3(diffuse.r, diffuse.g, diffuse.b);
@@ -132,8 +138,8 @@ void Light::update_light_data_ubo() const
 	m_light_data_ubo->bind();
 
 	// vec4 position
-	m_light_data_ubo->bind_buffer_sub_data(&m_position,			 VEC3_SIZE,  0 * VEC4_SIZE + 0);
-	m_light_data_ubo->bind_buffer_sub_data(&m_inner_cut_off,      FLOAT_SIZE, 0 * VEC4_SIZE + VEC3_SIZE);
+	m_light_data_ubo->bind_buffer_sub_data(&transform.get_global_position(), VEC3_SIZE,  0 * VEC4_SIZE + 0);
+	m_light_data_ubo->bind_buffer_sub_data(&m_inner_cut_off,                 FLOAT_SIZE, 0 * VEC4_SIZE + VEC3_SIZE);
 
 	// vec4 direction
 	m_light_data_ubo->bind_buffer_sub_data(&m_direction,			 VEC3_SIZE,  1 * VEC4_SIZE + 0);

@@ -32,8 +32,8 @@ THE SOFTWARE.
 Axis::Axis(MaterialRef material) :
 	RenderableObject(material, glm::vec3(0.0f, 0.0f, 0.0f), "Axis")
 {
-	m_scaling = glm::vec3(3.0f);
-	set_model_matrix(glm::vec3(0.0f), m_scaling, m_euler_rotation, 0.0f);
+	transform.set_local_scale(glm::vec3(3.0f));
+	transform.compute_model_matrix();
 
 	m_vbo = new VertexBuffer(sizeof(AxisVertex) * AXIS_VERTICES.size(), AXIS_VERTICES.data());
 	m_ebo = new ElementBuffer(sizeof(GLuint) * AXIS_INDICES.size(), AXIS_INDICES.data());

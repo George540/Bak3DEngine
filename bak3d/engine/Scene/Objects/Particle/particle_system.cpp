@@ -82,7 +82,7 @@ void ParticleSystem::update(const float dt)
 
     for (auto& emitter : m_emitters)
     {
-        emitter->update(dt, m_position);
+        emitter->update(dt, transform.get_local_position());
         ensure_ibo_capacity(*emitter);
 
         // Upload instance data

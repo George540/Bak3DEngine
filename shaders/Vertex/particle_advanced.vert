@@ -20,5 +20,5 @@ void main()
 
     float world_size = position[gl_VertexID].w;
     float pixel_scale = camera_data.projection[1][1] * viewport_height;
-    //gl_PointSize = world_size * pixel_scale * point_scale / gl_Position.w; // @TODO: See if this is even necessary. Resizing point clouds to be bigger can be costlier
+    gl_PointSize = world_size * pixel_scale * point_scale / gl_Position.w; // @TODO: See if this is even necessary. Resizing point clouds to be bigger can be costlier
 }

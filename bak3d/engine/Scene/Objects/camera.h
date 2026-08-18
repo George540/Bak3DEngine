@@ -51,7 +51,7 @@ public:
 	[[nodiscard]] glm::mat4 get_view_matrix() const;
 	[[nodiscard]] glm::mat4 get_projection_matrix() const;
 	[[nodiscard]] glm::mat4 get_view_projection_matrix() const;
-	[[nodiscard]] glm::vec3 get_camera_position() const { return m_position; }
+	[[nodiscard]] glm::vec3 get_camera_position() const { return transform.get_global_position(); }
 	[[nodiscard]] UniformBuffer* get_camera_data_buffer() const { return m_camera_data_ubo.get(); }
 private:
 	glm::vec3 m_lookat; // look towards this point

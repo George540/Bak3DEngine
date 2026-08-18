@@ -54,7 +54,7 @@ RenderableObject::~RenderableObject()
 
 void RenderableObject::update(float dt)
 {
-	set_model_matrix(m_position, m_scaling, m_euler_rotation, 0.0f);
+	
 }
 
 void RenderableObject::draw() const
@@ -62,7 +62,7 @@ void RenderableObject::draw() const
 	Camera* scene_camera = Scene::instance->get_camera();
 	if (!m_material_slot || !*m_material_slot || !scene_camera) return;
 
-	(*m_material_slot)->set_mat4("model", m_model_matrix);
+	(*m_material_slot)->set_mat4("model", transform.get_global_model_matrix());
 	apply_material();
 }
 
