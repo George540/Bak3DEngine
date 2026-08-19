@@ -25,6 +25,7 @@ THE SOFTWARE.
 #include "asset_viewer.h"
 
 #include <algorithm>
+#include <ranges>
 #include <utility>
 
 #include "imgui_b3d_extensions.h"
@@ -60,11 +61,20 @@ void AssetPanel::update()
 {
     EditorPanel::update();
 
-    draw_asset_toolbar();
+    build_asset_tree();
 
+    draw_asset_toolbar();
     ImGuiB3D::SeparatorWithSpacing(1);
 
-    draw_asset_grid();
+    ImGui::BeginChild("##folder_panel", ImVec2(180, 0), true);
+    draw_folder_tree(m_root);
+    ImGui::EndChild();
+
+    ImGui::SameLine();
+
+    ImGui::BeginChild("##assets_panel", ImVec2(0, 0), true);
+    draw_asset_grid(m_selected_folder ? *m_selected_folder : m_root);
+    ImGui::EndChild();
 }
 
 void AssetPanel::end_frame()
@@ -76,7 +86,7 @@ void AssetPanel::draw_asset_toolbar()
 {
     if (ImGui::Button("Clear", ImVec2(50, 20)))
     {
-        
+        m_search_name_string = "";
     }
 
     ImGui::SameLine();
@@ -89,46 +99,105 @@ void AssetPanel::draw_asset_toolbar()
     }
 }
 
-void AssetPanel::draw_asset_grid()
+void AssetPanel::draw_folder_tree(AssetTreeNode& node)
+{
+    for (auto& child : node.sub_folders | views::values)
+    {
+        ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_SpanAvailWidth;
+        if (m_selected_folder == child.get())
+        {
+            flags |= ImGuiTreeNodeFlags_Selected;
+        }
+
+        const bool is_tree_open = ImGui::TreeNodeEx(child->full_path.c_str(), flags, "%s", child->name.c_str());
+        if (ImGui::IsItemClicked())
+        {
+            m_selected_folder = child.get();
+        }
+
+        if (is_tree_open)
+        {
+            draw_folder_tree(*child);
+            ImGui::TreePop();
+        }
+    }
+}
+
+void AssetPanel::draw_asset_grid(AssetTreeNode& node)
 {
     const float cell_size = m_tile_size + m_tile_padding;
-    const float panel_width = ImGui::GetContentRegionAvail().x;
+    const int columns = max(1, static_cast<int>(ImGui::GetContentRegionAvail().x / cell_size));
 
-    int m_columns = max(1, static_cast<int>(panel_width / cell_size));
-
-    ImGui::BeginChild("##asset_grid", ImVec2(0, 0), false, ImGuiWindowFlags_HorizontalScrollbar);
-
-    if (ImGui::BeginTable("##asset_table", m_columns, 0))
+    ImGui::BeginChild("##asset_grid", ImVec2(0, 0.0f), false, ImGuiWindowFlags_HorizontalScrollbar);
+    if (ImGui::BeginTable("##asset_table", columns, 0))
     {
-        for (auto& [name, model] : ResourceManager::Models.all())
+        for (auto& [name, child] : node.sub_folders)
         {
-            if (!m_search_name_string.empty() && !ImGuiB3D::StringContainsIgnoreCase(name, m_search_name_string))
+            if (!m_search_name_string.empty() && ImGuiB3D::StringContainsIgnoreCase(name, m_search_name_string))
             {
                 continue;
             }
-
             ImGui::TableNextColumn();
-            draw_asset_tile(name, model.ref()->asset);
-        }
-        for (auto& [name, texture] : ResourceManager::Textures.all())
-        {
-            if (!m_search_name_string.empty() && !ImGuiB3D::StringContainsIgnoreCase(name, m_search_name_string))
-            {
-                continue;
-            }
-            if (texture->is_editor_texture())
-            {
-                continue;
-            }
-
-            ImGui::TableNextColumn();
-            draw_asset_tile(name, texture.ref()->asset);
+            draw_folder_tile(child.get());
         }
 
+        for (auto& [name, asset] : node.assets)
+        {
+            if (!m_search_name_string.empty() && ImGuiB3D::StringContainsIgnoreCase(name, m_search_name_string))
+            {
+                continue;
+            }
+            ImGui::TableNextColumn();
+            draw_asset_tile(name, asset);
+        }
         ImGui::EndTable();
     }
-
     ImGui::EndChild();
+}
+
+void AssetPanel::draw_folder_tile(AssetTreeNode* folder)
+{
+    ImGui::PushID(folder);
+
+    const ImVec2 image_size = { m_tile_size, m_tile_size };
+    const string label_asset = "##folder_" + folder->full_path;
+
+    ImGui::BeginChild(label_asset.c_str(), ImVec2(image_size.x * 2, image_size.y * 1.3f));
+    {
+        /*const TextureRef folder_icon = ResourceManager::get_texture("folder_icon.png");
+        const ImTextureID texture_id = folder_icon ? folder_icon->get_texture_id() : 0;*/
+        const ImTextureID texture_id = 0;
+
+        const bool is_folder_clicked = ImGui::ImageButton(
+            label_asset.c_str(),
+            texture_id,
+            image_size,
+            { 1, 1 }, { 0, 0 },
+            ImVec4(0, 0, 0, 0),
+            ImVec4(1, 1, 1, 1)
+        );
+
+        if (is_folder_clicked)
+        {
+            m_selected_folder = folder;
+        }
+
+        // Label
+        if (m_show_labels)
+        {
+            const string label = ImGuiB3D::TruncateLabel(folder->name, m_tile_size);
+            const float text_width = ImGui::CalcTextSize(label.c_str()).x;
+            const float indent = (m_tile_size - text_width) * 0.5f;
+            if (indent > 0.0f)
+            {
+                ImGui::SetCursorPosX(ImGui::GetCursorPosX() + indent);
+            }
+            ImGui::TextUnformatted(label.c_str());
+        }
+    }
+    ImGui::EndChild();
+    
+    ImGui::PopID();
 }
 
 void AssetPanel::draw_asset_tile(const string& name, Asset* asset)
@@ -201,4 +270,82 @@ void AssetPanel::draw_asset_tile(const string& name, Asset* asset)
     }
 
     ImGui::PopID();
+}
+
+template <typename T>
+void AssetPanel::insert_to_tree(const ResourceMap<T>& map)
+{
+    for (auto& [name, ref] : map.all())
+    {
+        Asset* asset = ref.ref()->asset;
+        if (!asset)
+        {
+            continue;
+        }
+
+        // Skip texture assets that are meant to be for editor-based entities only.
+        // Those are not viewable or usable in the engine.
+        if (const auto* texture = dynamic_cast<Texture2D*>(asset); texture && texture->is_editor_texture())
+        {
+            continue;
+        }
+
+        auto base_directory = string(BAK3D_ASSETS_DIR);
+        string directory = asset->get_directory();
+        if (directory.contains(base_directory))
+        {
+            directory = directory.substr(base_directory.size());
+        }
+        
+        // Remove trailing slashes, if any
+        while (!directory.empty() && (directory.front() == '/' || directory.front() == '\\'))
+        {
+            directory.erase(directory.begin());
+        }
+
+        AssetTreeNode* current = &m_root;
+        size_t start = 0;
+        while (start < directory.size())
+        {
+            const size_t slash = directory.find_first_of('/', start);
+            if (string segment = directory.substr(start, slash == string::npos ? string::npos : slash - start); !segment.empty())
+            {
+                auto it = current->sub_folders.find(segment);
+                if (it == current->sub_folders.end())
+                {
+                    auto node = make_unique<AssetTreeNode>();
+                    node->name = segment;
+                    node->full_path = current->full_path.empty() ? segment : current->full_path + "/" + segment;
+                    it = current->sub_folders.emplace(segment, move(node)).first;
+                }
+                current = it->second.get();
+            }
+
+            if (slash == string::npos)
+            {
+                break;
+            }
+            start = slash + 1;
+        }
+
+        current->assets.emplace_back(name, asset);
+    }
+}
+
+void AssetPanel::build_asset_tree()
+{
+    const size_t current_assets_count = ResourceManager::Models.size() + ResourceManager::Textures.size();
+    if (current_assets_count == m_last_asset_count)
+    {
+        return;
+    }
+
+    string previous_path = m_selected_folder ? m_selected_folder->full_path : "";
+
+    m_root = AssetTreeNode{};
+    m_root.full_path = BAK3D_ASSETS_DIR;
+    m_root.name = "assets";
+    insert_to_tree(ResourceManager::Models);
+    insert_to_tree(ResourceManager::Textures);
+    m_last_asset_count = current_assets_count;
 }
