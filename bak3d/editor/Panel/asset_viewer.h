@@ -52,7 +52,8 @@ public:
     void end_frame() override;
 private:
     void draw_asset_toolbar();
-    void draw_folder_tree(AssetTreeNode& node);
+    void draw_folder_tree();
+    void draw_folder_subtree(AssetTreeNode& node);
     void draw_asset_grid(AssetTreeNode& node);
     void draw_folder_tile(AssetTreeNode* folder);
     void draw_asset_tile(const std::string& name, Asset* asset);

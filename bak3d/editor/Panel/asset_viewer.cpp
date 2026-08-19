@@ -45,6 +45,17 @@ namespace
     float m_tile_padding = 8.0f;
     bool m_show_labels = true;
     bool m_show_tooltips = true;
+
+    void draw_truncated_tile_label(const string& asset_name)
+    {
+        const string label = ImGuiB3D::TruncateLabel(asset_name, m_tile_size);
+        const float text_width = ImGui::CalcTextSize(label.c_str()).x;
+        if (const float indent = (m_tile_size - text_width) * 0.5f; indent > 0.0f)
+        {
+            ImGui::SetCursorPosX(ImGui::GetCursorPosX() + indent);
+        }
+        ImGui::TextUnformatted(label.c_str());
+    }
 }
 
 AssetPanel::AssetPanel() : EditorPanel("Assets")
@@ -64,11 +75,10 @@ void AssetPanel::update()
     build_asset_tree();
 
     draw_asset_toolbar();
+
     ImGuiB3D::SeparatorWithSpacing(1);
 
-    ImGui::BeginChild("##folder_panel", ImVec2(180, 0), true);
-    draw_folder_tree(m_root);
-    ImGui::EndChild();
+    draw_folder_tree();
 
     ImGui::SameLine();
 
@@ -99,7 +109,33 @@ void AssetPanel::draw_asset_toolbar()
     }
 }
 
-void AssetPanel::draw_folder_tree(AssetTreeNode& node)
+void AssetPanel::draw_folder_tree()
+{
+    ImGui::BeginChild("##folder_panel", ImVec2(180, 0), true);
+    ImGui::SetNextItemOpen(true, ImGuiCond_Always);
+    ImGuiTreeNodeFlags root_flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_SpanAvailWidth;
+    if (m_selected_folder == &m_root)
+    {
+        root_flags |= ImGuiTreeNodeFlags_Selected;
+    }
+
+    // Render the root node once using m_root data
+    if (ImGui::TreeNodeEx(m_root.full_path.c_str(), root_flags, "%s", m_root.name.c_str()))
+    {
+        if (ImGui::IsItemClicked())
+        {
+            m_selected_folder = &m_root;
+        }
+
+        // Kick off the recursion for the child nodes
+        draw_folder_subtree(m_root);
+
+        ImGui::TreePop();
+    }
+    ImGui::EndChild();
+}
+
+void AssetPanel::draw_folder_subtree(AssetTreeNode& node)
 {
     for (auto& child : node.sub_folders | views::values)
     {
@@ -117,7 +153,7 @@ void AssetPanel::draw_folder_tree(AssetTreeNode& node)
 
         if (is_tree_open)
         {
-            draw_folder_tree(*child);
+            draw_folder_subtree(*child);
             ImGui::TreePop();
         }
     }
@@ -184,14 +220,7 @@ void AssetPanel::draw_folder_tile(AssetTreeNode* folder)
         // Label
         if (m_show_labels)
         {
-            const string label = ImGuiB3D::TruncateLabel(folder->name, m_tile_size);
-            const float text_width = ImGui::CalcTextSize(label.c_str()).x;
-            const float indent = (m_tile_size - text_width) * 0.5f;
-            if (indent > 0.0f)
-            {
-                ImGui::SetCursorPosX(ImGui::GetCursorPosX() + indent);
-            }
-            ImGui::TextUnformatted(label.c_str());
+            draw_truncated_tile_label(folder->name);
         }
     }
     ImGui::EndChild();
@@ -250,14 +279,7 @@ void AssetPanel::draw_asset_tile(const string& name, Asset* asset)
         // Label
         if (m_show_labels)
         {
-            const string label = ImGuiB3D::TruncateLabel(name, m_tile_size);
-            const float text_width = ImGui::CalcTextSize(label.c_str()).x;
-            const float indent = (m_tile_size - text_width) * 0.5f;
-            if (indent > 0.0f)
-            {
-                ImGui::SetCursorPosX(ImGui::GetCursorPosX() + indent);
-            }
-            ImGui::TextUnformatted(label.c_str());
+            draw_truncated_tile_label(name);
         }
     }
     ImGui::EndChild();
@@ -342,8 +364,9 @@ void AssetPanel::build_asset_tree()
     string previous_path = m_selected_folder ? m_selected_folder->full_path : "";
 
     m_root = AssetTreeNode{};
-    m_root.full_path = BAK3D_ASSETS_DIR;
-    m_root.name = "assets";
+    m_root.full_path = string(BAK3D_ASSETS_DIR);
+    const size_t root_folder_index = m_root.full_path.find_last_of('/');
+    m_root.name = m_root.full_path.substr(root_folder_index + 1);
     insert_to_tree(ResourceManager::Models);
     insert_to_tree(ResourceManager::Textures);
     m_last_asset_count = current_assets_count;
