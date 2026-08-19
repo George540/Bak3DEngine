@@ -133,7 +133,7 @@ void AssetPanel::draw_asset_grid(AssetTreeNode& node)
     {
         for (auto& [name, child] : node.sub_folders)
         {
-            if (!m_search_name_string.empty() && ImGuiB3D::StringContainsIgnoreCase(name, m_search_name_string))
+            if (!m_search_name_string.empty() && !ImGuiB3D::StringContainsIgnoreCase(name, m_search_name_string))
             {
                 continue;
             }
@@ -143,7 +143,7 @@ void AssetPanel::draw_asset_grid(AssetTreeNode& node)
 
         for (auto& [name, asset] : node.assets)
         {
-            if (!m_search_name_string.empty() && ImGuiB3D::StringContainsIgnoreCase(name, m_search_name_string))
+            if (!m_search_name_string.empty() && !ImGuiB3D::StringContainsIgnoreCase(name, m_search_name_string))
             {
                 continue;
             }
@@ -164,15 +164,14 @@ void AssetPanel::draw_folder_tile(AssetTreeNode* folder)
 
     ImGui::BeginChild(label_asset.c_str(), ImVec2(image_size.x * 2, image_size.y * 1.3f));
     {
-        /*const TextureRef folder_icon = ResourceManager::get_texture("folder_icon.png");
-        const ImTextureID texture_id = folder_icon ? folder_icon->get_texture_id() : 0;*/
-        const ImTextureID texture_id = 0;
+        const TextureRef folder_icon = !folder->sub_folders.empty() || !folder->assets.empty() ? ResourceManager::get_texture("folder_icon.png") : ResourceManager::get_texture("folder_icon_empty.png");
+        const ImTextureID texture_id = folder_icon ? folder_icon->get_texture_id() : 0;
 
         const bool is_folder_clicked = ImGui::ImageButton(
             label_asset.c_str(),
             texture_id,
             image_size,
-            { 1, 1 }, { 0, 0 },
+            { 0, 1 }, { 1, 0 },
             ImVec4(0, 0, 0, 0),
             ImVec4(1, 1, 1, 1)
         );
@@ -238,7 +237,7 @@ void AssetPanel::draw_asset_tile(const string& name, Asset* asset)
             label_asset.c_str(),
             text_id,
             image_size,
-            { 1, 1}, { 0, 0 }, // UV coords (flip second pair for OpenGL if needed)
+            { 0, 1 }, { 1, 0 }, // UV coords (flip second pair for OpenGL if needed)
             ImVec4(0, 0, 0, 0), // background colour
             tint
         );

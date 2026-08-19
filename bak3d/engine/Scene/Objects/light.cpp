@@ -135,7 +135,7 @@ void Light::update_light_data_ubo() const
 {
 	m_light_data_ubo->bind();
 
-	glm::vec3 position = transform.get_global_position();
+	const glm::vec3 position = transform.get_global_position();
 	// vec4 position
 	m_light_data_ubo->bind_buffer_sub_data(&position,        VEC3_SIZE,  0 * VEC4_SIZE + 0);
 	m_light_data_ubo->bind_buffer_sub_data(&m_inner_cut_off, FLOAT_SIZE, 0 * VEC4_SIZE + VEC3_SIZE);
