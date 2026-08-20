@@ -118,10 +118,12 @@ enum class GlobalSettingOption : uint32_t
 
 enum class SceneObjectType : uint32_t
 {
+    Camera,
     Grid,
     Axis,
     Light,
     Model,
+    Mesh,
     ParticleSystem,
     AdvancedParticleSystem,
     Max
@@ -184,6 +186,7 @@ struct Vertex
     }
 
 };
+static constexpr GLsizei VERTEX_SIZE = sizeof(Vertex);
 
 struct Edge
 {
@@ -203,6 +206,7 @@ struct Edge
         return v1_index < other.v1_index || (v1_index == other.v1_index && v2_index < other.v2_index);
     }
 };
+static constexpr GLsizei EDGE_SIZE = sizeof(Edge);
 
 struct Face
 {
@@ -223,6 +227,7 @@ struct Face
         return indices < other.indices;
     }
 };
+static constexpr GLsizei FACE_SIZE = sizeof(Face);
 
 using ShaderStageMap = std::unordered_map<GLenum, std::string>;
 
@@ -241,11 +246,12 @@ inline const char* get_shader_stage_name_file_extension(GLenum stage)
 }
 
 /*
- * Additional indirection layer for referencing MaterialRef's on different scene objects.
+ * Additional indirection layer for referencing material, mesh and other asset data on different scene objects.
  */
 using MaterialSlot = std::shared_ptr<MaterialRef>;
+using MeshSlot = std::shared_ptr<MeshRef>;
 
-// Helper to create a slot preloaded with a material
+// Helper to create a slot preloaded with an asseted slot
 inline MaterialSlot make_material_slot(const MaterialRef& mat)
 {
     return std::make_shared<MaterialRef>(mat);
@@ -254,6 +260,16 @@ inline MaterialSlot make_material_slot(const MaterialRef& mat)
 inline MaterialSlot make_material_slot()
 {
     return std::make_shared<MaterialRef>(nullptr);
+}
+
+inline MeshSlot make_mesh_slot(const MeshRef& mesh)
+{
+    return std::make_shared<MeshRef>(mesh);
+}
+
+inline MeshSlot make_mesh_slot()
+{
+    return std::make_shared<MeshRef>(nullptr);
 }
 
 // Unique cube vertices (8 total)

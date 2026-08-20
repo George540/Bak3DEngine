@@ -1,5 +1,6 @@
 #include "particle_system.h"
 
+#include "Asset/mesh_data.h"
 #include "Asset/resource_manager.h"
 
 #include "Core/logger.h"
@@ -11,10 +12,6 @@ ParticleSystem::ParticleSystem(const string& name)
                 glm::vec3(0.0f),
                         name)
 {
-    // Build shared quad geometry (unit quad in 0..1 range, shader centres it)
-    m_vbo = new VertexBuffer(static_cast<GLsizei>(QUAD_VERTICES.size()) * VEC4_SIZE, QUAD_VERTICES.data());
-    m_ebo = new ElementBuffer(static_cast<GLsizei>(QUAD_INDICES.size()) * UINT_SIZE, QUAD_INDICES.data());
-
     // Add one emitter by default
     add_emitter();
 
@@ -50,7 +47,7 @@ void ParticleSystem::ensure_ibo_capacity(const ParticleEmitter& emitter)
 
     // Attribute 0: quad vertex from the shared VBO
     // VBO must be bound when glVertexAttribPointer is called so VAO records it
-    m_vbo->bind();
+    (*m_mesh_slot)->get_vbo()->bind();
     gpu_data.vao->set_attrib_pointer(0, 4, GL_FLOAT, GL_FALSE, VEC4_SIZE, nullptr);
 
     // Attributes 1-4: per-instance data from this emitter's IBO
@@ -63,8 +60,8 @@ void ParticleSystem::ensure_ibo_capacity(const ParticleEmitter& emitter)
     gpu_data.vao->set_attrib_pointer(3, 1, GL_FLOAT, GL_FALSE, stride,
         reinterpret_cast<void*>(offsetof(ParticleInstanceData, scale)), 1);
 
-    m_ebo->bind();
-    m_vbo->unbind();
+    (*m_mesh_slot)->get_ebo()->bind();
+    (*m_mesh_slot)->get_vbo()->unbind();
     gpu_data.vao->unbind();
 }
 

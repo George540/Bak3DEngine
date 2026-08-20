@@ -24,6 +24,7 @@ THE SOFTWARE.
 
 #include "AdvancedParticleSystem.h"
 
+#include "Asset/mesh_data.h"
 #include "Asset/resource_manager.h"
 #include "Input/event_manager.h"
 #include "Renderer/debug_scope.h"
@@ -89,9 +90,9 @@ void AdvancedParticleSystem::draw() const
 
     glEnable(GL_PROGRAM_POINT_SIZE);
 
-    m_vao->bind();
+    (*m_mesh_slot)->get_vao()->bind();
     m_draw_indirect_command_buffer->draw_command(GL_POINTS, PARTICLE_COMMAND_SLOT);
-    m_vao->unbind();
+    (*m_mesh_slot)->get_vao()->unbind();
 
     glDisable(GL_PROGRAM_POINT_SIZE);
 }

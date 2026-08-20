@@ -28,6 +28,7 @@ THE SOFTWARE.
 #include "renderable_object.h"
 
 #include "Scene/scene.h"
+#include "Scene/scene_manager.h"
 
 using namespace std;
 
@@ -37,19 +38,7 @@ RenderableObject::RenderableObject(const MaterialRef& material, const glm::vec3 
 	m_material_slot = make_material_slot(material);
 	m_visible = true;
 
-	m_vao = new VertexArray();
-	m_vao->bind();
-
-	// Will be handled by derived class
-	m_vbo = nullptr;
-	m_ebo = nullptr;
-}
-
-RenderableObject::~RenderableObject()
-{
-	delete m_vao;
-	delete m_vbo;
-	delete m_ebo;
+	update_self_and_children();
 }
 
 void RenderableObject::update(float dt)
@@ -59,23 +48,31 @@ void RenderableObject::update(float dt)
 
 void RenderableObject::draw() const
 {
-	Camera* scene_camera = Scene::instance->get_camera();
+	Camera* scene_camera = SceneManager::get_current_scene()->get_camera();
 	if (!m_material_slot || !*m_material_slot || !scene_camera) return;
 
+	(*m_material_slot)->bind_textures_cache();
 	(*m_material_slot)->set_mat4("model", transform.get_global_model_matrix());
 	apply_material();
+
+	if (has_mesh())
+	{
+		(*m_mesh_slot)->draw();
+	}
 }
 
-InstancedRenderableObject::InstancedRenderableObject(const MaterialRef& material, const std::string& name) : RenderableObject(material, glm::vec3(0.0f, 0.0f, 0.0f), name), m_ibo(nullptr) {}
+InstancedRenderableObject::InstancedRenderableObject(const MaterialRef& material, const glm::vec3 position, const std::string& name)
+	: RenderableObject(material, position, name), m_ibo(nullptr) {}
 
 InstancedRenderableObject::~InstancedRenderableObject()
 {
 	delete m_ibo;
+	m_instances_transforms.clear();
 }
 
 void InstancedRenderableObject::draw() const
 {
-	Camera* scene_camera = Scene::instance->get_camera();
+	Camera* scene_camera = SceneManager::get_current_scene()->get_camera();
 	if (!m_material_slot || !*m_material_slot || !scene_camera) return;
 
 	(*m_material_slot)->apply();

@@ -40,6 +40,7 @@ ResourceMap<Shader> ResourceManager::Shaders;
 ResourceMap<Texture2D> ResourceManager::Textures;
 ResourceMap<Material> ResourceManager::Materials;
 ResourceMap<Model> ResourceManager::Models;
+ResourceMap<PrimitiveData> ResourceManager::Meshes;
 
 void ResourceManager::initialize()
 {
@@ -47,6 +48,7 @@ void ResourceManager::initialize()
     initialize_predefined_textures();
     initialize_predefined_materials();
     initialize_models();
+    initialize_predefined_meshes();
 }
 
 void ResourceManager::reload_shaders()
@@ -190,6 +192,16 @@ void ResourceManager::initialize_models()
     {
         add_model(file_name, new Model(file_path, file_name));
     }
+}
+
+void ResourceManager::initialize_predefined_meshes()
+{
+    add_mesh("Grid", new GridData());
+    add_mesh("Quad", new QuadData());
+
+    auto test = ResourceManager::Meshes;
+
+    return;
 }
 
 void ResourceManager::initialize_predefined_materials()

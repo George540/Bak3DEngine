@@ -199,28 +199,28 @@ void Details::update()
         if (previous_object_selection_index == 1)
         {
             m_current_model = nullptr;
-            Scene::instance->set_model(nullptr);
+            //Scene::instance->set_model(nullptr);
             model_selection_index = 0;
         }
         else if (previous_object_selection_index == 2)
         {
             m_current_particle_system = nullptr;
-            Scene::instance->despawn_particle_system();
+            //Scene::instance->despawn_particle_system();
         }
         else if (previous_object_selection_index == 3)
         {
             m_current_advanced_particle_system = nullptr;
-            Scene::instance->despawn_advanced_particle_system();
+            //Scene::instance->despawn_advanced_particle_system();
         }
 
         if (object_selection_index == 2)
         {
-            m_current_particle_system = Scene::instance->spawn_particle_system();
+            //m_current_particle_system = Scene::instance->spawn_particle_system();
         }
 
         if (object_selection_index == 3)
         {
-            m_current_advanced_particle_system = Scene::instance->spawn_advanced_particle_system();
+            //m_current_advanced_particle_system = Scene::instance->spawn_advanced_particle_system();
         }
 
         previous_object_selection_index = object_selection_index;
@@ -266,13 +266,13 @@ void Details::draw_model_section()
         ImGuiB3D::PropertyDropdown("Model", m_model_name_items, &model_selection_index, "Select one of the loaded asset models to render in the scene.");
         const string selected_model_name = m_model_name_items[model_selection_index];
         Model* selected_model = model_selection_index > 0 ? ResourceManager::get_model(selected_model_name).ref()->asset : nullptr;
-        m_current_model = Scene::instance->get_model();
+        //m_current_model = Scene::instance->get_model();
 
         bool is_model_different = selected_model && m_current_model ? selected_model->get_object_name() != m_current_model->get_object_name() : selected_model != m_current_model;
         if (is_model_different)
         {
             m_current_model = selected_model;
-            Scene::instance->set_model(m_current_model);
+            //Scene::instance->set_model(m_current_model);
         }
 
         if (m_current_model)

@@ -24,7 +24,6 @@ THE SOFTWARE.
 
 #include "scene_manager.h"
 
-#include "scene.h"
 #include "Core/logger.h"
 #include "Input/event_manager.h"
 
@@ -50,4 +49,9 @@ void SceneManager::update()
 void SceneManager::shutdown()
 {
     scene = nullptr;
+}
+
+Scene* SceneManager::get_current_scene()
+{
+    return scene;
 }

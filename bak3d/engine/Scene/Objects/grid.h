@@ -25,6 +25,7 @@ THE SOFTWARE.
 #pragma once
 
 #include "renderable_object.h"
+#include "Asset/mesh_data.h"
 
 /*
  * Basic grid class that draws the XZ plane grid with a certain size and slices.
@@ -32,12 +33,8 @@ THE SOFTWARE.
 class Grid : public RenderableObject
 {
 public:
-	Grid(MaterialRef material);
+	Grid();
 	~Grid() override = default;
 
 	void draw() const override;
-private:
-	int m_number_of_elements;
-	int m_number_of_slices;
-	float m_grid_size;
 };

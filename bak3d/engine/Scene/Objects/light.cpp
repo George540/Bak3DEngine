@@ -43,12 +43,6 @@ Light::Light(glm::vec3 position, glm::vec3 scaling, const MaterialRef& material)
 	transform.set_local_scale(scaling);
 	transform.compute_model_matrix();
 
-	m_vbo = new VertexBuffer(static_cast<GLsizei>(QUAD_VERTICES.size()) * VEC4_SIZE, QUAD_VERTICES.data());
-	m_ebo = new ElementBuffer(static_cast<GLsizei>(QUAD_INDICES.size()) * UINT_SIZE, QUAD_INDICES.data());
-
-	m_vao->set_attrib_pointer(0, 4, GL_FLOAT, GL_FALSE, VEC4_SIZE, nullptr);
-	m_vao->unbind();
-
 	// @TODO: Replace with struct payload instead of manual size
 	m_light_data_ubo = std::make_unique<UniformBuffer>(6 * VEC4_SIZE /*Temporary size*/, nullptr, 1, GL_DYNAMIC_DRAW);
 
@@ -65,6 +59,9 @@ Light::Light(glm::vec3 position, glm::vec3 scaling, const MaterialRef& material)
 	m_horizontal_angle = transform.get_global_position().x;
 	m_vertical_angle = transform.get_global_position().y;
 	m_distance_offset = glm::distance(transform.get_global_position(), glm::vec3(0.0f));
+
+	m_mesh_slot = make_mesh_slot(ResourceManager::get_mesh("Quad"));
+	set_texture_by_type(LightType::Point);
 
 	B3D_LOG_INFO("Light created.");
 }
@@ -107,15 +104,11 @@ void Light::update(float dt)
 
 void Light::draw() const
 {
-	RenderableObject::draw();
-
 	(*m_material_slot)->set_vec4("diffuseColor", glm::vec4(m_diffuse, 1.0f));
 
 	m_sprite_texture->bind(0);
-
-	m_vao->bind();
-	glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(QUAD_INDICES.size()), GL_UNSIGNED_INT, nullptr);
-	m_vao->unbind();
+	
+	RenderableObject::draw();
 
 	Texture2D::unbind();
 }

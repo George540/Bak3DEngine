@@ -38,7 +38,7 @@ class Model;
 class Texture2D;
 
 /*
- * Static class for managing loaded rendering resources such as shaders, textures, materials
+ * Static class for managing loaded rendering resources such as shaders, textures, materials, meshes
  * and models to be used in the engine.
  */
 class ResourceManager
@@ -49,6 +49,7 @@ public:
     static ResourceMap<Texture2D> Textures;
     static ResourceMap<Material> Materials;
     static ResourceMap<Model> Models;
+    static ResourceMap<PrimitiveData> Meshes;
 
     static void initialize();
 
@@ -58,17 +59,20 @@ public:
     static void add_texture(const std::string& name, Texture2D* texture) { Textures.insert_or_swap(name, texture, [](const Texture2D* t) { return t != nullptr; }); }
     static void add_material(const std::string& name, Material* material) { Materials.insert_or_swap(name, material, [](const Material* m) { return m != nullptr; }); }
     static void add_model(const std::string& name, Model* model) { Models.insert_or_swap(name, model, [](const Model* m) { return m != nullptr; }); }
+    static void add_mesh(const std::string& name, PrimitiveData* mesh) { Meshes.insert_or_swap(name, mesh, [](const PrimitiveData* m) { return m != nullptr; }); }
 
     static ShaderRef get_shader(const std::string& name) { return Shaders.get(name); }
     static TextureRef get_texture(const std::string& name) { return Textures.get(name); }
     static MaterialRef get_material(const std::string& name) { return Materials.get(name); }
     static ModelRef get_model(const std::string& name) { return Models.get(name); }
+    static MeshRef get_mesh(const std::string& name) { return Meshes.get(name); }
     
     static void shutdown();
 private:
     static void initialize_shaders();
     static void initialize_predefined_textures();
     static void initialize_models();
+    static void initialize_predefined_meshes();
     static void initialize_predefined_materials();
     
     ResourceManager() = default;

@@ -50,7 +50,7 @@ public:
 
     SceneObject() : SceneObject(glm::vec3(0.0f, 0.0f, 0.0f), "SceneObject") {}
     SceneObject(const glm::vec3 position, const std::string& name) : Bak3DObject(name) { transform.set_local_position(position); }
-    virtual ~SceneObject() override = 0;
+    ~SceneObject() override = default;
 
     // If no arguments, default constructor is called instead for the called class.
     template<typename T>
@@ -102,5 +102,3 @@ public:
         update_self_and_children();
     }
 };
-
-inline SceneObject::~SceneObject() = default;

@@ -35,8 +35,10 @@ class Shader;
 class Texture2D;
 class Material;
 class Model;
+class PrimitiveData;
 
 typedef SharedAssetRef<Shader> ShaderRef;
 typedef SharedAssetRef<Texture2D> TextureRef;
 typedef SharedAssetRef<Material> MaterialRef;
 typedef SharedAssetRef<Model> ModelRef;
+typedef SharedAssetRef<PrimitiveData> MeshRef;

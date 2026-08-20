@@ -29,7 +29,7 @@ THE SOFTWARE.
 #include "renderer.h"
 #include "Asset/resource_manager.h"
 #include "Core/global_settings.h"
-#include "Scene/scene.h"
+#include "Scene/scene_manager.h"
 
 void RendererPasses::render_pass_debug_geometry()
 {
@@ -41,11 +41,11 @@ void RendererPasses::render_pass_debug_geometry()
     const bool is_axis_rendering = GlobalSettings::get_global_setting_value<bool>(GlobalSettingOption::AxisRendering);
     if (is_grid_rendering)
     {
-        Scene::instance->get_object_in_scene(SceneObjectType::Grid)->draw();
+        SceneManager::get_current_scene()->get_grid()->draw();
     }
     if (is_axis_rendering)
     {
-        Scene::instance->get_object_in_scene(SceneObjectType::Axis)->draw();
+        
     }
 
     glDepthFunc(GL_LESS);
@@ -55,28 +55,34 @@ void RendererPasses::render_pass_opaque_geometry()
 {
     DebugScopeGroup scope("Opaque Geometry Pass");
 
-    if (const Model* model = Scene::instance->get_model())
+    for (SceneObject* mesh_obj : SceneManager::get_current_scene()->get_all(SceneObjectType::Mesh))
     {
-        model->draw();
+        const Mesh* mesh = dynamic_cast<Mesh*>(mesh_obj);
+        mesh->draw();
     }
+    /*for (SceneObject* model_obj : SceneManager::get_current_scene()->get_all(SceneObjectType::Model))
+    {
+        const Model* mesh = dynamic_cast<Model*>(model_obj);
+        mesh->draw();
+    }*/
 }
 
 void RendererPasses::render_pass_sprites()
 {
     DebugScopeGroup scope("Sprites Pass");
 
-    const ParticleSystem* particle_system = Scene::instance->get_particle_system();
+    /*const ParticleSystem* particle_system = Scene::instance->get_particle_system();
     if (!particle_system)
     {
         return;
-    }
+    }*/
 
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glDepthMask(GL_FALSE);
     glDisable(GL_CULL_FACE);
 
-    particle_system->draw();
+    //particle_system->draw();
 
     glDepthMask(GL_TRUE);
     glDisable(GL_BLEND);
@@ -85,7 +91,7 @@ void RendererPasses::render_pass_sprites()
 
 void RendererPasses::render_pass_transparency()
 {
-    DebugScopeGroup scope("Transparency Pass (WBOIT)");
+    /*DebugScopeGroup scope("Transparency Pass (WBOIT)");
 
     AdvancedParticleSystem* advanced_particles = Scene::instance->get_advanced_particle_system();
     if (!advanced_particles)
@@ -163,7 +169,7 @@ void RendererPasses::render_pass_transparency()
         glDisable(GL_BLEND);
 
         // Unbind in the next pass(es)
-    }
+    }*/
 }
 
 void RendererPasses::render_pass_post_processing()
@@ -186,7 +192,11 @@ void RendererPasses::render_pass_editor_overlays()
 
     if (GlobalSettings::get_global_setting_value<bool>(GlobalSettingOption::Light_Enabled))
     {
-        Scene::instance->get_active_light()->draw();
+        for (SceneObject* light_obj : SceneManager::get_current_scene()->get_all(SceneObjectType::Light))
+        {
+            const Light* light = dynamic_cast<Light*>(light_obj);
+            light->draw();
+        }
     }
 
     glDisable(GL_BLEND);

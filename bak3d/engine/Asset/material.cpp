@@ -333,6 +333,11 @@ void Material::apply()
 
 void Material::bind_textures_cache()
 {
+    if (m_texture_names.empty())
+    {
+        return;
+    }
+
     Texture2D::unbind_all(m_texture_names.size());
 
     for (const auto& [type, value] : m_texture_names)

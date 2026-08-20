@@ -24,6 +24,8 @@ THE SOFTWARE.
 
 #pragma once
 
+#include "scene.h"
+
 /*
  * Simple static Scene Manager that handles Scene instance behaviour in the main loop.
  */
@@ -33,4 +35,6 @@ public:
     static void initialize();
     static void update();
     static void shutdown();
+
+    static Scene* get_current_scene();
 };

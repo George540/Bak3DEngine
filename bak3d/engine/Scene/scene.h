@@ -34,8 +34,7 @@ THE SOFTWARE.
 #include "Objects/Particle/particle_system.h"
 
 /*
- * This is the class that contains all the scene's data, such as references to cameras, lights, models, grids, etc.
- * Runs in the main loop of the project and is only one singleton instance (at the moment).
+ * This is the class that contains all the scene's data. Runs in the main loop of the project.
  */
 class Scene
 {
@@ -43,38 +42,41 @@ public:
 	Scene();
 	~Scene();
 
-	static Scene* get_instance() { return instance; }
+	SceneObject* get_object_in_scene(SceneObjectType type, int index = 0);
+	Camera* get_camera() const { return m_camera; }
+	Grid* get_grid() const { return m_grid; }
+
+	template<typename T, typename... Args>
+	T* instantiate(SceneObjectType category, SceneObject* parent, Args&&... args)
+	{
+		static_assert(std::is_base_of_v<SceneObject, T>, "instantiate<T> requires a SceneObject-derived type");
+
+		auto owned = std::make_unique<T>(std::forward<Args>(args)...);
+		T* raw = owned.get();
+
+		SceneObject* attach_point = parent ? parent : m_root.get();
+		attach_point->add_child(std::move(owned));
+
+		m_category_index[category].push_back(raw);
+		return raw;
+	}
+
+	RenderableObject* instantiate_model(const ModelRef& model, SceneObject* parent = nullptr);
+
+	void destroy(SceneObject* obj);
 
 	void update(float dt) const;
 
-	Camera* get_camera() const { return m_camera; }
-	Light* get_active_light() const { return m_light; }
-
-	RenderableObject* get_object_in_scene(SceneObjectType object_type) const { return m_scene_objects.at(object_type); }
-
-	Model* get_model() const { return m_model; }
-	void set_model(Model* model) { m_model = model; }
-
-	ParticleSystem* get_particle_system() const { return m_particle_system; }
-	void set_particle_system(ParticleSystem* model) { m_particle_system = model; }
-
-	AdvancedParticleSystem* get_advanced_particle_system() const { return m_advanced_particle_system; }
-	void set_advanced_particle_system(AdvancedParticleSystem* model) { m_advanced_particle_system = model; }
-
-	ParticleSystem* spawn_particle_system();
-	void despawn_particle_system();
-
-	AdvancedParticleSystem* spawn_advanced_particle_system();
-	void despawn_advanced_particle_system();
-
-	static Scene* instance;
+	const std::vector<SceneObject*>& get_all(const SceneObjectType category) const
+	{
+		static const std::vector<SceneObject*> empty;
+		const auto it = m_category_index.find(category);
+		return it != m_category_index.end() ? it->second : empty;
+	}
 private:
-	std::unordered_map<SceneObjectType, RenderableObject*> m_scene_objects;
-	ParticleSystem* m_particle_system;
-	AdvancedParticleSystem* m_advanced_particle_system;
+	std::unique_ptr<SceneObject> m_root;
+	std::unordered_map<SceneObjectType, std::vector<SceneObject*>> m_category_index;
+
 	Camera* m_camera;
-	Model* m_model; // Asset, not an Object
-	Light* m_light;
 	Grid* m_grid;
-	Axis* m_axis;
 };

@@ -38,10 +38,9 @@ THE SOFTWARE.
 class RenderableObject : public SceneObject, public IRenderable
 {
 protected:
-    VertexArray* m_vao;
-    VertexBuffer* m_vbo;
-    ElementBuffer* m_ebo;
-
+    // A Renderable Object (RO) currently has only one mesh at a time.
+    // An Instanced Renderable Object (IRO) will be able to have multiple instances of the same mesh reference.
+    MeshSlot m_mesh_slot;
     MaterialSlot m_material_slot;
 
     bool m_visible;
@@ -49,15 +48,21 @@ protected:
     void apply_material() const { if (has_material()) (*m_material_slot)->apply(); }
 public:
     RenderableObject(const MaterialRef& material, const glm::vec3 position, const std::string& name);
-    ~RenderableObject() override;
+    ~RenderableObject() override = default;
 
     void update(float dt) override;
     void draw() const override;
 
+    void set_mesh(const MeshRef& mesh) const { *m_mesh_slot = mesh; }
+    void set_mesh_slot(const MeshSlot& mesh_slot) { m_mesh_slot = mesh_slot; }
+    bool has_mesh() const { return m_mesh_slot && *m_mesh_slot && m_mesh_slot->is_valid(); }
+    MeshRef get_mesh() const { return *m_mesh_slot; }
+
     void set_material(const MaterialRef& material) const { *m_material_slot = material; } // Standalone objects swap their own slot
     void set_material_slot(const MaterialSlot& slot) { m_material_slot = slot; } // Adopt a shared slot from a parent model
-    bool has_material() const { return m_material_slot && *m_material_slot; }
+    bool has_material() const { return m_material_slot && *m_material_slot && m_material_slot->is_valid(); }
     MaterialRef get_material() const { return *m_material_slot; }
+
     void set_visible(bool visible) { m_visible = visible; }
     bool is_visible() const { return m_visible; }
 };
@@ -70,8 +75,9 @@ class InstancedRenderableObject : public RenderableObject
 {
 protected:
     InstanceBuffer* m_ibo;
+    std::vector<Transform> m_instances_transforms;
 public:
-    InstancedRenderableObject(const MaterialRef& material, const std::string& name);
+    InstancedRenderableObject(const MaterialRef& material, const glm::vec3 position, const std::string& name);
     ~InstancedRenderableObject() override;
 
     void draw() const override;

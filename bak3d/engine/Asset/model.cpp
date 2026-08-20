@@ -31,7 +31,10 @@ THE SOFTWARE.
 
 #include "model.h"
 
+#include <set>
+
 #include "file_loader.h"
+#include "mesh_data.h"
 #include "Asset/resource_manager.h"
 #include "Core/logger.h"
 #include "Scene/scene.h"
@@ -40,7 +43,7 @@ using namespace std;
 
 namespace
 {
-	std::set<Vertex> m_unique_vertices;
+	set<Vertex> m_unique_vertices;
 	std::set<Edge> m_unique_edges;
 	std::set<Face> m_unique_faces;
 }
@@ -48,11 +51,6 @@ namespace
 Model::Model(const string& path, const std::string& file_name) :
 	Asset(path, file_name)
 {
-	m_path = path;
-	m_directory = m_path.substr(0, m_path.find_last_of('/'));
-	m_file_name = file_name;
-	m_object_name = m_file_name.substr(0, m_file_name.find('.'));
-	
 	load_model(path);
 
 	// Gather number of vertices but discard set storages to save on space.
@@ -65,44 +63,22 @@ Model::Model(const string& path, const std::string& file_name) :
 
 	m_current_material_slot = make_material_slot();
 	set_current_material(m_object_name + "_material");
-	for (const auto& mesh : meshes)
-	{
-		mesh->set_material(*m_current_material_slot);
-	}
 }
 
 Model::~Model()
 {
 	// Free texture data
-	textures_cache.clear();
+	m_textures_cache.clear();
 	B3D_LOG_INFO("Texture data of model %s has been cleared", m_file_name.c_str());
 
 	m_current_material_slot = nullptr;
 	
-	meshes.clear();
+	m_mesh_data.clear();
 	B3D_LOG_INFO("Model %s mesh data have been safely deleted", m_file_name.c_str());
-}
-
-void Model::draw() const
-{
-	if (!m_visible || !Scene::instance->get_camera() || !Scene::instance->get_active_light() || !m_current_material_slot) return;
-
-	update_material_properties();
-
-	for (auto& mesh : meshes)
-	{
-		mesh->draw();
-	}
-}
-
-void Model::update_material_properties() const
-{
-	(*m_current_material_slot)->bind_textures_cache();
 }
  
 void Model::load_model(string const& path)
 {
-	// read file via ASSIMP
 	Assimp::Importer importer;
 	const aiScene* scene = importer.ReadFile(path, aiProcess_Triangulate
 														| aiProcess_GenSmoothNormals
@@ -112,42 +88,46 @@ void Model::load_model(string const& path)
 														| aiProcess_SortByPType
 														| aiProcess_FindInvalidData);
 
-	// check for errors
 	if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) //if it's not zero
 	{
 		B3D_LOG_ERROR("Assimp error: %s", importer.GetErrorString());
 		return;
 	}
 
-	// retrieve the directory path of the filepath
 	B3D_LOG_INFO("Loading model with name %s", m_file_name.c_str());
 
-	// process ASSIMP's root node recursively
-	process_node(scene->mRootNode, scene);
+	m_root_node = process_node(scene->mRootNode, scene);
 }
 
 // processes a node in a recursive fashion. Processes each individual mesh located at the node and repeats this process on its children nodes (if any).
-void Model::process_node(aiNode* node, const aiScene* scene)
+unique_ptr<ModelNode> Model::process_node(aiNode* node, const aiScene* scene)
 {
-	// process each mesh located at the current node
-	for (unsigned int i = 0; i < node->mNumMeshes; ++i)
-	{
-		// the node object only contains indices to index the actual objects in the scene.
-		// the scene contains all the data, node is just to keep stuff organized (like relations between nodes).
-		aiMesh * mesh = scene->mMeshes[node->mMeshes[i]];
+	auto model_node = make_unique<ModelNode>();
+	model_node->name = node->mName.C_Str();
 
-		auto mesh_object = process_mesh(mesh, scene);
-		meshes.push_back(mesh_object);
+	const aiMatrix4x4& transform = node->mTransformation;
+	model_node->local_transform = glm::mat4(
+		transform.a1, transform.b1, transform.c1, transform.d1,
+		transform.a2, transform.b2, transform.c2, transform.d2,
+		transform.a3, transform.b3, transform.c3, transform.d3,
+		transform.a4, transform.b4, transform.c4, transform.d4);
+
+	// Handle all cases of referenced meshes, whether is itself or children
+	for (GLuint i = 0; i < node->mNumMeshes; ++i)
+	{
+		aiMesh* ai_mesh = scene->mMeshes[node->mMeshes[i]];
+		model_node->meshes.push_back(process_mesh(ai_mesh, scene, node->mMeshes[i]));
 	}
 
-	// after we've processed all the meshes (if any) we then recursively process each of the children nodes
-	for (unsigned int i = 0; i < node->mNumChildren; i++)
+	for (GLuint i = 0; i < node->mNumChildren; ++i)
 	{
-		process_node(node->mChildren[i], scene);
+		model_node->children.push_back(process_node(node->mChildren[i], scene));
 	}
+
+	return model_node;
 }
 
-Mesh* Model::process_mesh(aiMesh* mesh, const aiScene* scene)
+MeshRef Model::process_mesh(aiMesh* mesh, const aiScene* scene, const int mesh_index)
 {
 	// data to fill
 	vector<Vertex> vertices;
@@ -268,9 +248,9 @@ Mesh* Model::process_mesh(aiMesh* mesh, const aiScene* scene)
 	}
 
 	// Return a mesh object created from the extracted mesh data
-	const int mesh_index = meshes.size();
-	string mesh_name = "ChildMesh_" + to_string(mesh_index);
-	return new Mesh(vertices, indices, mesh_name);
+	const string mesh_key = m_object_name + "_mesh_" + to_string(mesh_index);
+	ResourceManager::add_mesh(mesh_key, new MeshData(move(vertices), move(indices), mesh->mName.C_Str()));
+	return ResourceManager::get_mesh(mesh_key);
 }
 
 void Model::load_material_textures(aiMaterial* mat, aiTextureType type)
@@ -280,7 +260,7 @@ void Model::load_material_textures(aiMaterial* mat, aiTextureType type)
 		aiString filename;
 		mat->GetTexture(type, i, &filename);
 
-		if (!textures_cache.contains(type)) // only one texture for each texture type at a time
+		if (!m_textures_cache.contains(type)) // only one texture for each texture type at a time
 		{
 			string path = m_directory + '/' + filename.C_Str();
 			string texture_file_name = string(filename.C_Str());
@@ -288,7 +268,7 @@ void Model::load_material_textures(aiMaterial* mat, aiTextureType type)
 			auto texture_name = texture_file_name.substr(0, texture_file_name.find('.'));
 			auto texture_key = format("{}.{}",m_object_name, texture_name);
 			ResourceManager::add_texture(texture_key, texture);
-			textures_cache[type] = texture;
+			m_textures_cache[type] = texture;
 		}
 	}
 }
@@ -296,6 +276,5 @@ void Model::load_material_textures(aiMaterial* mat, aiTextureType type)
 void Model::set_current_material(const std::string& material_name)
 {
 	// Write into the shared slot. All meshes see this instantly
-	auto t = ResourceManager::get_material(material_name);
 	*m_current_material_slot = ResourceManager::get_material(material_name);
 }

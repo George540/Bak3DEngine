@@ -26,6 +26,7 @@ THE SOFTWARE.
 
 #include "axis.h"
 
+#include "Asset/mesh_data.h"
 #include "Core/global_definitions.h"
 #include "Core/logger.h"
 
@@ -35,13 +36,6 @@ Axis::Axis(MaterialRef material) :
 	transform.set_local_scale(glm::vec3(3.0f));
 	update_self_and_children();
 
-	m_vbo = new VertexBuffer(sizeof(AxisVertex) * AXIS_VERTICES.size(), AXIS_VERTICES.data());
-	m_ebo = new ElementBuffer(sizeof(GLuint) * AXIS_INDICES.size(), AXIS_INDICES.data());
-
-	m_vao->set_attrib_pointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(AxisVertex), reinterpret_cast<void*>(offsetof(AxisVertex, position)));
-	m_vao->set_attrib_pointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(AxisVertex), reinterpret_cast<void*>(offsetof(AxisVertex, color)));
-	m_vao->unbind();
-
 	B3D_LOG_INFO("Setting up 3D axis gizmo...");
 }
 
@@ -49,7 +43,7 @@ void Axis::draw() const
 {
 	RenderableObject::draw();
 
-	m_vao->bind();
+	(*m_mesh_slot)->get_vao()->unbind();
 	glDrawElements(GL_LINES, static_cast<GLsizei>(AXIS_INDICES.size()), GL_UNSIGNED_INT, nullptr);
-	m_vao->unbind();
+	(*m_mesh_slot)->get_vao()->unbind();
 }
