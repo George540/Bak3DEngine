@@ -27,6 +27,7 @@ THE SOFTWARE.
 #include "Buffers/data_buffer.h"
 #include "Buffers/frame_buffer.h"
 #include "Core/global_settings.h"
+#include "Scene/Objects/quad.h"
 
 struct GLFWwindow;
 
@@ -52,6 +53,7 @@ public:
 	static void draw_frame();
 	static void end_frame();
 
+	static void initialize_screen_quad();
 	static void draw_quad();
 
 	static GLFWwindow* get_window() { return r_window; }

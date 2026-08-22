@@ -32,6 +32,7 @@ THE SOFTWARE.
 #include "shader.h"
 #include "texture.h"
 #include "Core/logger.h"
+#include "Renderer/renderer.h"
 
 using namespace std;
 
@@ -198,10 +199,7 @@ void ResourceManager::initialize_predefined_meshes()
 {
     add_mesh("Grid", new GridData());
     add_mesh("Quad", new QuadData());
-
-    auto test = ResourceManager::Meshes;
-
-    return;
+    Renderer::initialize_screen_quad();
 }
 
 void ResourceManager::initialize_predefined_materials()

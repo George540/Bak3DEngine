@@ -229,6 +229,11 @@ void Renderer::draw_quad()
 	}
 }
 
+void Renderer::initialize_screen_quad()
+{
+	m_quad = new Quad();
+}
+
 void Renderer::shutdown()
 {
 	r_window = nullptr;
@@ -301,8 +306,6 @@ void Renderer::initialize_buffers()
 
 	// Pages Data (Debug View) Uniform Buffer: Store debug data for different debug views and other debugging options
 	r_debug_view_ubo = make_unique<UniformBuffer>(PAGES_DATA_SIZE, nullptr, 2, GL_DYNAMIC_DRAW);
-
-	m_quad = new Quad();
 }
 
 void Renderer::query_gpu_limitations()
