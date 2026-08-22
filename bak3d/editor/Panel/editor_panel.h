@@ -40,6 +40,8 @@ public:
     virtual void update();
     virtual void end_frame();
 protected:
+    virtual void draw_toolbar() {}
+    
     bool m_visible;
     int m_flags;
     const char* m_title = "Title";

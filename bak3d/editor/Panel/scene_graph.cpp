@@ -24,11 +24,47 @@ THE SOFTWARE.
 
 #include "scene_graph.h"
 
+#include <ranges>
+
+#include "imgui_b3d_extensions.h"
 #include "Asset/mesh_data.h"
 #include "Scene/scene.h"
+#include "Scene/scene_manager.h"
 
 namespace
 {
+    SceneObject* m_selected_object = nullptr;
+
+    void draw_subtree(const SceneObject* scene_object)
+    {
+        for (auto& child : scene_object->children)
+        {
+            ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_SpanAvailWidth;
+            if (m_selected_object == child.get())
+            {
+                flags |= ImGuiTreeNodeFlags_Selected;
+            }
+
+            if (child->children.empty())
+            {
+                flags |= ImGuiTreeNodeFlags_Leaf;
+            }
+
+            const char* child_name = child->get_object_name().c_str();
+            const bool is_tree_open = ImGui::TreeNodeEx(child_name, flags, "%s", child_name);
+            if (ImGui::IsItemClicked())
+            {
+                m_selected_object = child.get();
+            }
+
+            if (is_tree_open)
+            {
+                draw_subtree(child.get());
+                ImGui::TreePop();
+            }
+        }
+    }
+
     void set_object_text_visibility(RenderableObject* obj)
     {
         if (!obj)
@@ -53,7 +89,7 @@ namespace
 
 SceneGraph::SceneGraph() : EditorPanel("Scene")
 {
-    
+
 }
 
 void SceneGraph::begin_frame()
@@ -65,35 +101,37 @@ void SceneGraph::update()
 {
     EditorPanel::update();
 
-    /*ImGui::BeginTable("##scene_graph", 1, ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersOuter | ImGuiTableFlags_ScrollY);
-    {
-        Light* light_object = dynamic_cast<Light*>(Scene::instance->get_object_in_scene(SceneObjectType::Light));
-        Model* model_object = Scene::instance->get_model();
+    draw_toolbar();
 
-        set_object_text_visibility(grid_object);
-        set_object_text_visibility(axis_object);
-        set_object_text_visibility(light_object);
+    ImGuiB3D::SeparatorWithSpacing();
 
-        if (model_object)
-        {
-            ImGui::TableNextRow(ImGuiTableRowFlags_None, 25.0f);
-            ImGui::TableSetColumnIndex(0);
-            ImGui::AlignTextToFramePadding();
-            ImGui::Text("%s", model_object->get_object_name().c_str());
-
-            for (const auto& child_mesh : model_object->get_all_mesh_data())
-            {
-                ImGui::TableNextRow(ImGuiTableRowFlags_None, 25.0f);
-                ImGui::TableSetColumnIndex(0);
-                ImGui::AlignTextToFramePadding();
-                ImGui::Text("... %s", child_mesh->get_object_name().c_str());
-            }
-        }
-    }
-    ImGui::EndTable();*/
+    draw_scene_graph();
 }
 
 void SceneGraph::end_frame()
 {
     EditorPanel::end_frame();
+}
+
+void SceneGraph::draw_toolbar()
+{
+    ImGuiB3D::ColoredButton("+",  ImVec2(40, 0), ImVec4(0.0f, 0.5f, 0.0f, 1.0f));
+    ImGui::SameLine();
+    ImGui::TextUnformatted("Add Object");
+}
+
+void SceneGraph::draw_scene_graph()
+{
+    if (const SceneObject* scene_root = SceneManager::get_current_scene()->get_root())
+    {
+        draw_subtree(scene_root);
+    }
+
+    if (ImGui::IsWindowHovered(ImGuiHoveredFlags_RootAndChildWindows) && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+    {
+        if (!ImGui::IsAnyItemHovered())
+        {
+            m_selected_object = nullptr;
+        }
+    }
 }

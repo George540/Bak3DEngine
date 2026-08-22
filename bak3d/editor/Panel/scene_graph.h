@@ -39,4 +39,7 @@ public:
     void begin_frame() override;
     void update() override;
     void end_frame() override;
+private:
+    void draw_toolbar() override;
+    void draw_scene_graph();
 };

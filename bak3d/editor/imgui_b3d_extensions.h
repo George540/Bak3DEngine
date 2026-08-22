@@ -32,6 +32,11 @@ THE SOFTWARE.
 #include "Asset/resource_map.h"
 #include "Asset/texture.h"
 
+constexpr float BUTTON_LIGHTEN_BOOST = 0.25f;
+constexpr float BUTTON_HOVERED_LIGHTEN_BOOST = 0.1f;
+constexpr float BUTTON_ACTIVE_LIGHTEN_BOOST = 0.2f;
+constexpr ImVec2 BUTTON_SIZE = ImVec2(60.0f, 20.0f);
+
 class ImGuiB3D
 {
     static bool ToolTipExtendedText(const char* tooltip_desc, float text_wrap_size);
@@ -53,7 +58,8 @@ public:
 
     static bool SeparatorWithSpacing(int num_spaces = 1);
     static bool StringContainsIgnoreCase(std::string str, const std::string& sub_str);
-    static bool InteractableMultilineText(const std::string& label, const std::string& text, const ImVec4 color);
+    static bool InteractableMultilineText(const std::string& label, const std::string& text, ImVec4 color);
+    static bool ColoredButton(const char* label, ImVec2 size = ImVec2(0, 0), ImVec4 color = ImVec4(1, 1, 1, 1));
 
     static bool MultiSpacing(int num_spaces);
 

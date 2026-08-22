@@ -37,11 +37,6 @@ namespace
         static_cast<int>(LogLevel::Log_Warning) |
         static_cast<int>(LogLevel::Log_Error);
 
-    constexpr float BUTTON_LIGHTEN_BOOST = 0.25f;
-    constexpr float BUTTON_HOVERED_LIGHTEN_BOOST = 0.1f;
-    constexpr float BUTTON_ACTIVE_LIGHTEN_BOOST = 0.2f;
-    constexpr ImVec2 BUTTON_SIZE = ImVec2(60.0f, 20.0f);
-
     void draw_log_filter_button(const char* label, LogLevel log_level, const ImVec2& size, const ImVec4& base_color)
     {
         const bool enabled = (log_filter_mask & static_cast<int>(log_level)) != 0;

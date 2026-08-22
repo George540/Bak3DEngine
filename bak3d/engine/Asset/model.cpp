@@ -51,6 +51,7 @@ namespace
 Model::Model(const string& path, const std::string& file_name) :
 	Asset(path, file_name)
 {
+	m_object_name = FileLoader::get_name_from_filename(m_object_name);
 	load_model(path);
 
 	// Gather number of vertices but discard set storages to save on space.

@@ -73,6 +73,8 @@ public:
 		const auto it = m_category_index.find(category);
 		return it != m_category_index.end() ? it->second : empty;
 	}
+
+	SceneObject* get_root() const { return m_root.get(); }
 private:
 	std::unique_ptr<SceneObject> m_root;
 	std::unordered_map<SceneObjectType, std::vector<SceneObject*>> m_category_index;

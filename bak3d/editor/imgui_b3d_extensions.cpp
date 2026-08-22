@@ -327,3 +327,17 @@ bool ImGuiB3D::InteractableMultilineText(const std::string& label, const std::st
 
     return result;
 }
+
+bool ImGuiB3D::ColoredButton(const char* label, const ImVec2 size, const ImVec4 color)
+{
+    ImGui::PushStyleColor(ImGuiCol_Button, color);
+    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(color.x + BUTTON_HOVERED_LIGHTEN_BOOST, color.y + BUTTON_HOVERED_LIGHTEN_BOOST, color.z + BUTTON_HOVERED_LIGHTEN_BOOST, color.w));
+    ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(color.x + BUTTON_ACTIVE_LIGHTEN_BOOST, color.y + BUTTON_ACTIVE_LIGHTEN_BOOST, color.z + BUTTON_ACTIVE_LIGHTEN_BOOST, color.w));
+    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.0f, 0.0f, 0.0f, 1.0f));
+
+    const bool is_pressed = ImGui::Button(label, size);
+
+    ImGui::PopStyleColor(4);
+
+    return is_pressed;
+}
