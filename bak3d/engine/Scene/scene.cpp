@@ -33,97 +33,68 @@ THE SOFTWARE.
 #include "Asset/resource_manager.h"
 #include "Core/global_settings.h"
 #include "Objects/camera.h"
+#include "Objects/grid.h"
+#include "Objects/light.h"
 
 using namespace std;
 
 Scene::Scene()
 {
-	m_root = std::make_unique<SceneObject>(glm::vec3(0.0f), "SceneRoot");
+	m_root = make_unique<SceneObject>(glm::vec3(0.0f), "SceneRoot");
 
 	// Camera Setup
-	m_camera = new Camera(glm::vec3(10.0f, 5.0f, 10.0f), // position
-						  glm::vec3(0.0f, 0.0f, 0.0f),   // lookat
-						  glm::vec3(0.0f, 1.0f, 0.0f),   // up
-						  10.0f,  // speed
-						  315.0f, // horizontal angle
-						  30.0f,  // vertical angle
-						  45.0f); // zoom
+	m_current_camera = instantiate<Camera>(SceneObjectType::Camera,
+	                                       nullptr,
+	                                       glm::vec3(10.0f, 5.0f, 10.0f),
+	                                       glm::vec3(0.0f, 0.0f, 0.0f),
+	                                       glm::vec3(0.0f, 1.0f, 0.0f),
+	                                       10.0f,
+	                                       315.0f,
+	                                       30.0f,
+	                                       45.0f);
 
-	m_grid = new Grid();
+	instantiate<Grid>(SceneObjectType::Debug, nullptr);
 
-	auto initial_light_scaling_value = GlobalSettings::get_global_setting_value<float>(GlobalSettingOption::Light_Scaling);
-
-	Light* initial_light = instantiate<Light>(
-		SceneObjectType::Light,
+	const auto initial_light_scaling_value = GlobalSettings::get_global_setting_value<float>(GlobalSettingOption::Light_Scaling);
+	instantiate<Light>(SceneObjectType::Light,
 		nullptr,
 		glm::vec3(-5.0f, 5.0f, 5.0f),
 		glm::vec3(initial_light_scaling_value, initial_light_scaling_value, initial_light_scaling_value),
-		ResourceManager::get_material("light_icon")
-		);
+		ResourceManager::get_material("light_icon"));
+
+	/*auto models = ResourceManager::Models;
+	instantiate_model(ResourceManager::get_model("mushroom.obj"));#1#*/
 
 	B3D_LOG_INFO("Scene initialized.");
 }
 
 Scene::~Scene()
 {
-	delete m_grid;
+	
 }
 
 SceneObject* Scene::get_object_in_scene(const SceneObjectType type, const int index)
 {
-	SceneObject* ret = nullptr;
-	if (m_category_index.contains(type) && m_category_index[type][0] )
+	SceneObject* object = nullptr;
+	if (m_scene_objects_indexed.contains(type) && m_scene_objects_indexed[type][0])
 	{
-		ret = m_category_index[type][index];
+		object = m_scene_objects_indexed[type][index];
 	}
-
-	return ret;
-}
-
-RenderableObject* Scene::instantiate_model(const ModelRef& model, SceneObject* parent)
-{
-	unique_ptr<RenderableObject> subtree(instantiate_model(model)); // from the previous step
-	if (!subtree)
-	{
-		return nullptr;
-	}
-
-	RenderableObject* root = subtree.get();
-	SceneObject* attach_point = parent ? parent : m_root.get();
-	attach_point->add_child(std::move(subtree));
-
-	// Register every node in the freshly-attached subtree, not just the root,
-	// so SceneGraph/Details can find individual submeshes by category too.
-	function<void(SceneObject*)> register_recursive = [&](SceneObject* node)
-	{
-		m_category_index[SceneObjectType::Model].push_back(node);
-		for (auto& child : node->children)
-		{
-			register_recursive(child.get());
-		}
-	};
-	register_recursive(root);
-
-	return root;
-}
-
-void Scene::destroy(SceneObject* obj)
-{
-	if (!obj || !obj->parent)
-	{
-		return;
-	}
-
-	for (auto& list : m_category_index | views::values)
-	{
-		std::erase(list, obj);
-	}
-
-	auto& siblings = obj->parent->children;
-	erase_if(siblings, [obj](const unique_ptr<SceneObject>& c) { return c.get() == obj; });
+	return object;
 }
 
 void Scene::update(float dt) const
 {
-	m_camera->update(dt);
+	for (const auto& type_storage : m_scene_objects_indexed | views::values)
+	{
+		for (const auto& object : type_storage)
+		{
+			object->update(dt);
+		}
+	}
+}
+
+std::vector<SceneObject*> Scene::get_all_objects_of_type(const SceneObjectType type)
+{
+	return m_scene_objects_indexed[type];
 }

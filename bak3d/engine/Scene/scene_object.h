@@ -32,7 +32,6 @@ THE SOFTWARE.
 #pragma once
 
 #include <glm/fwd.hpp>
-#include <glm/gtc/matrix_transform.hpp>
 
 #include "transform.h"
 #include "Core/bak3d_object.h"
@@ -47,6 +46,8 @@ public:
 
     SceneObject* parent = nullptr;
     std::vector<std::unique_ptr<SceneObject>> children;
+
+    bool m_is_debug = false;
 
     SceneObject() : SceneObject(glm::vec3(0.0f, 0.0f, 0.0f), "SceneObject") {}
     SceneObject(const glm::vec3 position, const std::string& name) : Bak3DObject(name) { transform.set_local_position(position); }
@@ -96,6 +97,8 @@ public:
             child->update_self_and_children();
         }
     }
+
+    bool is_debug_geometry() const { return m_is_debug; }
 
     virtual void update(float dt)
     {

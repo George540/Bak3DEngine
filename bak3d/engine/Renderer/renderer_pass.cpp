@@ -39,15 +39,13 @@ void RendererPasses::render_pass_debug_geometry()
 
     const bool is_grid_rendering = GlobalSettings::get_global_setting_value<bool>(GlobalSettingOption::GridRendering);
     const bool is_axis_rendering = GlobalSettings::get_global_setting_value<bool>(GlobalSettingOption::AxisRendering);
-    if (is_grid_rendering)
+    if (is_grid_rendering || is_axis_rendering)
     {
-        SceneManager::get_current_scene()->get_grid()->draw();
+        for (const auto& debug_geometry : SceneManager::get_current_scene()->get_all_debug_geometry())
+        {
+            debug_geometry->draw();
+        }
     }
-    if (is_axis_rendering)
-    {
-        
-    }
-
     glDepthFunc(GL_LESS);
 }
 
@@ -55,15 +53,13 @@ void RendererPasses::render_pass_opaque_geometry()
 {
     DebugScopeGroup scope("Opaque Geometry Pass");
 
-    for (SceneObject* mesh_obj : SceneManager::get_current_scene()->get_all(SceneObjectType::Mesh))
+    /*for (const RenderableObject* obj : SceneManager::get_current_scene()->get_renderable_objects(SceneObjectType::Mesh))
     {
-        const Mesh* mesh = dynamic_cast<Mesh*>(mesh_obj);
-        mesh->draw();
+        obj->draw();
     }
-    /*for (SceneObject* model_obj : SceneManager::get_current_scene()->get_all(SceneObjectType::Model))
+    for (const RenderableObject* obj : SceneManager::get_current_scene()->get_renderable_objects(SceneObjectType::Model))
     {
-        const Model* mesh = dynamic_cast<Model*>(model_obj);
-        mesh->draw();
+        obj->draw();
     }*/
 }
 
@@ -192,9 +188,8 @@ void RendererPasses::render_pass_editor_overlays()
 
     if (GlobalSettings::get_global_setting_value<bool>(GlobalSettingOption::Light_Enabled))
     {
-        for (SceneObject* light_obj : SceneManager::get_current_scene()->get_all(SceneObjectType::Light))
+        for (const Light* light : SceneManager::get_current_scene()->get_all_lights())
         {
-            const Light* light = dynamic_cast<Light*>(light_obj);
             light->draw();
         }
     }

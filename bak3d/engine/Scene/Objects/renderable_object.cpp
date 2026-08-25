@@ -27,6 +27,7 @@ THE SOFTWARE.
 
 #include "renderable_object.h"
 
+#include "Asset/mesh_data.h"
 #include "Scene/scene.h"
 #include "Scene/scene_manager.h"
 
@@ -36,7 +37,7 @@ RenderableObject::RenderableObject(const MaterialRef& material, const glm::vec3 
 	: SceneObject(position, name)
 {
 	m_material_slot = make_material_slot(material);
-	m_visible = true;
+	m_mesh_slot = make_mesh_slot();
 
 	update_self_and_children();
 }
@@ -48,7 +49,7 @@ void RenderableObject::update(float dt)
 
 void RenderableObject::draw() const
 {
-	Camera* scene_camera = SceneManager::get_current_scene()->get_camera();
+	Camera* scene_camera = SceneManager::get_current_scene()->get_current_camera();
 	if (!m_material_slot || !*m_material_slot || !scene_camera) return;
 
 	(*m_material_slot)->bind_textures_cache();
@@ -72,7 +73,7 @@ InstancedRenderableObject::~InstancedRenderableObject()
 
 void InstancedRenderableObject::draw() const
 {
-	Camera* scene_camera = SceneManager::get_current_scene()->get_camera();
+	Camera* scene_camera = SceneManager::get_current_scene()->get_current_camera();
 	if (!m_material_slot || !*m_material_slot || !scene_camera) return;
 
 	(*m_material_slot)->apply();

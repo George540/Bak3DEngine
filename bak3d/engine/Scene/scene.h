@@ -24,13 +24,13 @@ THE SOFTWARE.
 
 #pragma once
 
-#include "Asset/model.h"
-#include "Core/global_definitions.h"
+#include <map>
+
 #include "Objects/AdvancedParticleSystem.h"
-#include "Objects/axis.h"
 #include "Objects/camera.h"
-#include "Objects/grid.h"
 #include "Objects/light.h"
+#include "Objects/mesh.h"
+#include "Objects/renderable_object.h"
 #include "Objects/Particle/particle_system.h"
 
 /*
@@ -42,12 +42,8 @@ public:
 	Scene();
 	~Scene();
 
-	SceneObject* get_object_in_scene(SceneObjectType type, int index = 0);
-	Camera* get_camera() const { return m_camera; }
-	Grid* get_grid() const { return m_grid; }
-
 	template<typename T, typename... Args>
-	T* instantiate(SceneObjectType category, SceneObject* parent, Args&&... args)
+	T* instantiate(const SceneObjectType category, SceneObject* parent, Args&&... args)
 	{
 		static_assert(std::is_base_of_v<SceneObject, T>, "instantiate<T> requires a SceneObject-derived type");
 
@@ -57,28 +53,47 @@ public:
 		SceneObject* attach_point = parent ? parent : m_root.get();
 		attach_point->add_child(std::move(owned));
 
-		m_category_index[category].push_back(raw);
+		m_scene_objects_indexed[category].push_back(raw);
+		if constexpr (std::is_same_v<T, Camera>)
+			m_cameras.push_back(raw);
+		else if constexpr (std::is_same_v<T, Light>)
+			m_lights.push_back(raw);
+		else if constexpr (std::is_same_v<T, Mesh>)
+			m_meshes.push_back(raw);
+		else if constexpr (std::is_same_v<T, ParticleSystem>)
+			m_particle_systems.push_back(raw);
+		else if constexpr (std::is_same_v<T, AdvancedParticleSystem>)
+			m_advanced_particle_systems.push_back(raw);
+		else if constexpr (std::is_base_of_v<RenderableObject, T>) // Leftover geometry, most likely debug
+			m_debug_geometry.push_back(raw);
+
 		return raw;
 	}
 
-	RenderableObject* instantiate_model(const ModelRef& model, SceneObject* parent = nullptr);
+	SceneObject* get_root() const { return m_root.get(); }
+	Camera* get_current_camera() const { return m_current_camera; }
+	std::vector<SceneObject*> get_all_objects_of_type(SceneObjectType type);
+	SceneObject* get_object_in_scene(SceneObjectType type, int index = 0);
 
-	void destroy(SceneObject* obj);
+	std::vector<Camera*>& get_all_cameras() { return m_cameras; }
+	std::vector<Light*>& get_all_lights() { return m_lights; }
+	std::vector<Mesh*>& get_all_meshes() { return m_meshes; }
+	std::vector<RenderableObject*> get_all_debug_geometry() { return m_debug_geometry; }
+	std::vector<ParticleSystem*>& get_all_particle_systems() { return m_particle_systems; }
+	std::vector<AdvancedParticleSystem*>& get_all_advanced_particle_systems() { return m_advanced_particle_systems; }
 
 	void update(float dt) const;
 
-	const std::vector<SceneObject*>& get_all(const SceneObjectType category) const
-	{
-		static const std::vector<SceneObject*> empty;
-		const auto it = m_category_index.find(category);
-		return it != m_category_index.end() ? it->second : empty;
-	}
-
-	SceneObject* get_root() const { return m_root.get(); }
 private:
+	Camera* m_current_camera = nullptr;
+	
 	std::unique_ptr<SceneObject> m_root;
-	std::unordered_map<SceneObjectType, std::vector<SceneObject*>> m_category_index;
+	std::map<SceneObjectType, std::vector<SceneObject*>> m_scene_objects_indexed; // <object name, scene object ptr>
 
-	Camera* m_camera;
-	Grid* m_grid;
+	std::vector<Camera*> m_cameras;
+	std::vector<RenderableObject*> m_debug_geometry;
+	std::vector<Light*> m_lights;
+	std::vector<Mesh*> m_meshes;
+	std::vector<ParticleSystem*> m_particle_systems;
+	std::vector<AdvancedParticleSystem*> m_advanced_particle_systems;
 };

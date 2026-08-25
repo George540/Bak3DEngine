@@ -43,7 +43,7 @@ protected:
     MeshSlot m_mesh_slot;
     MaterialSlot m_material_slot;
 
-    bool m_visible;
+    bool m_visible = true;
 
     void apply_material() const { if (has_material()) (*m_material_slot)->apply(); }
 public:

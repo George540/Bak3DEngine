@@ -24,6 +24,7 @@ THE SOFTWARE.
 
 #include "bounding_box.h"
 
+#include "Asset/mesh_data.h"
 #include "Asset/resource_manager.h"
 #include "Core/global_definitions.h"
 #include "Scene/scene.h"

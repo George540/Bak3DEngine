@@ -119,8 +119,7 @@ enum class GlobalSettingOption : uint32_t
 enum class SceneObjectType : uint32_t
 {
     Camera,
-    Grid,
-    Axis,
+    Debug,
     Light,
     Model,
     Mesh,
