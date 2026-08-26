@@ -33,8 +33,7 @@ const char* GlobalSettings::to_string(GlobalSettingOption enum_setting)
     {
         case GlobalSettingOption::Resources_ForceFail: return "Force Fail";
         case GlobalSettingOption::Vsync: return "VSync";
-        case GlobalSettingOption::GridRendering: return "Enable Grid";
-        case GlobalSettingOption::AxisRendering: return "Enable Axis";
+        case GlobalSettingOption::DebugGeometry_Enabled: return "Enable Debug Geometry";
         case GlobalSettingOption::BackgroundColor: return "Background Color";
         case GlobalSettingOption::Light_Enabled: return "Enabled";
         case GlobalSettingOption::Light_Type: return "Type";
@@ -74,8 +73,7 @@ void GlobalSettings::initialize()
     global_settings.clear();
     global_settings[GlobalSettingOption::Resources_ForceFail] = false;
     global_settings[GlobalSettingOption::Vsync] = false;
-    global_settings[GlobalSettingOption::GridRendering] = true;
-    global_settings[GlobalSettingOption::AxisRendering] = true;
+    global_settings[GlobalSettingOption::DebugGeometry_Enabled] = true;
     global_settings[GlobalSettingOption::ViewSelection] = 0;
     global_settings[GlobalSettingOption::BackgroundColor] = glm::vec4(0.133f, 0.168f, 0.2f, 1.0f);
     global_settings[GlobalSettingOption::Light_Enabled] = true;

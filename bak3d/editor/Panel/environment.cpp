@@ -136,15 +136,10 @@ void Environment::draw_general_settings()
     ImGui::SetNextItemOpen(true, ImGuiCond_Once);
     if (ImGui::TreeNode("General"))
     {
-        // Grid Rendering
-        bool grid_rendering = GlobalSettings::get_global_setting_value<bool>(GlobalSettingOption::GridRendering);
-        ImGuiB3D::PropertyToggle("Render Grid", &grid_rendering, "Render scene grid in viewport");
-        GlobalSettings::set_global_setting<bool>(GlobalSettingOption::GridRendering, grid_rendering);
-
-        // Axis Rendering
-        bool axis_rendering = GlobalSettings::get_global_setting_value<bool>(GlobalSettingOption::AxisRendering);
-        ImGuiB3D::PropertyToggle("Render Axis", &axis_rendering, "Render scene axis in viewport");
-        GlobalSettings::set_global_setting<bool>(GlobalSettingOption::AxisRendering, axis_rendering);
+        // Debug geometry enabled
+        bool is_debug_geometry_enabled = GlobalSettings::get_global_setting_value<bool>(GlobalSettingOption::DebugGeometry_Enabled);
+        ImGuiB3D::PropertyToggle("Debug Geometry", &is_debug_geometry_enabled, "Render scene grid in viewport");
+        GlobalSettings::set_global_setting<bool>(GlobalSettingOption::DebugGeometry_Enabled, is_debug_geometry_enabled);
 
         // Toggle background color
         glm::vec4 bg_color_vec4 = GlobalSettings::get_global_setting_value<glm::vec4>(GlobalSettingOption::BackgroundColor);

@@ -37,9 +37,7 @@ void RendererPasses::render_pass_debug_geometry()
 
     glDepthFunc(GL_ALWAYS);
 
-    const bool is_grid_rendering = GlobalSettings::get_global_setting_value<bool>(GlobalSettingOption::GridRendering);
-    const bool is_axis_rendering = GlobalSettings::get_global_setting_value<bool>(GlobalSettingOption::AxisRendering);
-    if (is_grid_rendering || is_axis_rendering)
+    if (GlobalSettings::get_global_setting_value<bool>(GlobalSettingOption::DebugGeometry_Enabled))
     {
         for (const auto& debug_geometry : SceneManager::get_current_scene()->get_all_debug_geometry())
         {

@@ -80,8 +80,7 @@ enum class GlobalSettingOption : uint32_t
 {
     Resources_ForceFail,
     Vsync,
-    GridRendering,
-    AxisRendering,
+    DebugGeometry_Enabled,
     ViewSelection,
     BackgroundColor,
     Light_Enabled,
