@@ -61,11 +61,10 @@ class EventManager
 	static double last_mouse_position_y;
 	static double delta_x;
 	static double delta_y;
-	static double cam_zoom_distance;
-	static double cam_zoom_factor;
-	static int last_mouse_left_state;
-	static int last_mouse_right_state;
-	static int last_mouse_middle_state;
+	static double camera_scroll_offset;
+	static bool is_camera_looking_enabled;
+	static bool is_scrolling_enabled;
+
 public:
 	static void initialize();
 	static void shutdown();
@@ -96,6 +95,8 @@ public:
 	static double get_mouse_motion_x();
 	static double get_mouse_motion_y();
 	static double get_camera_scroll_offset();
+	static bool is_camera_looking();
+	static void set_camera_looking(bool enabled);
 
 	static void set_windows_application_icon();
 
@@ -105,13 +106,15 @@ public:
 	static float get_random_float(float min, float max);
 
 	static void on_scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
+	static void set_scrolling_enabled(bool enabled);
 
-	static bool is_dragging_enabled;
-	static bool is_scrolling_enabled;
-
-	static bool is_using_diffuse_texture;
-	static bool is_using_specular_texture;
-	static bool is_using_normals_texture;
+	static bool is_key_down(int key);
+	static bool is_key_moving_forward_down();
+	static bool is_key_moving_back_down();
+	static bool is_key_moving_right_down();
+	static bool is_key_moving_left_down();
+	static bool is_key_moving_up_down();
+	static bool is_key_moving_down_down();
 };
 
 #endif

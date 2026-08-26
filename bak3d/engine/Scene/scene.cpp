@@ -45,13 +45,7 @@ Scene::Scene()
 	// Camera Setup
 	m_current_camera = instantiate<Camera>(SceneObjectType::Camera,
 	                                       nullptr,
-	                                       glm::vec3(10.0f, 5.0f, 10.0f),
-	                                       glm::vec3(0.0f, 0.0f, 0.0f),
-	                                       glm::vec3(0.0f, 1.0f, 0.0f),
-	                                       10.0f,
-	                                       315.0f,
-	                                       30.0f,
-	                                       45.0f);
+	                                       glm::vec3(10.0f, 5.0f, 10.0f));
 
 	instantiate<Grid>(SceneObjectType::Debug, nullptr);
 

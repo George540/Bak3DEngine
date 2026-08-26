@@ -56,14 +56,7 @@ double EventManager::last_mouse_position_x = 0.0;
 double EventManager::last_mouse_position_y = 0.0;
 double EventManager::delta_x = 0.0;
 double EventManager::delta_y = 0.0;
-double EventManager::cam_zoom_distance = 10.0;
-double EventManager::cam_zoom_factor = 1.0;
-int EventManager::last_mouse_left_state = GLFW_RELEASE;
-int EventManager::last_mouse_right_state = GLFW_RELEASE;
-int EventManager::last_mouse_middle_state = GLFW_RELEASE;
-bool EventManager::is_using_diffuse_texture = true;
-bool EventManager::is_using_specular_texture = true;
-bool EventManager::is_using_normals_texture = true;
+double EventManager::camera_scroll_offset = 0.0;
 
 // Window
 GLFWwindow* EventManager::m_window = nullptr;
@@ -73,10 +66,8 @@ int EventManager::m_window_width = 1920; // defaulting to 1920 / 1080 just in ca
 int EventManager::m_window_height = 1080;
 int EventManager::m_viewport_width = 1920;
 int EventManager::m_viewport_height = 1080;
-bool EventManager::is_dragging_enabled = false;
+bool EventManager::is_camera_looking_enabled = false;
 bool EventManager::is_scrolling_enabled = false;
-
-using namespace std;
 
 /*
  * Initializes the proper GLFW window settings and handles all inputs.
@@ -151,8 +142,6 @@ void EventManager::initialize()
 	glfwGetWindowSize(m_window, &m_window_width, &m_window_height);
 	B3D_LOG_INFO("Window created with size %d x %d", m_window_width, m_window_height);
 
-	cam_zoom_factor = 1;
-
 	// Ensure we can capture the escape key being pressed below
 	glfwSetInputMode(m_window, GLFW_STICKY_KEYS, GL_TRUE);
 
@@ -187,35 +176,41 @@ void EventManager::begin_update()
 
 void EventManager::update()
 {
-	// Camera tilt and Pan
-	if (last_mouse_right_state == GLFW_RELEASE
-		&& glfwGetMouseButton(m_window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS
-		&& is_dragging_enabled)
+	if (is_camera_looking_enabled)
 	{
-		delta_x = static_cast<float>(mouse_pos_x - last_mouse_position_x);
-		delta_y = -static_cast<float>(mouse_pos_y - last_mouse_position_y);
+		delta_x = static_cast<float>(
+			mouse_pos_x - last_mouse_position_x
+		);
+
+		delta_y = -static_cast<float>(
+			mouse_pos_y - last_mouse_position_y
+		);
 	}
 	else
 	{
-		delta_x = 0.0;
-		delta_y = 0.0;
+		delta_x = 0.0f;
+		delta_y = 0.0f;
 	}
+
 	last_mouse_position_x = mouse_pos_x;
 	last_mouse_position_y = mouse_pos_y;
 
-	// Update mouse zoom via scroll wheel
 	glfwSetScrollCallback(m_window, on_scroll_callback);
 
-	// Update frame time
+	// Frame timing
 	const double current_time = glfwGetTime();
+
 	nb_frames++;
+
 	frame_time = static_cast<float>(current_time - last_frame_time);
+
 	if (current_time - last_frame_time_fps >= 1.0)
 	{
 		frames_per_second = nb_frames;
 		nb_frames = 0;
 		last_frame_time_fps += 1.0;
 	}
+
 	last_frame_time = current_time;
 }
 
@@ -277,7 +272,42 @@ double EventManager::get_mouse_motion_y()
 
 double EventManager::get_camera_scroll_offset()
 {
-	return cam_zoom_distance;
+	// One frame event
+	const double offset = camera_scroll_offset;
+	camera_scroll_offset = 0.0;
+	return offset;
+}
+
+bool EventManager::is_camera_looking()
+{
+	return is_camera_looking_enabled;
+}
+
+void EventManager::set_camera_looking(const bool enabled)
+{
+	if (is_camera_looking_enabled == enabled)
+	{
+		return;
+	}
+
+	is_camera_looking_enabled = enabled;
+	if (enabled)
+	{
+		last_mouse_position_x = mouse_pos_x;
+		last_mouse_position_y = mouse_pos_y;
+
+		delta_x = 0.0f;
+		delta_y = 0.0f;
+
+		disable_mouse_cursor();
+	}
+	else
+	{
+		delta_x = 0.0f;
+		delta_y = 0.0f;
+
+		enable_mouse_cursor();
+	}
 }
 
 void EventManager::set_windows_application_icon()
@@ -320,28 +350,53 @@ float EventManager::get_random_float(float min, float max)
 	return min + value * (max - min);
 }
 
-/**
- * \brief Scroll callback function for the scroll wheel input, used for camera zoom distance
- * \param window The OpenGL main window
- * \param xoffset The scrollwheel x-offset (not used)
- * \param yoffset The scrollwheel y-offset
- */
 void EventManager::on_scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 {
 	// Forward to ImGui first so it can update MouseWheel
 	ImGui_ImplGlfw_ScrollCallback(window, xoffset, yoffset);
 
-	if (ImGui::GetIO().WantCaptureMouse && is_scrolling_enabled)
+	if (is_scrolling_enabled)
 	{
-		if (yoffset > 0)
-		{
-			cam_zoom_factor = (cam_zoom_distance * 0.2) * 1;
-		}
-		else if (yoffset < 0)
-		{
-			cam_zoom_factor = (cam_zoom_distance * 0.2) * -1;
-		}
-		cam_zoom_distance -= cam_zoom_factor;
-		cam_zoom_distance = max(0.1, min(35.0, cam_zoom_distance));
+		camera_scroll_offset += yoffset;
 	}
+}
+
+void EventManager::set_scrolling_enabled(const bool enabled)
+{
+	is_scrolling_enabled = enabled;
+}
+
+bool EventManager::is_key_down(const int key)
+{
+	return glfwGetKey(m_window, key) == GLFW_PRESS;
+}
+
+bool EventManager::is_key_moving_forward_down()
+{
+	return is_key_down(GLFW_KEY_W);
+}
+
+bool EventManager::is_key_moving_back_down()
+{
+	return is_key_down(GLFW_KEY_S);
+}
+
+bool EventManager::is_key_moving_right_down()
+{
+	return is_key_down(GLFW_KEY_D);
+}
+
+bool EventManager::is_key_moving_left_down()
+{
+	return is_key_down(GLFW_KEY_A);
+}
+
+bool EventManager::is_key_moving_up_down()
+{
+	return is_key_down(GLFW_KEY_Q);
+}
+
+bool EventManager::is_key_moving_down_down()
+{
+	return is_key_down(GLFW_KEY_E);
 }

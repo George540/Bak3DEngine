@@ -27,6 +27,7 @@ THE SOFTWARE.
 
 #include <glm/ext/matrix_clip_space.hpp>
 #include <glm/ext/matrix_transform.hpp>
+#include <glm/gtx/norm.hpp>
 
 #include "camera.h"
 
@@ -37,14 +38,9 @@ THE SOFTWARE.
 
 using namespace std;
 
-Camera::Camera(glm::vec3 position, glm::vec3 lookat, glm::vec3 up, float speed, float hor_angle, float ver_angle, float zoom) :
-	SceneObject(position, "Camera"),
-	m_lookat(lookat),
-	m_cam_up(up),
-	m_cam_speed(speed),
-	m_horizontal_angle(hor_angle),
-	m_vertical_angle(ver_angle),
-	m_zoom(zoom)
+constexpr static glm::vec3 CAMERA_UP = glm::vec3(0.0f, 1.0f, 0.0f);
+
+Camera::Camera(glm::vec3 position) : SceneObject(position, "Camera")
 {
 	object_type = SceneObjectType::Camera;
 
@@ -60,34 +56,76 @@ void Camera::update(float dt)
 	// Prevent from having the camera move only when the cursor is within the windows
 	EventManager::enable_mouse_cursor();
 
-	// Mouse motion to get the variation in angle
-	m_horizontal_angle -= EventManager::get_mouse_motion_x() * m_cam_speed * static_cast<double>(dt);
-	m_vertical_angle -= EventManager::get_mouse_motion_y() * m_cam_speed * static_cast<double>(dt);
-
-	// Clamp vertical angle to [-85, 85] degrees
-	m_vertical_angle = max(-85.0f, min(85.0f, static_cast<float>(m_vertical_angle)));
-	if (m_horizontal_angle > 360)
+	if (EventManager::is_camera_looking())
 	{
-		m_horizontal_angle -= 360;
+		// Mouse Look
+		m_horizontal_angle -= EventManager::get_mouse_motion_x() * m_cam_speed * dt;
+		m_vertical_angle -= EventManager::get_mouse_motion_y() * m_cam_speed * dt;
+
+		// Prevent camera from flipping upside down
+		// Clamp vertical angle to [-85, 85] degrees
+		m_vertical_angle = max(-85.0f, min(85.0f, static_cast<float>(m_vertical_angle)));
+		if (m_horizontal_angle > 360)
+		{
+			m_horizontal_angle -= 360;
+		}
+		else if (m_horizontal_angle < -360)
+		{
+			m_horizontal_angle += 360;
+		}
+
+		// Movement
+		glm::vec3 movement(0.0f);
+
+		const glm::vec3 forward = get_forward_vector();
+		const glm::vec3 right = get_right_vector();
+
+		if (EventManager::is_key_moving_forward_down())
+		{
+			movement += forward;
+		}
+		if (EventManager::is_key_moving_back_down())
+		{
+			movement -= forward;
+		}
+		if (EventManager::is_key_moving_right_down())
+		{
+			movement += right;
+		}
+		if (EventManager::is_key_moving_left_down())
+		{
+			movement -= right;
+		}
+
+		// Vertical movement
+		if (EventManager::is_key_moving_up_down())
+		{
+			movement += CAMERA_UP;
+		}
+		if (EventManager::is_key_moving_down_down())
+		{
+			movement -= CAMERA_UP;
+		}
+
+		// Normalize so diagonal movement isn't faster
+		if (glm::length2(movement) > 0.0f)
+		{
+			movement = glm::normalize(movement);
+			transform.set_local_position(transform.get_local_position() + movement * static_cast<float>(m_cam_speed) * dt);
+		}
 	}
-	else if (m_horizontal_angle < -360)
+
+	// FOV handling and clamping
+	if (const double scroll_delta = EventManager::get_camera_scroll_offset(); scroll_delta != 0.0)
 	{
-		m_horizontal_angle += 360;
+		m_fov -= static_cast<float>(scroll_delta) * 2.0f;
+		m_fov = clamp(m_fov, 20.0f, 90.0f);
 	}
-
-	const auto theta = static_cast<float>(glm::radians(m_horizontal_angle));
-	const auto phi = static_cast<float>(glm::radians(m_vertical_angle));
-
-	// Set position of camera while orbiting lookat
-	glm::vec3 position = glm::vec3(cosf(phi) * cosf(theta), sinf(phi), -cosf(phi) * sinf(theta));
-	// Set zoom based on camera scroll offset
-	position *= EventManager::get_camera_scroll_offset();
-	transform.set_local_position(position);
 
 	m_camera_data_ubo->bind();
 	m_camera_data_ubo->bind_buffer_sub_data(glm::value_ptr(get_projection_matrix()), MAT4_SIZE, 0);
 	m_camera_data_ubo->bind_buffer_sub_data(glm::value_ptr(get_view_matrix()), MAT4_SIZE, MAT4_SIZE);
-	m_camera_data_ubo->bind_buffer_sub_data(glm::value_ptr(glm::vec4(position, 1.0f)), VEC4_SIZE, 2 * MAT4_SIZE);
+	m_camera_data_ubo->bind_buffer_sub_data(glm::value_ptr(glm::vec4(transform.get_local_position(), 1.0f)), VEC4_SIZE, 2 * MAT4_SIZE);
 	m_camera_data_ubo->unbind();
 
 	SceneObject::update(dt);
@@ -95,15 +133,38 @@ void Camera::update(float dt)
 
 glm::mat4 Camera::get_view_matrix() const
 {
-	return glm::lookAt(transform.get_local_position(), m_lookat, m_cam_up);
+	const glm::vec3 position = transform.get_local_position();
+	const glm::vec3 forward = get_forward_vector();
+
+	return glm::lookAt(position, position + forward, CAMERA_UP);
 }
 
 glm::mat4 Camera::get_projection_matrix() const
 {
-	return glm::perspective(glm::radians(m_zoom), static_cast<float>(EventManager::get_window_width()) / static_cast<float>(EventManager::get_window_height()), 0.1f, 100.0f);
+	const float aspect = static_cast<float>(EventManager::get_viewport_width()) / static_cast<float>(EventManager::get_viewport_height());
+	return glm::perspective(glm::radians(m_fov), aspect, 0.1f, 100.0f);
 }
 
 glm::mat4 Camera::get_view_projection_matrix() const
 {
 	return get_projection_matrix() * get_view_matrix();
+}
+
+glm::vec3 Camera::get_forward_vector() const
+{
+	const float yaw = glm::radians(static_cast<float>(m_horizontal_angle));
+	const float pitch = glm::radians(static_cast<float>(m_vertical_angle));
+
+	glm::vec3 forward;
+	forward.x = cosf(pitch) * cosf(yaw);
+	forward.y = sinf(pitch);
+	forward.z = -cosf(pitch) * sinf(yaw);
+
+	return glm::normalize(forward);
+}
+
+glm::vec3 Camera::get_right_vector() const
+{
+	const glm::vec3 forward = get_forward_vector();
+	return glm::normalize(glm::cross(forward, CAMERA_UP));
 }
