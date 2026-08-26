@@ -42,4 +42,6 @@ public:
 private:
     void draw_toolbar() override;
     void draw_scene_graph();
+
+    void draw_add_object_popup();
 };

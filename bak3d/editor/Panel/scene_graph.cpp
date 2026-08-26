@@ -64,27 +64,6 @@ namespace
             }
         }
     }
-
-    void set_object_text_visibility(RenderableObject* obj)
-    {
-        if (!obj)
-        {
-            return;
-        }
-
-        ImGui::TableNextRow(ImGuiTableRowFlags_None, 25.0f);
-        ImGui::TableSetColumnIndex(0);
-        ImGui::AlignTextToFramePadding();
-
-        if (obj->is_visible())
-        {
-            ImGui::Text("%s", obj->get_object_name().c_str());
-        }
-        else
-        {
-            ImGui::TextDisabled("%s", obj->get_object_name().c_str());
-        }
-    }
 }
 
 SceneGraph::SceneGraph() : EditorPanel("Scene")
@@ -115,7 +94,7 @@ void SceneGraph::end_frame()
 
 void SceneGraph::draw_toolbar()
 {
-    ImGuiB3D::ColoredButton("+",  ImVec2(40, 0), ImVec4(0.0f, 0.5f, 0.0f, 1.0f));
+    draw_add_object_popup();
     ImGui::SameLine();
     ImGui::TextUnformatted("Add Object");
 }
@@ -133,5 +112,44 @@ void SceneGraph::draw_scene_graph()
         {
             m_selected_object = nullptr;
         }
+    }
+}
+
+void SceneGraph::draw_add_object_popup()
+{
+    if (ImGuiB3D::ColoredButton("+",  ImVec2(40, 0), ImVec4(0.0f, 0.5f, 0.0f, 1.0f)))
+    {
+        ImGui::OpenPopup("Add Object Popup");
+    }
+
+    if (ImGui::BeginPopup("Add Object Popup"))
+    {
+        ImGui::SeparatorText("Add Object");
+
+        if (ImGui::BeginMenu("Lights"))
+        {
+            ImGui::MenuItem("Directional Light");
+            ImGui::MenuItem("Spot Light");
+            ImGui::MenuItem("Point Light");
+            ImGui::MenuItem("Area Light");
+            ImGui::EndMenu();
+        }
+        if (ImGui::BeginMenu("Primitives"))
+        {
+            ImGui::MenuItem("Cube");
+            ImGui::MenuItem("Sphere");
+            ImGui::MenuItem("Pyramid");
+            ImGui::MenuItem("Cone");
+            ImGui::MenuItem("Torus");
+            ImGui::MenuItem("Suzanne");
+            ImGui::EndMenu();
+        }
+        if (ImGui::BeginMenu("VFX"))
+        {
+            ImGui::MenuItem("Sprite Particles");
+            ImGui::MenuItem("Advanced Particles");
+            ImGui::EndMenu();
+        }
+        ImGui::EndPopup();
     }
 }
