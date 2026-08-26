@@ -35,6 +35,7 @@ THE SOFTWARE.
 
 #include "transform.h"
 #include "Core/bak3d_object.h"
+#include "Core/global_definitions.h"
 
 /*
  * Abstract class for declaring objects using position, orientation and scaling in 3D space.
@@ -47,7 +48,7 @@ public:
     SceneObject* parent = nullptr;
     std::vector<std::unique_ptr<SceneObject>> children;
 
-    bool m_is_debug = false;
+    SceneObjectType object_type;
 
     SceneObject() : SceneObject(glm::vec3(0.0f, 0.0f, 0.0f), "SceneObject") {}
     SceneObject(const glm::vec3 position, const std::string& name) : Bak3DObject(name) { transform.set_local_position(position); }
@@ -98,7 +99,8 @@ public:
         }
     }
 
-    bool is_debug_geometry() const { return m_is_debug; }
+    SceneObjectType get_object_type() const { return object_type; }
+    void set_object_type(const SceneObjectType type) { object_type = type; }
 
     virtual void update(float dt)
     {

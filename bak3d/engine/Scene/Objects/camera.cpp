@@ -46,6 +46,8 @@ Camera::Camera(glm::vec3 position, glm::vec3 lookat, glm::vec3 up, float speed, 
 	m_vertical_angle(ver_angle),
 	m_zoom(zoom)
 {
+	object_type = SceneObjectType::Camera;
+
 	// @TODO: Replace with struct payload instead of manual size
 	// 2 mat4's * 1 vec4 = 9 vec4's
 	m_camera_data_ubo = make_unique<UniformBuffer>(VEC4_SIZE * 9 /*Temporary size*/, nullptr, 0, GL_DYNAMIC_DRAW);

@@ -40,6 +40,8 @@ THE SOFTWARE.
 Light::Light(glm::vec3 position, glm::vec3 scaling, const MaterialRef& material) :
 	RenderableObject(material, position, "Light")
 {
+	object_type = SceneObjectType::Light;
+
 	transform.set_local_scale(scaling);
 	transform.compute_model_matrix();
 

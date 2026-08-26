@@ -5,6 +5,7 @@
 
 Quad::Quad() : RenderableObject(nullptr, glm::vec3(0.0f, 0.0f, 0.0f), "Quad")
 {
+    object_type = SceneObjectType::Mesh;
     m_mesh_slot = make_mesh_slot(ResourceManager::get_mesh("Quad"));
 }
 

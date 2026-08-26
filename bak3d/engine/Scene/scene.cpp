@@ -70,7 +70,7 @@ Scene::Scene()
 
 Scene::~Scene()
 {
-	
+
 }
 
 SceneObject* Scene::get_object_in_scene(const SceneObjectType type, const int index)
@@ -94,7 +94,139 @@ void Scene::update(float dt) const
 	}
 }
 
-std::vector<SceneObject*> Scene::get_all_objects_of_type(const SceneObjectType type)
+void Scene::register_object(SceneObject* object)
+{
+    assert(object);
+
+    const SceneObjectType type = object->object_type;
+
+    // Generic category index
+    m_scene_objects_indexed[type].push_back(object);
+
+    // Specialized typed indexes
+    switch (type)
+    {
+        case SceneObjectType::Camera:
+        {
+            auto* camera = dynamic_cast<Camera*>(object);
+            assert(camera);
+            m_cameras.push_back(camera);
+            break;
+        }
+        case SceneObjectType::Debug:
+        {
+            auto* renderable = dynamic_cast<RenderableObject*>(object);
+            assert(renderable);
+            m_debug_geometry.push_back(renderable);
+            break;
+        }
+        case SceneObjectType::Light:
+        {
+            auto* light = dynamic_cast<Light*>(object);
+            assert(light);
+            m_lights.push_back(light);
+            break;
+        }
+        case SceneObjectType::Mesh:
+        {
+            auto* mesh = dynamic_cast<Mesh*>(object);
+            assert(mesh);
+            m_meshes.push_back(mesh);
+            break;
+        }
+        case SceneObjectType::ParticleSystem:
+        {
+            auto* particle_system = dynamic_cast<ParticleSystem*>(object);
+            assert(particle_system);
+            m_particle_systems.push_back(particle_system);
+            break;
+        }
+        case SceneObjectType::AdvancedParticleSystem:
+        {
+            auto* particle_system = dynamic_cast<AdvancedParticleSystem*>(object);
+            assert(particle_system);
+            m_advanced_particle_systems.push_back(particle_system);
+            break;
+        }
+        case SceneObjectType::Max:
+		default:
+            assert(false && "Cannot register SceneObjectType::Max");
+            break;
+    }
+}
+
+void Scene::unregister_object(SceneObject* object)
+{
+    assert(object);
+
+    const SceneObjectType type = object->object_type;
+
+    if (const auto indexed_it = m_scene_objects_indexed.find(type); indexed_it != m_scene_objects_indexed.end())
+    {
+        auto& storage = indexed_it->second;
+
+        erase(storage, object);
+
+        // Optional: remove empty category vectors.
+        if (storage.empty())
+        {
+            m_scene_objects_indexed.erase(indexed_it);
+        }
+    }
+
+    switch (type)
+    {
+        case SceneObjectType::Camera:
+        {
+            auto* camera = dynamic_cast<Camera*>(object);
+            assert(camera);
+            erase(m_cameras, camera);
+            break;
+        }
+        case SceneObjectType::Debug:
+        {
+            auto* renderable = dynamic_cast<RenderableObject*>(object);
+            assert(renderable);
+            erase(m_debug_geometry, renderable);
+            break;
+        }
+        case SceneObjectType::Light:
+        {
+            auto* light = dynamic_cast<Light*>(object);
+            assert(light);
+            erase(m_lights, light);
+            break;
+        }
+        case SceneObjectType::Mesh:
+        {
+            auto* mesh = dynamic_cast<Mesh*>(object);
+            assert(mesh);
+            erase(m_meshes, mesh);
+            break;
+        }
+        case SceneObjectType::ParticleSystem:
+        {
+            auto* particle_system = dynamic_cast<ParticleSystem*>(object);
+            assert(particle_system);
+            erase(m_particle_systems, particle_system);
+            break;
+        }
+        case SceneObjectType::AdvancedParticleSystem:
+        {
+            auto* particle_system = dynamic_cast<AdvancedParticleSystem*>(object);
+
+            assert(particle_system);
+            erase(m_advanced_particle_systems, particle_system);
+            break;
+        }
+        case SceneObjectType::Max:
+		default:
+            assert(false && "Cannot unregister SceneObjectType::Max");
+            break;
+    }
+}
+
+vector<SceneObject*> Scene::get_all_objects_of_type(const SceneObjectType type)
 {
 	return m_scene_objects_indexed[type];
 }

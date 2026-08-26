@@ -38,7 +38,7 @@ Mesh::Mesh(vector<Vertex> vertices, vector<GLuint> indices, const std::string& n
 	m_vertices(std::move(vertices)),
 	m_indices(std::move(indices))
 {
-
+    object_type = SceneObjectType::Mesh;
 }
 
 void Mesh::update(float dt)

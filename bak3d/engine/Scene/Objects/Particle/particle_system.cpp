@@ -12,6 +12,8 @@ ParticleSystem::ParticleSystem(const string& name)
                 glm::vec3(0.0f),
                         name)
 {
+    object_type = SceneObjectType::ParticleSystem;
+
     // Add one emitter by default
     add_emitter();
 

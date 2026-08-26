@@ -33,7 +33,7 @@ THE SOFTWARE.
 #include "Asset/resource_manager.h"
 #include "Core/logger.h"
 #include "Scene/scene.h"
-#include "Scene/Objects/AdvancedParticleSystem.h"
+#include "Scene/Objects/advanced_particle_system.h"
 #include "Scene/Objects/Particle/particle_system.h"
 
 using namespace std;

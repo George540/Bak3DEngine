@@ -25,8 +25,9 @@ THE SOFTWARE.
 #pragma once
 
 #include <map>
+#include <ranges>
 
-#include "Objects/AdvancedParticleSystem.h"
+#include "Objects/advanced_particle_system.h"
 #include "Objects/camera.h"
 #include "Objects/light.h"
 #include "Objects/mesh.h"
@@ -45,29 +46,53 @@ public:
 	template<typename T, typename... Args>
 	T* instantiate(const SceneObjectType category, SceneObject* parent, Args&&... args)
 	{
-		static_assert(std::is_base_of_v<SceneObject, T>, "instantiate<T> requires a SceneObject-derived type");
+		static_assert(std::is_base_of_v<SceneObject, T>, "instantiate<T>() requires a SceneObject-derived type.");
+		static_assert(!std::is_same_v<T, SceneObject>, "instantiate<SceneObject>() is not allowed.");
 
 		auto owned = std::make_unique<T>(std::forward<Args>(args)...);
+
 		T* raw = owned.get();
 
 		SceneObject* attach_point = parent ? parent : m_root.get();
+
+		assert(attach_point);
+
+		// Scene graph becomes the owner
 		attach_point->add_child(std::move(owned));
 
-		m_scene_objects_indexed[category].push_back(raw);
-		if constexpr (std::is_same_v<T, Camera>)
-			m_cameras.push_back(raw);
-		else if constexpr (std::is_same_v<T, Light>)
-			m_lights.push_back(raw);
-		else if constexpr (std::is_same_v<T, Mesh>)
-			m_meshes.push_back(raw);
-		else if constexpr (std::is_same_v<T, ParticleSystem>)
-			m_particle_systems.push_back(raw);
-		else if constexpr (std::is_same_v<T, AdvancedParticleSystem>)
-			m_advanced_particle_systems.push_back(raw);
-		else if constexpr (std::is_base_of_v<RenderableObject, T>) // Leftover geometry, most likely debug
-			m_debug_geometry.push_back(raw);
+		// All indexes are non-owning
+		register_object(raw);
 
 		return raw;
+	}
+
+	template<typename T>
+	void destroy(T* object)
+	{
+		static_assert(std::is_base_of_v<SceneObject, T>, "destroy<T>() requires a SceneObject-derived type.");
+
+		if (!object)
+		{
+			return;
+		}
+
+		// Unregister the entire subtree
+		for (const auto& child : object->children)
+		{
+			destroy(child.get());
+		}
+
+		// Remove this object from all non-owning indexes
+		unregister_object(object);
+
+		// Remove the owning unique_ptr from the parent
+		if (SceneObject* parent = object->parent)
+		{
+			std::erase_if(parent->children, [object](const std::unique_ptr<SceneObject>& child)
+			{
+				return child.get() == object;
+			});
+		}
 	}
 
 	SceneObject* get_root() const { return m_root.get(); }
@@ -85,6 +110,9 @@ public:
 	void update(float dt) const;
 
 private:
+	void register_object(SceneObject* object);
+	void unregister_object(SceneObject* object);
+	
 	Camera* m_current_camera = nullptr;
 	
 	std::unique_ptr<SceneObject> m_root;

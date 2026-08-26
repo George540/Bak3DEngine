@@ -22,7 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 =========================================================================== */
 
-#include "AdvancedParticleSystem.h"
+#include "advanced_particle_system.h"
 
 #include "Asset/mesh_data.h"
 #include "Asset/resource_manager.h"
@@ -40,6 +40,8 @@ AdvancedParticleSystem::AdvancedParticleSystem(const std::string& name)
                 glm::vec3(0.0f),
                         name)
 {
+    object_type = SceneObjectType::AdvancedParticleSystem;
+    
     m_emit_compute_shader = ResourceManager::get_shader("particle_advanced_emit");
     if (!m_emit_compute_shader || !m_emit_compute_shader->is_shader_compiled())
     {

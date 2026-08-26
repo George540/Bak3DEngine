@@ -31,7 +31,7 @@ THE SOFTWARE.
 
 BoundingBox::BoundingBox() : RenderableObject(ResourceManager::get_material("grid"), glm::vec3(0.0f), "Bounding Box")
 {
-    
+    object_type = SceneObjectType::Debug;
 }
 
 void BoundingBox::update(float dt)
