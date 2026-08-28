@@ -27,9 +27,9 @@ THE SOFTWARE.
 #include "light.h"
 
 #include "Core/global_definitions.h"
-#include "Input/event_manager.h"
 
 #include <GLFW/glfw3.h>
+#include <glm/gtc/epsilon.hpp>
 
 #include "Asset/resource_manager.h"
 #include "Asset/texture.h"
@@ -42,64 +42,23 @@ Light::Light(glm::vec3 position, glm::vec3 scaling, const MaterialRef& material)
 {
 	object_type = SceneObjectType::Light;
 
-	transform.set_local_scale(scaling);
-	transform.compute_model_matrix();
-
 	// @TODO: Replace with struct payload instead of manual size
 	m_light_data_ubo = std::make_unique<UniformBuffer>(6 * VEC4_SIZE /*Temporary size*/, nullptr, 1, GL_DYNAMIC_DRAW);
 
-	m_diffuse = glm::vec3(1.0f);
-	m_ambient = glm::vec3(0.3f);
-	m_specular = glm::vec3(0.3f);
-
-	m_attenuation_radius = 32.0f;
-
-	m_cone_size = 1.0f;
-	m_inner_cut_off = glm::cos(glm::radians(12.5f));
-	m_outer_cut_off = glm::cos(glm::radians(17.5f));
-
-	m_horizontal_angle = transform.get_global_position().x;
-	m_vertical_angle = transform.get_global_position().y;
-	m_distance_offset = glm::distance(transform.get_global_position(), glm::vec3(0.0f));
-
 	m_mesh_slot = make_mesh_slot(ResourceManager::get_mesh("Quad"));
-	set_texture_by_type(LightType::Point);
+	set_texture_by_type(m_type);
 
 	B3D_LOG_INFO("Light created.");
 }
 
 void Light::update(float dt)
 {
-	m_horizontal_angle = GlobalSettings::get_global_setting_value<float>(GlobalSettingOption::Light_HorizontalRotation);
-	m_vertical_angle = GlobalSettings::get_global_setting_value<float>(GlobalSettingOption::Light_VerticalRotation);
-	m_distance_offset = GlobalSettings::get_global_setting_value<float>(GlobalSettingOption::Light_OriginDistance);
-	m_intensity = GlobalSettings::get_global_setting_value<float>(GlobalSettingOption::Light_Intensity);
-	const float sprite_scaling = GlobalSettings::get_global_setting_value<float>(GlobalSettingOption::Light_Scaling);
+	if (m_is_dirty)
+	{
+		update_light_data_ubo();
 
-	const auto theta = glm::radians(m_horizontal_angle);
-	const auto phi = glm::radians(m_vertical_angle);
-	glm::vec3 position = glm::vec3(cosf(phi) * cosf(theta), sinf(phi), -cosf(phi) * sinf(theta));
-
-	position *= m_distance_offset;
-	glm::vec3 scale = glm::vec3(sprite_scaling, sprite_scaling, sprite_scaling);
-
-	transform.set_local_position(position);
-	transform.set_local_scale(scale);
-	transform.compute_model_matrix();
-	m_direction = glm::normalize(glm::vec3(0.0f) - position);
-
-	const glm::vec4 diffuse = GlobalSettings::get_global_setting_value<glm::vec4>(GlobalSettingOption::Light_Color);
-	m_diffuse = glm::vec3(diffuse.r, diffuse.g, diffuse.b);
-
-	const LightType type = static_cast<LightType>(GlobalSettings::get_global_setting_value<uint32_t>(GlobalSettingOption::Light_Type));
-	set_texture_by_type(type);
-
-	m_cone_size = GlobalSettings::get_global_setting_value<float>(GlobalSettingOption::Light_Spot_ConeAngle_Size);
-	m_attenuation_radius = GlobalSettings::get_global_setting_value<float>(GlobalSettingOption::Light_Point_Attenuation_Radius);
-	m_inner_cut_off = glm::cos(glm::radians(GlobalSettings::get_global_setting_value<float>(GlobalSettingOption::Light_Spot_ConeAngle_Inner_CutOff) + m_cone_size));
-	m_outer_cut_off = glm::cos(glm::radians(GlobalSettings::get_global_setting_value<float>(GlobalSettingOption::Light_Spot_ConeAngle_Outer_CutOff) + m_cone_size));
-
-	update_light_data_ubo();
+		m_is_dirty = false;
+	}
 
 	RenderableObject::update(dt);
 }
@@ -115,15 +74,111 @@ void Light::draw() const
 	Texture2D::unbind();
 }
 
+void Light::set_type(const LightType type)
+{
+	if (m_type == type)
+	{
+		return;
+	}
+
+	m_type = type;
+	set_texture_by_type(type);
+	m_is_dirty = true;
+}
+
+void Light::set_ambient(const glm::vec3 ambient)
+{
+	if (glm::all(glm::epsilonEqual(m_ambient, ambient, EPSILON_CUSTOM)))
+	{
+		return;
+	}
+
+	m_ambient = ambient;
+	m_is_dirty = true;
+}
+
+void Light::set_diffuse(const glm::vec3 diffuse)
+{
+	if (glm::all(glm::epsilonEqual(m_diffuse, diffuse, EPSILON_CUSTOM)))
+	{
+		return;
+	}
+
+	m_diffuse = diffuse;
+	m_is_dirty = true;
+}
+
+void Light::set_specular(const glm::vec3 specular)
+{
+	if (glm::all(glm::epsilonEqual(m_specular, specular, EPSILON_CUSTOM)))
+	{
+		return;
+	}
+
+	m_specular = specular;
+	m_is_dirty = true;
+}
+
+void Light::set_intensity(const float intensity)
+{
+	if (glm::epsilonEqual(m_intensity, intensity, EPSILON_CUSTOM))
+	{
+		return;
+	}
+
+	m_intensity = intensity;
+	m_is_dirty = true;
+}
+
+void Light::set_direction(const glm::vec3 direction)
+{
+	const glm::vec3 normalized_direction = glm::normalize(direction);
+	if (glm::all(glm::epsilonEqual(m_direction, normalized_direction, EPSILON_CUSTOM)))
+	{
+		return;
+	}
+
+	m_direction = normalized_direction;
+	m_is_dirty = true;
+}
+
 void Light::set_attenuation(const float radius)
 {
+	if (glm::epsilonEqual(m_attenuation_radius, radius, EPSILON_CUSTOM))
+	{
+		return;
+	}
+
 	m_attenuation_radius = radius;
+	m_is_dirty = true;
 }
 
 void Light::set_cone_angles(const float inner_degrees, const float outer_degrees)
 {
-	m_inner_cut_off = glm::cos(glm::radians(inner_degrees + m_cone_size));
-	m_outer_cut_off = glm::cos(glm::radians(outer_degrees + m_cone_size));
+	const float inner_cutoff = glm::cos(glm::radians(inner_degrees + m_cone_size));
+	const float outer_cutoff = glm::cos(glm::radians(outer_degrees + m_cone_size));
+
+	if (glm::epsilonEqual(m_inner_cut_off, inner_cutoff, EPSILON_CUSTOM)
+		&& glm::epsilonEqual(m_outer_cut_off, outer_cutoff, EPSILON_CUSTOM))
+	{
+		return;
+	}
+
+	m_inner_cut_off = inner_cutoff;
+	m_outer_cut_off = outer_cutoff;
+
+	m_is_dirty = true;
+}
+
+void Light::set_cone_size(const float size)
+{
+	if (glm::epsilonEqual(m_cone_size, size, EPSILON_CUSTOM))
+	{
+		return;
+	}
+
+	m_cone_size = size;
+	m_is_dirty = true;
 }
 
 void Light::update_light_data_ubo() const
@@ -159,13 +214,7 @@ void Light::update_light_data_ubo() const
 
 void Light::set_texture_by_type(const LightType type)
 {
-	if (m_type == type)
-	{
-		return;
-	}
-
-	m_type = type;
-	switch (m_type)
+	switch (type)
 	{
 		case LightType::Directional: m_sprite_texture = ResourceManager::get_texture("directional_light_icon.png"); break;
 		case LightType::Point: m_sprite_texture = ResourceManager::get_texture("point_light_icon.png"); break;

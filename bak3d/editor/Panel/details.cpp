@@ -33,6 +33,7 @@ THE SOFTWARE.
 #include "Asset/resource_manager.h"
 #include "Core/logger.h"
 #include "Scene/scene.h"
+#include "Scene/scene_manager.h"
 #include "Scene/Objects/advanced_particle_system.h"
 #include "Scene/Objects/Particle/particle_system.h"
 
@@ -44,18 +45,8 @@ namespace
     constexpr ImVec2 IMAGE_BUTTON_PROPERTY_SIZE_BORDERED = ImVec2(50.0f, 50.0f);
     constexpr ImVec2 POPUP_SIZE = ImVec2(200, 300);
 
-    string asset_picker_item_id = "##sprite_picker";
-    int object_selection_index = 0;
-    int previous_object_selection_index = -1;
-    vector<const char*> m_object_items = { "None", "Model", "Particle System", "Advanced Particles" };
-    int model_selection_index = 0;
-    vector<const char*> m_model_name_items = { "None" };
-
-    Model* m_current_model = nullptr;
-    ParticleSystem* m_current_particle_system = nullptr;
-    AdvancedParticleSystem* m_current_advanced_particle_system = nullptr;
-
     unordered_map<aiTextureType, string> m_pending_texture_selections;
+    string asset_picker_item_id = "##sprite_picker";
 
     void draw_property_button_selection_item(string* selected_name, const char* label, const char* tooltip_desc)
     {
@@ -180,10 +171,7 @@ namespace
 
 Details::Details() : EditorPanel("Details")
 {
-    for (const auto& model_name : ResourceManager::Models.all() | views::keys)
-    {
-        m_model_name_items.push_back(model_name.c_str());
-    }
+
 }
 
 void Details::begin_frame()
@@ -195,52 +183,14 @@ void Details::update()
 {
     EditorPanel::update();
 
-    draw_object_section();
-
-    if (object_selection_index != previous_object_selection_index)
+    if (SceneObject* selected_object = SceneManager::get_current_scene()->get_selected_scene_object())
     {
-        // Tear down whatever was previously active
-        if (previous_object_selection_index == 1)
+        draw_scene_object_section(selected_object);
+        
+        if (selected_object->get_object_type() == SceneObjectType::Light)
         {
-            m_current_model = nullptr;
-            //Scene::instance->set_model(nullptr);
-            model_selection_index = 0;
+            draw_light_section(dynamic_cast<Light*>(selected_object));
         }
-        else if (previous_object_selection_index == 2)
-        {
-            m_current_particle_system = nullptr;
-            //Scene::instance->despawn_particle_system();
-        }
-        else if (previous_object_selection_index == 3)
-        {
-            m_current_advanced_particle_system = nullptr;
-            //Scene::instance->despawn_advanced_particle_system();
-        }
-
-        if (object_selection_index == 2)
-        {
-            //m_current_particle_system = Scene::instance->spawn_particle_system();
-        }
-
-        if (object_selection_index == 3)
-        {
-            //m_current_advanced_particle_system = Scene::instance->spawn_advanced_particle_system();
-        }
-
-        previous_object_selection_index = object_selection_index;
-    }
-
-    if (object_selection_index == 1) // Model
-    {
-        draw_model_section();
-    }
-    else if (object_selection_index == 2) // Particle System
-    {
-        draw_particle_system_section();
-    }
-    else if (object_selection_index == 3) // Advanced Particles
-    {
-        ImGui::TextUnformatted("New GPU Particle system on the way!");
     }
     else
     {
@@ -253,18 +203,64 @@ void Details::end_frame()
     EditorPanel::end_frame();
 }
 
-void Details::draw_object_section()
+void Details::draw_scene_object_section(SceneObject* scene_object)
 {
-    // Object Selection
-    if (ImGuiB3D::PropertyDropdown("Object Selection", m_object_items, &object_selection_index, "Select an object type to render in the scene"))
+    ImGui::SetNextItemOpen(true, ImGuiCond_Once);
+    if (ImGui::TreeNode("Transform"))
     {
-        B3D_LOG_INFO("Selected object: %s", m_object_items[object_selection_index]);
+        // Position
+        glm::vec3 position = scene_object->transform.get_local_position();
+        if (ImGuiB3D::PropertyDragFloat3("Position", &position, 0.1f, 0.0f, 0.0f, "%.3f", "Translate scene object."))
+        {
+            scene_object->transform.set_local_position(position);
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("Reset##Position"))
+        {
+            scene_object->transform.set_local_position(glm::vec3(0.0f));
+        }
+
+        // Euler Rotation
+        glm::vec3 rotation = scene_object->transform.get_local_euler_rotation();
+        if (ImGuiB3D::PropertyDragFloat3("Rotation", &rotation, 0.1f, 0.0f, 0.0f, "%.3f", "Rotate scene object based on Euler angles."))
+        {
+            scene_object->transform.set_local_euler_rotation(rotation);
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("Reset##Rotation"))
+        {
+            scene_object->transform.set_local_euler_rotation(glm::vec3(0.0f));
+        }
+
+        // Scale
+        glm::vec3 scale = scene_object->transform.get_local_scale();
+        if (ImGuiB3D::PropertyDragFloat3("Scale", &scale, 0.1f, 0.0f, 0.0f, "%.3f", "Scale scene object."))
+        {
+            scene_object->transform.set_local_scale(scale);
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("Reset##Scale"))
+        {
+            scene_object->transform.set_local_scale(glm::vec3(1.0f));
+        }
+
+        ImGui::TreePop();
     }
+}
+
+void Details::draw_light_section(Light* light)
+{
+    if (!light)
+    {
+        return;
+    }
+
+    bool is_changed = false;
 }
 
 void Details::draw_model_section()
 {
-    ImGui::SetNextItemOpen(true, ImGuiCond_Once);
+    /*ImGui::SetNextItemOpen(true, ImGuiCond_Once);
     if (ImGui::TreeNode("Model Data"))
     {
         ImGuiB3D::PropertyDropdown("Model", m_model_name_items, &model_selection_index, "Select one of the loaded asset models to render in the scene.");
@@ -325,12 +321,12 @@ void Details::draw_model_section()
         }
 
         ImGui::TreePop();
-    }
+    }*/
 }
 
 void Details::draw_particle_system_section()
 {
-    if (m_current_particle_system)
+    /*if (m_current_particle_system)
     {
         int emitters_num = m_current_particle_system->get_emitters().size();
         ImGui::Text("Emitters (%d)", emitters_num);
@@ -366,7 +362,7 @@ void Details::draw_particle_system_section()
     else
     {
         ImGui::TextUnformatted("No particle system object exists.");
-    }
+    }*/
 }
 
 void Details::draw_particle_emitter_section(ParticleEmitter& emitter)

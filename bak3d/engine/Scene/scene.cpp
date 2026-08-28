@@ -49,11 +49,10 @@ Scene::Scene()
 
 	instantiate<Grid>(SceneObjectType::Debug, nullptr);
 
-	const auto initial_light_scaling_value = GlobalSettings::get_global_setting_value<float>(GlobalSettingOption::Light_Scaling);
 	instantiate<Light>(SceneObjectType::Light,
 		nullptr,
 		glm::vec3(-5.0f, 5.0f, 5.0f),
-		glm::vec3(initial_light_scaling_value, initial_light_scaling_value, initial_light_scaling_value),
+		glm::vec3(0.5f),
 		ResourceManager::get_material("light_icon"));
 
 	/*auto models = ResourceManager::Models;

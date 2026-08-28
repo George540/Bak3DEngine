@@ -26,6 +26,7 @@ THE SOFTWARE.
 
 #include <algorithm>
 #include <imgui.h>
+#include <imgui_internal.h>
 #include <iterator>
 #include <string>
 
@@ -40,6 +41,7 @@ constexpr static float VALUE_INNER_PADDING = 5.0f;
 
 namespace
 {
+    // @TODO: Remove padding and favour table format for property labels and widgets
     float align_to_label_column()
     {
         const float total_width  = ImGui::GetContentRegionAvail().x;  // snapshot before cursor moves
@@ -135,8 +137,80 @@ bool ImGuiB3D::PropertyBeginDropdown(const char* label, const char* preview_valu
     // NOTE: Make sure you use ImGui::EndCombo() to properly close the widget.
 }
 
+bool ImGuiB3D::PropertyDragFloat3(const char* label, glm::vec3* value, float v_speed, float v_min, float v_max, const char* format, const char* tooltip_desc, bool is_colored)
+{
+    ImGui::TextUnformatted(label);
+    if (tooltip_desc)
+    {
+        ToolTipExtendedText(tooltip_desc, TOOL_TIP_WIDTH);
+    }
+    ImGui::SetNextItemWidth(align_to_label_column());
+    const auto label_str = "##" + string(label);
+    float value_channels[3] = { value->x, value->y, value->z };
+
+    bool result = false;
+    if (is_colored)
+    {
+        ImGui::BeginGroup();
+        ImGui::PushID(label_str.c_str());
+
+        // Split the available item width into 3 equal columns
+        ImGui::PushMultiItemsWidths(3, ImGui::CalcItemWidth());
+
+        // Define colors (RGB)
+        static constexpr ImU32 colors[] = { 
+            IM_COL32(200, 50, 50, 255),
+            IM_COL32(50, 200, 50, 255), 
+            IM_COL32(50, 50, 200, 255)
+        };
+
+        for (int i = 0; i < IM_ARRAYSIZE(colors); i++) 
+        {
+            ImGui::PushID(i);
+
+            // Add spacing on the subsequent channels
+            if (i > 0)
+            {
+                ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
+            }
+
+            result |= ImGui::DragFloat("##v", &value_channels[i], v_speed, v_min, v_max, format);
+
+            // Overlay the custom vertical colored strip
+            ImVec2 min = ImGui::GetItemRectMin();
+            ImVec2 max = ImGui::GetItemRectMax();
+        
+            // Match the layout coordinates to create a 3-pixel wide line on the left side
+            min.x += 1.0f;
+            min.y += 1.0f;
+            max.x = min.x + 3.0f;
+            max.y -= 1.0f;
+
+            ImGui::GetWindowDrawList()->AddRectFilled(min, max, colors[i]);
+
+            ImGui::PopID();
+            ImGui::PopItemWidth();
+        }
+
+        // Render the main label text on the right side
+        ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
+        ImGui::TextUnformatted(label);
+
+        ImGui::PopID();
+        ImGui::EndGroup();
+    }
+    else
+    {
+        result |= ImGui::DragFloat3(label, value_channels, v_speed, v_min, v_max, format);
+    }
+    value->x = value_channels[0];
+    value->y = value_channels[1];
+    value->z = value_channels[2];
+    return result;
+}
+
 bool ImGuiB3D::PropertySliderFloat(const char* label, float* value, float v_min, float v_max, const char* format,
-    const char* tooltip_desc)
+                                   const char* tooltip_desc)
 {
     ImGui::TextUnformatted(label);
     if (tooltip_desc)

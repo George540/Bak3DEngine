@@ -42,6 +42,8 @@ THE SOFTWARE.
  * ==========================================================================
  */
 
+constexpr static float EPSILON_CUSTOM = 0.00001f;
+
 constexpr static std::string_view B3D_LOG_FILE = "B3D_Logs.log";
 constexpr static int MAX_LOG_ENTRIES = 128;
 constexpr static float POST_PROCESS_COLORING_SLIDER_CLAMP = 10.0f;

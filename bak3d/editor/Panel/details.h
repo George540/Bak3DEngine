@@ -25,6 +25,7 @@ THE SOFTWARE.
 #pragma once
 
 #include "editor_panel.h"
+#include "Scene/Objects/light.h"
 #include "Scene/Objects/Particle/particle_emitter.h"
 
 /*
@@ -39,7 +40,8 @@ public:
     void update() override;
     void end_frame() override;
 private:
-    void draw_object_section();
+    void draw_scene_object_section(SceneObject* scene_object);
+    void draw_light_section(Light* light);
     void draw_model_section();
     void draw_particle_system_section();
     void draw_particle_emitter_section(ParticleEmitter& emitter);

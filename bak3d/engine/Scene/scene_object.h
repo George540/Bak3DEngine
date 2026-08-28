@@ -50,6 +50,8 @@ public:
 
     SceneObjectType object_type;
 
+    bool m_is_dirty = true;
+
     SceneObject() : SceneObject(glm::vec3(0.0f, 0.0f, 0.0f), "SceneObject") {}
     SceneObject(const glm::vec3 position, const std::string& name) : Bak3DObject(name) { transform.set_local_position(position); }
     ~SceneObject() override = default;
@@ -101,6 +103,15 @@ public:
 
     SceneObjectType get_object_type() const { return object_type; }
     void set_object_type(const SceneObjectType type) { object_type = type; }
+
+    [[nodiscard]]
+    bool is_dirty() const { return m_is_dirty; }
+    void mark_dirty() { m_is_dirty = true; }
+
+    void clear_dirty()
+    {
+        m_is_dirty = false;
+    }
 
     virtual void update(float dt)
     {

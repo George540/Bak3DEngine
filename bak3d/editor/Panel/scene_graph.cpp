@@ -30,8 +30,6 @@ THE SOFTWARE.
 
 namespace
 {
-    SceneObject* m_selected_object = nullptr;
-
     void draw_subtree(const SceneObject* scene_object)
     {
         for (auto& child : scene_object->children)
@@ -42,7 +40,7 @@ namespace
             }
 
             ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_SpanAvailWidth;
-            if (m_selected_object == child.get())
+            if (SceneManager::get_current_scene()->get_selected_scene_object() == child.get())
             {
                 flags |= ImGuiTreeNodeFlags_Selected;
             }
@@ -56,7 +54,7 @@ namespace
             const bool is_tree_open = ImGui::TreeNodeEx(child_name, flags, "%s", child_name);
             if (ImGui::IsItemClicked())
             {
-                m_selected_object = child.get();
+                SceneManager::get_current_scene()->set_selected_scene_object(child.get());
             }
 
             if (is_tree_open)
@@ -110,7 +108,7 @@ void SceneGraph::draw_scene_graph()
     {
         if (!ImGui::IsAnyItemHovered())
         {
-            m_selected_object = nullptr;
+            SceneManager::get_current_scene()->set_selected_scene_object(nullptr);
         }
     }
 }

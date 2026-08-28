@@ -55,28 +55,23 @@ inline const char* light_type_to_string(const LightType type)
 class Light : public RenderableObject
 {
 protected:
-	// ORIENTATION
-	float m_horizontal_angle;
-	float m_vertical_angle;
-	float m_distance_offset;
-
 	// RENDERING
-	glm::vec3 m_ambient;
-	glm::vec3 m_diffuse;
-	glm::vec3 m_specular;
-	float m_intensity;
+	glm::vec3 m_ambient = glm::vec3(0.3f);
+	glm::vec3 m_diffuse = glm::vec3(1.0f);
+	glm::vec3 m_specular = glm::vec3(0.3f);
+	float m_intensity = 1.0f;
 	LightType m_type;
 
 	// DIRECTIONAL
 	glm::vec3 m_direction;
 
 	// POINT
-	float m_attenuation_radius;
+	float m_attenuation_radius = 32.0f;
 
 	// SPOT
-	float m_inner_cut_off; // glm::cos(glm::radians(inner_degrees))
-	float m_outer_cut_off; // glm::cos(glm::radians(outer_degrees))
-	float m_cone_size;
+	float m_inner_cut_off = glm::cos(glm::radians(12.5f)); // glm::cos(glm::radians(inner_degrees))
+	float m_outer_cut_off = glm::cos(glm::radians(17.5f)); // glm::cos(glm::radians(outer_degrees))
+	float m_cone_size = 1.0f;
 
 	std::unique_ptr<UniformBuffer> m_light_data_ubo;
 
@@ -90,18 +85,9 @@ public:
 
 	UniformBuffer* get_camera_data_ubo() const { return m_light_data_ubo.get(); }
 
-	float get_horizontal_angle() const { return m_horizontal_angle; }
-	void set_horizontal_angle(const float angle) { m_horizontal_angle = angle; }
-
-	float get_vertical_angle() const { return m_horizontal_angle; }
-	void set_vertical_angle(const float angle) { m_vertical_angle = angle; }
-
-	float get_distance_offset() const { return m_distance_offset; }
-	void set_distance_offset(const float distance) { m_distance_offset = distance; }
-
 	// Type
 	LightType get_type() const { return m_type; }
-	void set_type(const LightType type) { m_type = type; }
+	void set_type(const LightType type);
 
 	// Colors
 	glm::vec3 get_ambient() const { return m_ambient; }
@@ -109,14 +95,14 @@ public:
 	glm::vec3 get_specular() const { return m_specular;}
 	float get_intensity() const { return m_intensity; }
 
-	void set_ambient (const glm::vec3 ambient) { m_ambient = ambient; }
-	void set_diffuse (const glm::vec3 diffuse) { m_diffuse = diffuse; }
-	void set_specular(const glm::vec3 specular) { m_specular = specular; }
-	void set_intensity(const float intensity) { m_intensity = intensity; }
+	void set_ambient (glm::vec3 ambient);
+	void set_diffuse (glm::vec3 diffuse);
+	void set_specular(glm::vec3 specular);
+	void set_intensity(float intensity);
 
 	// Direction (directional + spot)
 	glm::vec3 get_direction() const { return m_direction; }
-	void set_direction(const glm::vec3 direction) { m_direction = glm::normalize(direction); }
+	void set_direction(const glm::vec3 direction);
 
 	float get_attenuation_radius() const { return m_attenuation_radius; }
 	float get_cone_angle_inner_cutoff() const { return m_inner_cut_off; }
@@ -124,10 +110,10 @@ public:
 	float get_cone_size() const { return m_cone_size; }
 
 	// Attenuation (point + spot)
-	void set_attenuation(const float radius);
+	void set_attenuation(float radius);
 	// Cone angles in degrees — stored internally as cosines (spot only)
 	void set_cone_angles(float inner_degrees, float outer_degrees);
-	void set_cone_size(const float size) { m_cone_size = size; };
+	void set_cone_size(float size);
 private:
 	void update_light_data_ubo() const;
 	void set_texture_by_type(LightType type);

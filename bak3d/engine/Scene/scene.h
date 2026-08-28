@@ -100,6 +100,9 @@ public:
 	std::vector<SceneObject*> get_all_objects_of_type(SceneObjectType type);
 	SceneObject* get_object_in_scene(SceneObjectType type, int index = 0);
 
+	SceneObject* get_selected_scene_object() const { return m_selected_scene_object; }
+	void set_selected_scene_object(SceneObject* object) { m_selected_scene_object = object; }
+
 	std::vector<Camera*>& get_all_cameras() { return m_cameras; }
 	std::vector<Light*>& get_all_lights() { return m_lights; }
 	std::vector<Mesh*>& get_all_meshes() { return m_meshes; }
@@ -114,6 +117,7 @@ private:
 	void unregister_object(SceneObject* object);
 	
 	Camera* m_current_camera = nullptr;
+	SceneObject* m_selected_scene_object = nullptr;
 	
 	std::unique_ptr<SceneObject> m_root;
 	std::map<SceneObjectType, std::vector<SceneObject*>> m_scene_objects_indexed; // <object name, scene object ptr>
