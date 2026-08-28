@@ -60,7 +60,7 @@ protected:
 	glm::vec3 m_diffuse = glm::vec3(1.0f);
 	glm::vec3 m_specular = glm::vec3(0.3f);
 	float m_intensity = 1.0f;
-	LightType m_type;
+	LightType m_type = LightType::Point;
 
 	// DIRECTIONAL
 	glm::vec3 m_direction;
@@ -69,8 +69,10 @@ protected:
 	float m_attenuation_radius = 32.0f;
 
 	// SPOT
-	float m_inner_cut_off = glm::cos(glm::radians(12.5f)); // glm::cos(glm::radians(inner_degrees))
-	float m_outer_cut_off = glm::cos(glm::radians(17.5f)); // glm::cos(glm::radians(outer_degrees))
+	float m_inner_angle = 12.5f;
+	float m_outer_angle = 17.5f;
+	float m_inner_cut_off = glm::cos(glm::radians(m_inner_angle)); // glm::cos(glm::radians(inner_degrees))
+	float m_outer_cut_off = glm::cos(glm::radians(m_outer_angle)); // glm::cos(glm::radians(outer_degrees))
 	float m_cone_size = 1.0f;
 
 	std::unique_ptr<UniformBuffer> m_light_data_ubo;
@@ -105,8 +107,8 @@ public:
 	void set_direction(const glm::vec3 direction);
 
 	float get_attenuation_radius() const { return m_attenuation_radius; }
-	float get_cone_angle_inner_cutoff() const { return m_inner_cut_off; }
-	float get_cone_angle_outer_cutoff() const { return m_outer_cut_off; }
+	float get_cone_angle_inner_cutoff() const;
+	float get_cone_angle_outer_cutoff() const;
 	float get_cone_size() const { return m_cone_size; }
 
 	// Attenuation (point + spot)

@@ -44,9 +44,11 @@ public:
     static bool ToolTipExtendedText(const char* tooltip_desc, float text_wrap_size = TOOL_TIP_WIDTH);
     static bool PropertyToggle(const char* label, bool* value, const char* tooltip_desc = nullptr);
     static bool PropertyToggle(const char* label, int* value, const char* tooltip_desc = nullptr);
-    static bool ColorPicker(const char* label, glm::vec4* color, const char* tooltip_desc = nullptr, bool is_property = true, ImVec2 channel_size = ImVec2(0.0f, 0.0f));
+    static bool ColorPicker3(const char* label, glm::vec3* color, const char* tooltip_desc = nullptr, bool is_property = true, ImVec2 channel_size = ImVec2(0.0f, 0.0f));
+    static bool ColorPicker4(const char* label, glm::vec4* color, const char* tooltip_desc = nullptr, bool is_property = true, ImVec2 channel_size = ImVec2(0.0f, 0.0f));
     static bool PropertyDropdown(const char* label, const std::vector<const char*>& data, int* selected_index, const char* tooltip_desc = nullptr);
     static bool PropertyBeginDropdown(const char* label, const char* preview_value, const char* tooltip_desc);
+    static bool PropertyDragFloat(const char* label, float* value, float v_speed = 1.0f, float v_min = 0.0f, float v_max = 0.0f, const char* format = "%.3f", const char* tooltip_desc = nullptr);
     static bool PropertyDragFloat3(const char* label, glm::vec3* value, float v_speed = 1.0f, float v_min = 0.0f, float v_max = 0.0f, const char* format = "%.3f", const char* tooltip_desc = nullptr, const bool is_colored = true);
     static bool PropertySliderFloat(const char* label, float* value, float v_min, float v_max, const char* format, const char* tooltip_desc = nullptr);
     static bool PropertySliderFloat3(const char* label, glm::vec3* value, float v_min, float v_max, const char* format, const char* tooltip_desc = nullptr);

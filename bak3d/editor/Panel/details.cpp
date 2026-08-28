@@ -48,6 +48,8 @@ namespace
     unordered_map<aiTextureType, string> m_pending_texture_selections;
     string asset_picker_item_id = "##sprite_picker";
 
+    vector<string> m_light_type_items = { };
+
     void draw_property_button_selection_item(string* selected_name, const char* label, const char* tooltip_desc)
     {
         // Make popup ID as unique as possible to avoid duplicates
@@ -171,7 +173,15 @@ namespace
 
 Details::Details() : EditorPanel("Details")
 {
-
+    // Could be hardcoded since we know the light types already, but let's keep it modular.
+    constexpr int light_types_num = static_cast<int>(LightType::Max);
+    m_light_type_items.reserve(light_types_num);
+    for (int light_type_id = 0; light_type_id < light_types_num; light_type_id++)
+    {
+        const LightType light_type = static_cast<LightType>(light_type_id);
+        string label = light_type_to_string(light_type);
+        m_light_type_items.push_back(label);
+    }
 }
 
 void Details::begin_frame()
@@ -189,6 +199,8 @@ void Details::update()
         
         if (selected_object->get_object_type() == SceneObjectType::Light)
         {
+            ImGuiB3D::SeparatorWithSpacing();
+
             draw_light_section(dynamic_cast<Light*>(selected_object));
         }
     }
@@ -255,7 +267,94 @@ void Details::draw_light_section(Light* light)
         return;
     }
 
-    bool is_changed = false;
+    // Light Type
+    const LightType light_type = light->get_type();
+    if (ImGuiB3D::PropertyBeginDropdown("Type", light_type_to_string(light_type), "Select Light Caster type. Choices are:\n"
+                                                                                                                  " - Directional\n"
+                                                                                                                  " - Point\n"
+                                                                                                                  " - Spot\n"
+                                                                                                                  " - Area"))
+    {
+        for (int light_type_index = 0; light_type_index < m_light_type_items.size(); light_type_index++)
+        {
+            ImGui::PushID(light_type_index);
+
+            const bool is_selected = (light_type_to_string(light_type) == m_light_type_items[light_type_index].c_str());
+
+            if (ImGui::Selectable(m_light_type_items[light_type_index].c_str(), is_selected))
+            {
+                light->set_type(static_cast<LightType>(light_type_index));
+            }
+
+            if (is_selected)
+            {
+                ImGui::SetItemDefaultFocus();
+            }
+
+            ImGui::PopID();
+        }
+
+        ImGui::EndCombo();
+    }
+
+    ImGui::SetNextItemOpen(true, ImGuiCond_Once);
+    if (ImGui::TreeNode("Coloration"))
+    {
+        // Intensity
+        float intensity = light->get_intensity();
+        if (ImGuiB3D::PropertyDragFloat("Intensity", &intensity, 0.1f, 0.001f, 0.0f, "%.3f", "Intensity of the light"))
+        {
+            light->set_intensity(intensity);
+        }
+
+        // Color
+        glm::vec3 light_color = light->get_diffuse();
+        if (ImGuiB3D::ColorPicker3("Color", &light_color, "Change light's color"))
+        {
+            light->set_diffuse(light_color);
+        }
+
+        ImGui::TreePop();
+    }
+
+    // Unique light type properties
+    if (light_type == LightType::Point || light_type == LightType::Spot)
+    {
+        const string light_type_string = light_type_to_string(light_type);
+        ImGui::SetNextItemOpen(true, ImGuiCond_Once);
+        if (ImGui::TreeNode(light_type_string.c_str()))
+        {
+            // Attenuation Radius
+            float attenuation = light->get_attenuation_radius();
+            if (ImGuiB3D::PropertySliderFloat("Attenuation Radius", &attenuation, 0.0f, 300.0f, "%.1f", "Alter attenuation radius of the light. Controls linear and quadratic factors of attenuation calculation."))
+            {
+                light->set_attenuation(attenuation);
+            }
+
+            if (light_type == LightType::Spot)
+            {
+                // Cone size
+                float cone_size = light->get_cone_size();
+                if (ImGuiB3D::PropertySliderFloat("Cone Size", &cone_size, 1.0f, 180.0f, "%.1f", "Alter cone angle of the spotlight. The greater the size, the greater the light casting area."))
+                {
+                    light->set_cone_size(cone_size);
+                }
+
+                // Inner Cone Angle
+                bool cone_angles_changed = false;
+                float inner = light->get_cone_angle_inner_cutoff();
+                float outer = light->get_cone_angle_outer_cutoff();
+                cone_angles_changed |= ImGuiB3D::PropertySliderFloat("Inner Cone Angle", &inner, 1.0f, 170.0f, "%.1f", "Alter inner cone angle cutoff of the spotlight. The larger the value, the smoother the cutoff.");
+                cone_angles_changed |= ImGuiB3D::PropertySliderFloat("Outer Cone Angle", &outer, inner, 180.0f, "%.1f", "Alter outer cone angle cutoff of the spotlight. The larger the value, the smoother the cutoff.");
+                if (cone_angles_changed)
+                {
+                    light->set_cone_angles(inner, outer);
+                }
+            }
+
+            ImGui::TreePop();
+        }
+    }
 }
 
 void Details::draw_model_section()
@@ -469,7 +568,7 @@ void Details::draw_particle_emitter_section(ParticleEmitter& emitter)
                                                                                                                "Control scale random offset below for more control.");
             // Color
             ImGui::BeginDisabled(emitter_config.randomize_color);
-            ImGuiB3D::ColorPicker("Color", &emitter_config.color, "Control particle color in normalized RGBA channel.");
+            ImGuiB3D::ColorPicker4("Color", &emitter_config.color, "Control particle color in normalized RGBA channel.");
             ImGui::EndDisabled();
 
             // Sprite

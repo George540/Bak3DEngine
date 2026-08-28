@@ -81,7 +81,37 @@ bool ImGuiB3D::PropertyToggle(const char* label, int* value, const char* tooltip
     return success;
 }
 
-bool ImGuiB3D::ColorPicker(const char* label, glm::vec4* color, const char* tooltip_desc, bool is_property, ImVec2 channel_size)
+bool ImGuiB3D::ColorPicker3(const char* label, glm::vec3* color, const char* tooltip_desc, bool is_property, ImVec2 channel_size)
+{
+    ImGui::TextUnformatted(label);
+    if (tooltip_desc)
+    {
+        ToolTipExtendedText(tooltip_desc, TOOL_TIP_WIDTH);
+    }
+    if (is_property)
+    {
+        ImGui::SetNextItemWidth(align_to_label_column());
+    }
+    const auto label_str = "##" + string(label);
+    float color_channels[3] = { color->r, color->g, color->b };
+    const bool is_auto_sized = !is_property && channel_size.x > 0.0f || channel_size.y > 0.0f;
+    if (is_auto_sized)
+    {
+        ImGui::SameLine();
+        ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, channel_size);
+    }
+    const bool result = ImGui::ColorEdit3(label_str.c_str(), color_channels, !is_property ? ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel : 0);
+    if (is_auto_sized)
+    {
+        ImGui::PopStyleVar();
+    }
+    color->r = color_channels[0];
+    color->g = color_channels[1];
+    color->b = color_channels[2];
+    return result;
+}
+
+bool ImGuiB3D::ColorPicker4(const char* label, glm::vec4* color, const char* tooltip_desc, bool is_property, ImVec2 channel_size)
 {
     ImGui::TextUnformatted(label);
     if (tooltip_desc)
@@ -135,6 +165,18 @@ bool ImGuiB3D::PropertyBeginDropdown(const char* label, const char* preview_valu
     const auto label_str = "##" + string(label);
     return ImGui::BeginCombo(label_str.c_str(), preview_value);
     // NOTE: Make sure you use ImGui::EndCombo() to properly close the widget.
+}
+
+bool ImGuiB3D::PropertyDragFloat(const char* label, float* value, float v_speed, float v_min, float v_max, const char* format, const char* tooltip_desc)
+{
+    ImGui::TextUnformatted(label);
+    if (tooltip_desc)
+    {
+        ToolTipExtendedText(tooltip_desc, TOOL_TIP_WIDTH);
+    }
+    ImGui::SetNextItemWidth(align_to_label_column());
+    const auto label_str = "##" + string(label);
+    return ImGui::DragFloat(label_str.c_str(), value, v_speed, v_min, v_max, format);
 }
 
 bool ImGuiB3D::PropertyDragFloat3(const char* label, glm::vec3* value, float v_speed, float v_min, float v_max, const char* format, const char* tooltip_desc, bool is_colored)

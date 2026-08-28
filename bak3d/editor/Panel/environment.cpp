@@ -134,7 +134,7 @@ void Environment::draw_general_settings()
     {
         // Toggle background color
         glm::vec4 bg_color_vec4 = GlobalSettings::get_global_setting_value<glm::vec4>(GlobalSettingOption::BackgroundColor);
-        ImGuiB3D::ColorPicker("Background Color", &bg_color_vec4, "Change background color using glClearColor(...)");
+        ImGuiB3D::ColorPicker4("Background Color", &bg_color_vec4, "Change background color using glClearColor(...)");
         GlobalSettings::set_global_setting<glm::vec4>(GlobalSettingOption::BackgroundColor, bg_color_vec4);
 
         ImGui::TreePop();
@@ -218,7 +218,7 @@ void Environment::draw_light_settings()
 
                 // Color
                 glm::vec4 light_color = GlobalSettings::get_global_setting_value<glm::vec4>(GlobalSettingOption::Light_Color);
-                ImGuiB3D::ColorPicker("Color", &light_color, "Change light's color");
+                ImGuiB3D::ColorPicker4("Color", &light_color, "Change light's color");
                 GlobalSettings::set_global_setting<glm::vec4>(GlobalSettingOption::Light_Color, light_color);
 
                 ImGui::TreePop();
@@ -439,7 +439,7 @@ void Environment::draw_vignette_settings()
         GlobalSettings::set_global_setting<float>(GlobalSettingOption::PostProcess_ColorGrading_VignetteIntensity, vignette_intensity);
 
         glm::vec4 vignette_color = GlobalSettings::get_global_setting_value<glm::vec4>(GlobalSettingOption::PostProcess_ColorGrading_VignetteColor);
-        ImGuiB3D::ColorPicker("Color", &vignette_color, "Adjust vignette coloring. Color gets inverted when intensity is negative.");
+        ImGuiB3D::ColorPicker4("Color", &vignette_color, "Adjust vignette coloring. Color gets inverted when intensity is negative.");
         GlobalSettings::set_global_setting<glm::vec4>(GlobalSettingOption::PostProcess_ColorGrading_VignetteColor, vignette_color);
 
         ImGuiB3D::SeparatorWithSpacing(1);

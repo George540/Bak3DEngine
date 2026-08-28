@@ -142,6 +142,16 @@ void Light::set_direction(const glm::vec3 direction)
 	m_is_dirty = true;
 }
 
+float Light::get_cone_angle_inner_cutoff() const
+{
+	return m_inner_angle;
+}
+
+float Light::get_cone_angle_outer_cutoff() const
+{
+	return m_outer_angle;
+}
+
 void Light::set_attenuation(const float radius)
 {
 	if (glm::epsilonEqual(m_attenuation_radius, radius, EPSILON_CUSTOM))
@@ -153,19 +163,19 @@ void Light::set_attenuation(const float radius)
 	m_is_dirty = true;
 }
 
-void Light::set_cone_angles(const float inner_degrees, const float outer_degrees)
+void Light::set_cone_angles(float inner_degrees, float outer_degrees)
 {
-	const float inner_cutoff = glm::cos(glm::radians(inner_degrees + m_cone_size));
-	const float outer_cutoff = glm::cos(glm::radians(outer_degrees + m_cone_size));
-
-	if (glm::epsilonEqual(m_inner_cut_off, inner_cutoff, EPSILON_CUSTOM)
-		&& glm::epsilonEqual(m_outer_cut_off, outer_cutoff, EPSILON_CUSTOM))
+	if (glm::epsilonEqual(m_inner_angle, inner_degrees, EPSILON_CUSTOM)
+		&& glm::epsilonEqual(m_outer_angle, outer_degrees, EPSILON_CUSTOM))
 	{
 		return;
 	}
 
-	m_inner_cut_off = inner_cutoff;
-	m_outer_cut_off = outer_cutoff;
+	m_inner_angle = inner_degrees;
+	m_outer_angle = outer_degrees;
+
+	m_inner_cut_off = glm::cos(glm::radians(m_inner_angle + m_cone_size));
+	m_outer_cut_off = glm::cos(glm::radians(m_outer_angle + m_cone_size));
 
 	m_is_dirty = true;
 }
@@ -178,6 +188,7 @@ void Light::set_cone_size(const float size)
 	}
 
 	m_cone_size = size;
+
 	m_is_dirty = true;
 }
 
