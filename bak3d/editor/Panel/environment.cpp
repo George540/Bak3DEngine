@@ -79,10 +79,6 @@ void Environment::update()
 
     ImGuiB3D::SeparatorWithSpacing(1);
 
-    draw_debug_settings();
-
-    ImGuiB3D::SeparatorWithSpacing(1);
-
     draw_light_settings();
 
     ImGuiB3D::SeparatorWithSpacing(1);
@@ -136,44 +132,11 @@ void Environment::draw_general_settings()
     ImGui::SetNextItemOpen(true, ImGuiCond_Once);
     if (ImGui::TreeNode("General"))
     {
-        // Debug geometry enabled
-        bool is_debug_geometry_enabled = GlobalSettings::get_global_setting_value<bool>(GlobalSettingOption::DebugGeometry_Enabled);
-        ImGuiB3D::PropertyToggle("Debug Geometry", &is_debug_geometry_enabled, "Render scene grid in viewport");
-        GlobalSettings::set_global_setting<bool>(GlobalSettingOption::DebugGeometry_Enabled, is_debug_geometry_enabled);
-
         // Toggle background color
         glm::vec4 bg_color_vec4 = GlobalSettings::get_global_setting_value<glm::vec4>(GlobalSettingOption::BackgroundColor);
-        ImGuiB3D::PropertyColorPicker("Background Color", &bg_color_vec4, "Change background color using glClearColor(...)");
+        ImGuiB3D::ColorPicker("Background Color", &bg_color_vec4, "Change background color using glClearColor(...)");
         GlobalSettings::set_global_setting<glm::vec4>(GlobalSettingOption::BackgroundColor, bg_color_vec4);
 
-        ImGui::TreePop();
-    }
-}
-
-void Environment::draw_debug_settings()
-{
-    ImGui::SetNextItemOpen(true, ImGuiCond_Once);
-    if (ImGui::TreeNode("Debug"))
-    {
-        // Toggle Debug View
-        int view_selection = GlobalSettings::get_global_setting_value<int>(GlobalSettingOption::ViewSelection);
-        ImGui::RadioButton("Default", &view_selection, 0);
-        ImGui::RadioButton("Depth Test", &view_selection, 1);
-        GlobalSettings::set_global_setting<int>(GlobalSettingOption::ViewSelection, view_selection);
-
-        PagesData pages_data = Renderer::get_pages_data();
-        pages_data.debug_mode = view_selection;
-
-        // Depth Test Near and Far
-        if (view_selection == 1)
-        {
-            ImGuiB3D::PropertySliderFloat("Near", &pages_data.depth_settings.r, 0.1f, pages_data.depth_settings.g + 0.01f, "%.1f", "Set the depth testing near distance with black color.\nThis determines how near the pixel is to the viewpoint.");
-
-            ImGuiB3D::PropertySliderFloat("Far", &pages_data.depth_settings.g, pages_data.depth_settings.r, 10.0f, "%.1f", "Set the depth testing far distance with white color.\nThis determines how far the pixel is to the viewpoint.");
-        }
-
-        Renderer::set_pages_data(pages_data);
-        
         ImGui::TreePop();
     }
 }
@@ -255,7 +218,7 @@ void Environment::draw_light_settings()
 
                 // Color
                 glm::vec4 light_color = GlobalSettings::get_global_setting_value<glm::vec4>(GlobalSettingOption::Light_Color);
-                ImGuiB3D::PropertyColorPicker("Color", &light_color, "Change light's color");
+                ImGuiB3D::ColorPicker("Color", &light_color, "Change light's color");
                 GlobalSettings::set_global_setting<glm::vec4>(GlobalSettingOption::Light_Color, light_color);
 
                 ImGui::TreePop();
@@ -476,7 +439,7 @@ void Environment::draw_vignette_settings()
         GlobalSettings::set_global_setting<float>(GlobalSettingOption::PostProcess_ColorGrading_VignetteIntensity, vignette_intensity);
 
         glm::vec4 vignette_color = GlobalSettings::get_global_setting_value<glm::vec4>(GlobalSettingOption::PostProcess_ColorGrading_VignetteColor);
-        ImGuiB3D::PropertyColorPicker("Color", &vignette_color, "Adjust vignette coloring. Color gets inverted when intensity is negative.");
+        ImGuiB3D::ColorPicker("Color", &vignette_color, "Adjust vignette coloring. Color gets inverted when intensity is negative.");
         GlobalSettings::set_global_setting<glm::vec4>(GlobalSettingOption::PostProcess_ColorGrading_VignetteColor, vignette_color);
 
         ImGuiB3D::SeparatorWithSpacing(1);

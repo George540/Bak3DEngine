@@ -37,6 +37,8 @@ namespace
         static_cast<int>(LogLevel::Log_Warning) |
         static_cast<int>(LogLevel::Log_Error);
 
+    char search_buffer[64] = "";
+
     void draw_log_filter_button(const char* label, LogLevel log_level, const ImVec2& size, const ImVec4& base_color)
     {
         const bool enabled = (log_filter_mask & static_cast<int>(log_level)) != 0;
@@ -80,6 +82,18 @@ void Console::update()
 {
     EditorPanel::update();
 
+    ImGuiB3D::SeparatorWithSpacing(1);
+
+    draw_log_table();
+}
+
+void Console::end_frame()
+{
+    EditorPanel::end_frame();
+}
+
+void Console::draw_toolbar()
+{
     const string count_text = to_string(Logger::get_log_entries().size()) + "/" + to_string(MAX_LOG_ENTRIES);
 
     ImGui::SameLine();
@@ -119,12 +133,12 @@ void Console::update()
     ImGui::SameLine();
 
     // Search bar
-    static char search_buffer[64] = "";
     ImGui::SetNextItemWidth(-FLT_MIN);
     ImGui::InputTextWithHint("##log_filter", "Filter logs by search...", search_buffer, IM_ARRAYSIZE(search_buffer));
+}
 
-    ImGuiB3D::SeparatorWithSpacing(1);
-
+void Console::draw_log_table()
+{
     // Log table entries
     ImGui::BeginTable("##console_text", 1, ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersOuter | ImGuiTableFlags_ScrollY);
     {
@@ -149,17 +163,17 @@ void Console::update()
             ImVec4 log_color;
             switch (log_entry.log_level)
             {
-                case LogLevel::Log_Warning: 
-                    log_color = ImVec4(1.0f, 1.0f, 0.0f, 1.0f); 
-                    break;
-                case LogLevel::Log_Error: 
-                    log_color = ImVec4(1.0f, 0.0f, 0.0f, 1.0f); 
-                    break;
-                case LogLevel::Log_Info:
-                case LogLevel::Log_Max:
-                default: 
-                    log_color = ImVec4(1.0f, 1.0f, 1.0f, 1.0f); 
-                    break;
+            case LogLevel::Log_Warning: 
+                log_color = ImVec4(1.0f, 1.0f, 0.0f, 1.0f); 
+                break;
+            case LogLevel::Log_Error: 
+                log_color = ImVec4(1.0f, 0.0f, 0.0f, 1.0f); 
+                break;
+            case LogLevel::Log_Info:
+            case LogLevel::Log_Max:
+            default: 
+                log_color = ImVec4(1.0f, 1.0f, 1.0f, 1.0f); 
+                break;
             }
             const string label = to_string(current_log_index++) + log_entry.header_buffer;
             ImGuiB3D::InteractableMultilineText(label, full_log, log_color);
@@ -171,9 +185,4 @@ void Console::update()
         }
     }
     ImGui::EndTable();
-}
-
-void Console::end_frame()
-{
-    EditorPanel::end_frame();
 }

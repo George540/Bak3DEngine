@@ -61,10 +61,44 @@ static constexpr GLsizei PAGES_DATA_SIZE = sizeof(PagesData);
 
 enum class DebugViewMode : int32_t
 {
-    Default = 0,
+    Lit = 0,
     Depth = 1,
     AO = 2,
     Max
+};
+
+enum class OverlaysFlags : uint32_t
+{
+    None = 0,
+    WorldGrid = 1 << 0,
+    LightIcons = 1 << 1,
+    All = WorldGrid | LightIcons
+};
+
+// Bitwise AND operator
+inline bool operator&(OverlaysFlags a, OverlaysFlags b)
+{
+    return (static_cast<int32_t>(a) & static_cast<int32_t>(b)) != 0;
+}
+
+// Bitwise XOR compound assignment operator
+inline OverlaysFlags& operator^=(OverlaysFlags& a, OverlaysFlags b)
+{
+    a = static_cast<OverlaysFlags>(static_cast<int32_t>(a) ^ static_cast<int32_t>(b));
+    return a;
+}
+
+// Bitwise OR operator
+inline OverlaysFlags operator|(OverlaysFlags a, OverlaysFlags b)
+{
+    return static_cast<OverlaysFlags>(static_cast<int32_t>(a) | static_cast<int32_t>(b));
+}
+
+
+struct OverlayFlagsDefinition
+{
+    OverlaysFlags flag;
+    const char* label;
 };
 
 using GlobalSettingValueType = std::variant<
@@ -81,7 +115,7 @@ enum class GlobalSettingOption : uint32_t
     Resources_ForceFail,
     Vsync,
     DebugGeometry_Enabled,
-    ViewSelection,
+    VisualMode,
     BackgroundColor,
     Light_Enabled,
     Light_Type,

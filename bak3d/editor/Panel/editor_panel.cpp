@@ -50,6 +50,8 @@ void EditorPanel::update()
     {
         return;
     }
+
+    draw_toolbar();
 }
 
 void EditorPanel::end_frame()

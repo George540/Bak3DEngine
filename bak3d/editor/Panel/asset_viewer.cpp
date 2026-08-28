@@ -70,11 +70,9 @@ void AssetPanel::begin_frame()
 
 void AssetPanel::update()
 {
-    EditorPanel::update();
-
     build_asset_tree();
 
-    draw_asset_toolbar();
+    EditorPanel::update();
 
     ImGuiB3D::SeparatorWithSpacing(1);
 
@@ -92,7 +90,7 @@ void AssetPanel::end_frame()
     EditorPanel::end_frame();
 }
 
-void AssetPanel::draw_asset_toolbar()
+void AssetPanel::draw_toolbar()
 {
     if (ImGui::Button("Clear", ImVec2(50, 20)))
     {

@@ -34,10 +34,9 @@ THE SOFTWARE.
 
 using namespace std;
 
-constexpr float TOOL_TIP_WIDTH = 500.0f;
-constexpr float LABEL_HORIZONTAL_WIDTH_RATIO = 0.5f;
-constexpr float VALUE_HORIZONTAL_WIDTH_RATIO = 0.1f;
-constexpr float VALUE_INNER_PADDING = 5.0f;
+constexpr static float LABEL_HORIZONTAL_WIDTH_RATIO = 0.5f;
+constexpr static float VALUE_HORIZONTAL_WIDTH_RATIO = 0.1f;
+constexpr static float VALUE_INNER_PADDING = 5.0f;
 
 namespace
 {
@@ -56,7 +55,7 @@ namespace
 bool ImGuiB3D::PropertyToggle(const char* label, bool* value, const char* tooltip_desc)
 {
     ImGui::TextUnformatted(label);
-    if (tooltip_desc && ImGui::IsItemHovered())
+    if (tooltip_desc)
     {
         ToolTipExtendedText(tooltip_desc, TOOL_TIP_WIDTH);
     }
@@ -68,7 +67,7 @@ bool ImGuiB3D::PropertyToggle(const char* label, bool* value, const char* toolti
 bool ImGuiB3D::PropertyToggle(const char* label, int* value, const char* tooltip_desc)
 {
     ImGui::TextUnformatted(label);
-    if (tooltip_desc && ImGui::IsItemHovered())
+    if (tooltip_desc)
     {
         ToolTipExtendedText(tooltip_desc, TOOL_TIP_WIDTH);
     }
@@ -80,17 +79,30 @@ bool ImGuiB3D::PropertyToggle(const char* label, int* value, const char* tooltip
     return success;
 }
 
-bool ImGuiB3D::PropertyColorPicker(const char* label, glm::vec4* color, const char* tooltip_desc)
+bool ImGuiB3D::ColorPicker(const char* label, glm::vec4* color, const char* tooltip_desc, bool is_property, ImVec2 channel_size)
 {
     ImGui::TextUnformatted(label);
-    if (tooltip_desc && ImGui::IsItemHovered())
+    if (tooltip_desc)
     {
         ToolTipExtendedText(tooltip_desc, TOOL_TIP_WIDTH);
     }
-    ImGui::SetNextItemWidth(align_to_label_column());
+    if (is_property)
+    {
+        ImGui::SetNextItemWidth(align_to_label_column());
+    }
     const auto label_str = "##" + string(label);
     float color_channels[4] = { color->r, color->g, color->b, color->a };
-    const bool result = ImGui::ColorEdit4(label_str.c_str(), color_channels);
+    const bool is_auto_sized = !is_property && channel_size.x > 0.0f || channel_size.y > 0.0f;
+    if (is_auto_sized)
+    {
+        ImGui::SameLine();
+        ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, channel_size);
+    }
+    const bool result = ImGui::ColorEdit4(label_str.c_str(), color_channels, !is_property ? ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel : 0);
+    if (is_auto_sized)
+    {
+        ImGui::PopStyleVar();
+    }
     color->r = color_channels[0];
     color->g = color_channels[1];
     color->b = color_channels[2];
@@ -101,7 +113,7 @@ bool ImGuiB3D::PropertyColorPicker(const char* label, glm::vec4* color, const ch
 bool ImGuiB3D::PropertyDropdown(const char* label, const std::vector<const char*>& data, int* selected_index, const char* tooltip_desc)
 {
     ImGui::TextUnformatted(label);
-    if (tooltip_desc && ImGui::IsItemHovered())
+    if (tooltip_desc)
     {
         ToolTipExtendedText(tooltip_desc, TOOL_TIP_WIDTH);
     }
@@ -113,7 +125,7 @@ bool ImGuiB3D::PropertyDropdown(const char* label, const std::vector<const char*
 bool ImGuiB3D::PropertyBeginDropdown(const char* label, const char* preview_value, const char* tooltip_desc)
 {
     ImGui::TextUnformatted(label);
-    if (tooltip_desc && ImGui::IsItemHovered())
+    if (tooltip_desc)
     {
         ToolTipExtendedText(tooltip_desc, TOOL_TIP_WIDTH);
     }
@@ -127,7 +139,7 @@ bool ImGuiB3D::PropertySliderFloat(const char* label, float* value, float v_min,
     const char* tooltip_desc)
 {
     ImGui::TextUnformatted(label);
-    if (tooltip_desc && ImGui::IsItemHovered())
+    if (tooltip_desc)
     {
         ToolTipExtendedText(tooltip_desc, TOOL_TIP_WIDTH);
     }
@@ -140,7 +152,7 @@ bool ImGuiB3D::PropertySliderFloat3(const char* label, glm::vec3* value, float v
     const char* tooltip_desc)
 {
     ImGui::TextUnformatted(label);
-    if (tooltip_desc && ImGui::IsItemHovered())
+    if (tooltip_desc)
     {
         ToolTipExtendedText(tooltip_desc, TOOL_TIP_WIDTH);
     }
@@ -158,7 +170,7 @@ bool ImGuiB3D::PropertySliderFloat4(const char* label, glm::vec4* value, float v
     const char* tooltip_desc)
 {
     ImGui::TextUnformatted(label);
-    if (tooltip_desc && ImGui::IsItemHovered())
+    if (tooltip_desc)
     {
         ToolTipExtendedText(tooltip_desc, TOOL_TIP_WIDTH);
     }
@@ -176,7 +188,7 @@ bool ImGuiB3D::PropertySliderFloat4(const char* label, glm::vec4* value, float v
 bool ImGuiB3D::PropertySliderInt(const char* label, int* value, int v_min, int v_max, const char* tooltip_desc)
 {
     ImGui::TextUnformatted(label);
-    if (tooltip_desc && ImGui::IsItemHovered())
+    if (tooltip_desc)
     {
         ToolTipExtendedText(tooltip_desc, TOOL_TIP_WIDTH);
     }
@@ -188,7 +200,7 @@ bool ImGuiB3D::PropertySliderInt(const char* label, int* value, int v_min, int v
 bool ImGuiB3D::PropertyButton(const char* property_label, const char* button_label, const char* tooltip_desc, const ImVec2 size)
 {
     ImGui::TextUnformatted(property_label);
-    if (tooltip_desc && ImGui::IsItemHovered())
+    if (tooltip_desc)
     {
         ToolTipExtendedText(tooltip_desc, TOOL_TIP_WIDTH);
     }
@@ -204,7 +216,7 @@ bool ImGuiB3D::PropertyImageButton(const char* label, const char* tooltip_desc, 
                                    const ImVec2 uv0, const ImVec2 uv1, const ImVec4 bg_col, const ImVec4 tint_col)
 {
     ImGui::TextUnformatted(label);
-    if (tooltip_desc && ImGui::IsItemHovered())
+    if (tooltip_desc)
     {
         ToolTipExtendedText(tooltip_desc, TOOL_TIP_WIDTH);
     }
@@ -262,14 +274,18 @@ void ImGuiB3D::AssetTooltip(const Asset* asset)
     ImGui::EndTooltip();
 }
 
-bool ImGuiB3D::ToolTipExtendedText(const char* tooltip_desc, float text_wrap_size)
+bool ImGuiB3D::ToolTipExtendedText(const char* tooltip_desc, const float text_wrap_size)
 {
-    ImGui::BeginTooltip();
-    ImGui::PushTextWrapPos(text_wrap_size);
-    ImGui::TextUnformatted(tooltip_desc);
-    ImGui::PopTextWrapPos();
-    ImGui::EndTooltip();
-    return true;
+    if (ImGui::IsItemHovered())
+    {
+        ImGui::BeginTooltip();
+        ImGui::PushTextWrapPos(text_wrap_size);
+        ImGui::TextUnformatted(tooltip_desc);
+        ImGui::PopTextWrapPos();
+        ImGui::EndTooltip();
+        return true;
+    }
+    return false;
 }
 
 bool ImGuiB3D::MultiSpacing(int num_spaces)

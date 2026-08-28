@@ -51,7 +51,8 @@ public:
     void update() override;
     void end_frame() override;
 private:
-    void draw_asset_toolbar();
+    void draw_toolbar() override;
+
     void draw_folder_tree();
     void draw_folder_subtree(AssetTreeNode& node);
     void draw_asset_grid(AssetTreeNode& node);

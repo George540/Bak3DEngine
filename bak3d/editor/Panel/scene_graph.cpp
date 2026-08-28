@@ -24,10 +24,7 @@ THE SOFTWARE.
 
 #include "scene_graph.h"
 
-#include <ranges>
-
 #include "imgui_b3d_extensions.h"
-#include "Asset/mesh_data.h"
 #include "Scene/scene.h"
 #include "Scene/scene_manager.h"
 
@@ -39,6 +36,11 @@ namespace
     {
         for (auto& child : scene_object->children)
         {
+            if (!child || child->get_object_type() == SceneObjectType::Debug)
+            {
+                continue;
+            }
+
             ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_SpanAvailWidth;
             if (m_selected_object == child.get())
             {
@@ -79,8 +81,6 @@ void SceneGraph::begin_frame()
 void SceneGraph::update()
 {
     EditorPanel::update();
-
-    draw_toolbar();
 
     ImGuiB3D::SeparatorWithSpacing();
 

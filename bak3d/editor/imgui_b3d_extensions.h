@@ -32,18 +32,19 @@ THE SOFTWARE.
 #include "Asset/resource_map.h"
 #include "Asset/texture.h"
 
-constexpr float BUTTON_LIGHTEN_BOOST = 0.25f;
-constexpr float BUTTON_HOVERED_LIGHTEN_BOOST = 0.1f;
-constexpr float BUTTON_ACTIVE_LIGHTEN_BOOST = 0.2f;
-constexpr ImVec2 BUTTON_SIZE = ImVec2(60.0f, 20.0f);
+constexpr static float TOOL_TIP_WIDTH = 500.0f;
+constexpr static float BUTTON_LIGHTEN_BOOST = 0.25f;
+constexpr static float BUTTON_HOVERED_LIGHTEN_BOOST = 0.1f;
+constexpr static float BUTTON_ACTIVE_LIGHTEN_BOOST = 0.2f;
+constexpr static ImVec2 BUTTON_SIZE = ImVec2(60.0f, 20.0f);
 
 class ImGuiB3D
 {
-    static bool ToolTipExtendedText(const char* tooltip_desc, float text_wrap_size);
 public:
+    static bool ToolTipExtendedText(const char* tooltip_desc, float text_wrap_size = TOOL_TIP_WIDTH);
     static bool PropertyToggle(const char* label, bool* value, const char* tooltip_desc = nullptr);
     static bool PropertyToggle(const char* label, int* value, const char* tooltip_desc = nullptr);
-    static bool PropertyColorPicker(const char* label, glm::vec4* color, const char* tooltip_desc = nullptr);
+    static bool ColorPicker(const char* label, glm::vec4* color, const char* tooltip_desc = nullptr, bool is_property = true, ImVec2 channel_size = ImVec2(0.0f, 0.0f));
     static bool PropertyDropdown(const char* label, const std::vector<const char*>& data, int* selected_index, const char* tooltip_desc = nullptr);
     static bool PropertyBeginDropdown(const char* label, const char* preview_value, const char* tooltip_desc);
     static bool PropertySliderFloat(const char* label, float* value, float v_min, float v_max, const char* format, const char* tooltip_desc = nullptr);

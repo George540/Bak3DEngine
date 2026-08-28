@@ -38,7 +38,15 @@ public:
     void update() override;
     void end_frame() override;
 
+    void draw_viewport();
+    void sync_camera_controls();
+
     float get_viewport_width() const;
     float get_viewport_height() const;
     float get_viewport_aspect_ratio() const;
+
+private:
+    void draw_toolbar() override;
+    void draw_visual_modes_selection();
+    void draw_editor_overlays_selection();
 };

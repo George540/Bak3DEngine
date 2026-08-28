@@ -34,6 +34,7 @@ const char* GlobalSettings::to_string(GlobalSettingOption enum_setting)
         case GlobalSettingOption::Resources_ForceFail: return "Force Fail";
         case GlobalSettingOption::Vsync: return "VSync";
         case GlobalSettingOption::DebugGeometry_Enabled: return "Enable Debug Geometry";
+        case GlobalSettingOption::VisualMode: return "Visual Mode";
         case GlobalSettingOption::BackgroundColor: return "Background Color";
         case GlobalSettingOption::Light_Enabled: return "Enabled";
         case GlobalSettingOption::Light_Type: return "Type";
@@ -62,7 +63,6 @@ const char* GlobalSettings::to_string(GlobalSettingOption enum_setting)
         case GlobalSettingOption::PostProcess_KernelEffect_EmbossIntensity: return "Emboss";
         case GlobalSettingOption::PostProcess_KernelEffect_BoxBlurIntensity: return "Box Blur";
         case GlobalSettingOption::PostProcess_KernelEffect_LaplacianIntensity: return "Laplacian";
-        case GlobalSettingOption::ViewSelection: return "View Selection";
         case GlobalSettingOption::Max: return "Max";
         default: return "Unknown";
     }
@@ -73,8 +73,8 @@ void GlobalSettings::initialize()
     global_settings.clear();
     global_settings[GlobalSettingOption::Resources_ForceFail] = false;
     global_settings[GlobalSettingOption::Vsync] = false;
-    global_settings[GlobalSettingOption::DebugGeometry_Enabled] = true;
-    global_settings[GlobalSettingOption::ViewSelection] = 0;
+    global_settings[GlobalSettingOption::DebugGeometry_Enabled] = static_cast<uint32_t>(OverlaysFlags::All);
+    global_settings[GlobalSettingOption::VisualMode] = 0;
     global_settings[GlobalSettingOption::BackgroundColor] = glm::vec4(0.133f, 0.168f, 0.2f, 1.0f);
     global_settings[GlobalSettingOption::Light_Enabled] = true;
     global_settings[GlobalSettingOption::Light_Type] = static_cast<uint32_t>(1);

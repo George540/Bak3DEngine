@@ -125,8 +125,8 @@ void Renderer::draw_frame()
 {
     const bool msaa_enabled = GlobalSettings::get_global_setting_value<bool>(GlobalSettingOption::AA_MSAA_Enabled);
 	const bool post_process_enabled = GlobalSettings::get_global_setting_value<bool>(GlobalSettingOption::PostProcessing_Enabled);
-    const auto view_mode = static_cast<DebugViewMode>(GlobalSettings::get_global_setting_value<int>(GlobalSettingOption::ViewSelection));
-    const bool debug_view_active = view_mode != DebugViewMode::Default;
+    const auto view_mode = static_cast<DebugViewMode>(GlobalSettings::get_global_setting_value<int>(GlobalSettingOption::VisualMode));
+    const bool debug_view_active = view_mode != DebugViewMode::Lit;
 
     if (msaa_enabled)
     {

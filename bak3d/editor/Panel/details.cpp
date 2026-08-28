@@ -473,7 +473,7 @@ void Details::draw_particle_emitter_section(ParticleEmitter& emitter)
                                                                                                                "Control scale random offset below for more control.");
             // Color
             ImGui::BeginDisabled(emitter_config.randomize_color);
-            ImGuiB3D::PropertyColorPicker("Color", &emitter_config.color, "Control particle color in normalized RGBA channel.");
+            ImGuiB3D::ColorPicker("Color", &emitter_config.color, "Control particle color in normalized RGBA channel.");
             ImGui::EndDisabled();
 
             // Sprite

@@ -37,7 +37,7 @@ void RendererPasses::render_pass_debug_geometry()
 
     glDepthFunc(GL_ALWAYS);
 
-    if (GlobalSettings::get_global_setting_value<bool>(GlobalSettingOption::DebugGeometry_Enabled))
+    if (GlobalSettings::get_global_setting_value<uint32_t>(GlobalSettingOption::DebugGeometry_Enabled) & static_cast<uint32_t>(OverlaysFlags::WorldGrid))
     {
         for (const auto& debug_geometry : SceneManager::get_current_scene()->get_all_debug_geometry())
         {
@@ -184,7 +184,7 @@ void RendererPasses::render_pass_editor_overlays()
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    if (GlobalSettings::get_global_setting_value<bool>(GlobalSettingOption::Light_Enabled))
+    if (GlobalSettings::get_global_setting_value<uint32_t>(GlobalSettingOption::DebugGeometry_Enabled) & static_cast<uint32_t>(OverlaysFlags::LightIcons))
     {
         for (const Light* light : SceneManager::get_current_scene()->get_all_lights())
         {

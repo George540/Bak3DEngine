@@ -37,7 +37,6 @@ public:
 private:
     static void draw_tools_settings();
     static void draw_general_settings();
-    static void draw_debug_settings();
     static void draw_light_settings();
     static void draw_post_processor_settings();
 
