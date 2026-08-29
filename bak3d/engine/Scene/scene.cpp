@@ -43,17 +43,10 @@ Scene::Scene()
 	m_root = make_unique<SceneObject>(glm::vec3(0.0f), "SceneRoot");
 
 	// Camera Setup
-	m_current_camera = instantiate<Camera>(SceneObjectType::Camera,
-	                                       nullptr,
-	                                       glm::vec3(10.0f, 5.0f, 10.0f));
+	m_current_camera = instantiate<Camera>(nullptr, glm::vec3(10.0f, 5.0f, 10.0f));
 
-	instantiate<Grid>(SceneObjectType::Debug, nullptr);
-
-	instantiate<Light>(SceneObjectType::Light,
-		nullptr,
-		glm::vec3(-5.0f, 5.0f, 5.0f),
-		glm::vec3(0.5f),
-		ResourceManager::get_material("light_icon"));
+	instantiate<Grid>(nullptr);
+	instantiate<Light>(nullptr, LightType::Point, glm::vec3(-5.0f, 5.0f, 5.0f));
 
 	/*auto models = ResourceManager::Models;
 	instantiate_model(ResourceManager::get_model("mushroom.obj"));#1#*/
@@ -87,11 +80,85 @@ void Scene::update(float dt) const
 	}
 }
 
+std::string Scene::get_unique_object_name(const std::string& name) const
+{
+     bool name_exists = false;
+
+    for (const auto& objects : m_scene_objects_indexed | views::values)
+    {
+        for (const SceneObject* object : objects)
+        {
+            assert(object);
+            if (object->get_object_name() == name)
+            {
+                name_exists = true;
+                break;
+            }
+        }
+
+        if (name_exists)
+        {
+            break;
+        }
+    }
+
+    // Name is already unique
+    if (!name_exists)
+    {
+        return name;
+    }
+
+    // The requested name already exists. Treat the entire requested name as the base:
+    // - Light -> Light_1
+    // - Light_5 -> Light_5_1
+    const std::string prefix = name + "_";
+    int highest_suffix = 0;
+    for (const auto& objects : m_scene_objects_indexed | views::values)
+    {
+        for (const SceneObject* object : objects)
+        {
+            assert(object);
+            const std::string& other_name = object->get_object_name();
+
+            if (!other_name.starts_with(prefix))
+            {
+                continue;
+            }
+
+            const std::string suffix = other_name.substr(prefix.size());
+
+            // Only care about a pure numeric suffix
+            if (suffix.empty())
+            {
+                continue;
+            }
+
+            if (!ranges::all_of(suffix, [](const char c){ return std::isdigit(static_cast<unsigned char>(c));}))
+            {
+                continue;
+            }
+
+            const int suffix_number = std::stoi(suffix);
+            highest_suffix = std::max(highest_suffix, suffix_number);
+        }
+    }
+
+    return name + "_" + std::to_string(highest_suffix + 1);
+}
+
 void Scene::register_object(SceneObject* object)
 {
     assert(object);
 
     const SceneObjectType type = object->object_type;
+    const std::string original_name = object->get_object_name();
+
+    const std::string unique_name = get_unique_object_name(original_name);
+    if (unique_name != original_name)
+    {
+        B3D_LOG_INFO( "Scene: object name '%s' already exists, renamed to '%s'.", original_name.c_str(), unique_name.c_str());
+        object->set_object_name(unique_name);
+    }
 
     // Generic category index
     m_scene_objects_indexed[type].push_back(object);

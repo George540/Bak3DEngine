@@ -57,6 +57,7 @@ double EventManager::last_mouse_position_y = 0.0;
 double EventManager::delta_x = 0.0;
 double EventManager::delta_y = 0.0;
 double EventManager::camera_scroll_offset = 0.0;
+float EventManager::mouse_sensitivity = 0.1f;
 
 // Window
 GLFWwindow* EventManager::m_window = nullptr;

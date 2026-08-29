@@ -79,7 +79,7 @@ protected:
 
 	TextureRef m_sprite_texture;
 public:
-	Light(glm::vec3 position, glm::vec3 scaling, const MaterialRef& material);
+	Light(LightType type = LightType::Point, glm::vec3 position = glm::vec3(0.0f)) ;
 	~Light() override = default;
 
 	void update(float dt) override;

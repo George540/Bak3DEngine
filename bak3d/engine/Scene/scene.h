@@ -44,7 +44,7 @@ public:
 	~Scene();
 
 	template<typename T, typename... Args>
-	T* instantiate(const SceneObjectType category, SceneObject* parent, Args&&... args)
+	T* instantiate(SceneObject* parent, Args&&... args)
 	{
 		static_assert(std::is_base_of_v<SceneObject, T>, "instantiate<T>() requires a SceneObject-derived type.");
 		static_assert(!std::is_same_v<T, SceneObject>, "instantiate<SceneObject>() is not allowed.");
@@ -113,6 +113,7 @@ public:
 	void update(float dt) const;
 
 private:
+	std::string get_unique_object_name(const std::string& name) const;
 	void register_object(SceneObject* object);
 	void unregister_object(SceneObject* object);
 	

@@ -43,6 +43,7 @@ constexpr static glm::vec3 CAMERA_UP = glm::vec3(0.0f, 1.0f, 0.0f);
 Camera::Camera(glm::vec3 position) : SceneObject(position, "Camera")
 {
 	object_type = SceneObjectType::Camera;
+	transform.set_local_euler_rotation(glm::vec3(-20.0f, 45.0f, 0.0f));
 
 	// @TODO: Replace with struct payload instead of manual size
 	// 2 mat4's * 1 vec4 = 9 vec4's
@@ -57,22 +58,17 @@ void Camera::update(float dt)
 	EventManager::enable_mouse_cursor();
 
 	if (EventManager::is_camera_looking())
+	if (EventManager::is_camera_looking())
 	{
-		// Mouse Look
-		m_horizontal_angle -= EventManager::get_mouse_motion_x() * m_cam_speed * dt;
-		m_vertical_angle -= EventManager::get_mouse_motion_y() * m_cam_speed * dt;
+		// Rotation
+		const float mouse_x = EventManager::get_mouse_motion_x();
+		const float mouse_y = EventManager::get_mouse_motion_y();
 
-		// Prevent camera from flipping upside down
-		// Clamp vertical angle to [-85, 85] degrees
-		m_vertical_angle = max(-85.0f, min(85.0f, static_cast<float>(m_vertical_angle)));
-		if (m_horizontal_angle > 360)
-		{
-			m_horizontal_angle -= 360;
-		}
-		else if (m_horizontal_angle < -360)
-		{
-			m_horizontal_angle += 360;
-		}
+		glm::vec3 rotation = transform.get_local_euler_rotation();
+		rotation.y -= mouse_x * EventManager::get_mouse_sensitivity(); // Yaw
+		rotation.x -= mouse_y * EventManager::get_mouse_sensitivity(); // Pitch
+		rotation.x = glm::clamp(rotation.x, -85.0f, 85.0f); // Prevent camera from flipping upside down
+		transform.set_local_euler_rotation(rotation);
 
 		// Movement
 		glm::vec3 movement(0.0f);
@@ -152,19 +148,12 @@ glm::mat4 Camera::get_view_projection_matrix() const
 
 glm::vec3 Camera::get_forward_vector() const
 {
-	const float yaw = glm::radians(static_cast<float>(m_horizontal_angle));
-	const float pitch = glm::radians(static_cast<float>(m_vertical_angle));
-
-	glm::vec3 forward;
-	forward.x = cosf(pitch) * cosf(yaw);
-	forward.y = sinf(pitch);
-	forward.z = -cosf(pitch) * sinf(yaw);
-
-	return glm::normalize(forward);
+	const glm::mat4& model = transform.get_global_model_matrix();
+	return glm::normalize(glm::vec3(model[2]) * -1.0f);
 }
 
 glm::vec3 Camera::get_right_vector() const
 {
-	const glm::vec3 forward = get_forward_vector();
-	return glm::normalize(glm::cross(forward, CAMERA_UP));
+	const glm::mat4& model = transform.get_global_model_matrix();
+	return glm::normalize(glm::vec3(model[0]));
 }

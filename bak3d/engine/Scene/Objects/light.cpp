@@ -37,9 +37,10 @@ THE SOFTWARE.
 #include "Core/logger.h"
 #include "Scene/scene.h"
 
-Light::Light(glm::vec3 position, glm::vec3 scaling, const MaterialRef& material) :
-	RenderableObject(material, position, "Light")
+Light::Light(const LightType type, const glm::vec3 position) :
+	RenderableObject(ResourceManager::get_material("light_icon"), position, "Light")
 {
+	m_type = type;
 	object_type = SceneObjectType::Light;
 
 	// @TODO: Replace with struct payload instead of manual size

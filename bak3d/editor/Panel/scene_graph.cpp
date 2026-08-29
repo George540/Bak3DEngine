@@ -124,12 +124,31 @@ void SceneGraph::draw_add_object_popup()
     {
         ImGui::SeparatorText("Add Object");
 
+        glm::vec3 spawn_position = glm::vec3(0.0f);
+        if (const Camera* current_camera = SceneManager::get_current_scene()->get_current_camera())
+        {
+            spawn_position = current_camera->get_camera_position() + (current_camera->get_forward_vector() * 10.0f);
+        }
+
         if (ImGui::BeginMenu("Lights"))
         {
-            ImGui::MenuItem("Directional Light");
-            ImGui::MenuItem("Spot Light");
-            ImGui::MenuItem("Point Light");
-            ImGui::MenuItem("Area Light");
+            if (ImGui::MenuItem("Directional Light"))
+            {
+                SceneManager::get_current_scene()->instantiate<Light>(nullptr, LightType::Directional, spawn_position);
+            }
+            if (ImGui::MenuItem("Spot Light"))
+            {
+                SceneManager::get_current_scene()->instantiate<Light>(nullptr, LightType::Spot, spawn_position);
+            }
+            if (ImGui::MenuItem("Point Light"))
+            {
+                SceneManager::get_current_scene()->instantiate<Light>(nullptr, LightType::Point, spawn_position);
+            }
+            if (ImGui::MenuItem("Area Light"))
+            {
+                // @TODO: Implement Area Light
+                SceneManager::get_current_scene()->instantiate<Light>(nullptr, LightType::Point, spawn_position);
+            }
             ImGui::EndMenu();
         }
         if (ImGui::BeginMenu("Primitives"))

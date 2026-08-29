@@ -64,6 +64,7 @@ class EventManager
 	static double camera_scroll_offset;
 	static bool is_camera_looking_enabled;
 	static bool is_scrolling_enabled;
+	static float mouse_sensitivity;
 
 public:
 	static void initialize();
@@ -104,6 +105,7 @@ public:
 	static void disable_mouse_cursor();
 	static void toggle_vsync(bool vsync_enabled);
 	static float get_random_float(float min, float max);
+	static float get_mouse_sensitivity() { return mouse_sensitivity; }
 
 	static void on_scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 	static void set_scrolling_enabled(bool enabled);

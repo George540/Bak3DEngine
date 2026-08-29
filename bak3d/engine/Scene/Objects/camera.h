@@ -45,7 +45,7 @@ public:
 	[[nodiscard]] glm::mat4 get_view_matrix() const;
 	[[nodiscard]] glm::mat4 get_projection_matrix() const;
 	[[nodiscard]] glm::mat4 get_view_projection_matrix() const;
-	[[nodiscard]] glm::vec3 get_camera_position() const { return transform.get_global_position(); }
+	[[nodiscard]] glm::vec3 get_camera_position() const { return transform.get_local_position(); }
 	[[nodiscard]] UniformBuffer* get_camera_data_buffer() const { return m_camera_data_ubo.get(); }
 
 	[[nodiscard]] glm::vec3 get_forward_vector() const;
