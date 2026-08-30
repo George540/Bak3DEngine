@@ -321,18 +321,24 @@ void Details::draw_scene_object_section(SceneObject* selected_object)
 
 void Details::draw_renderable_object_section(RenderableObject* selected_renderable)
 {
-    bool is_visible = selected_renderable->is_visible();
-    ImGuiB3D::PropertyToggle("Visible", &is_visible, "Whether object gets drawn every frame.");
-    selected_renderable->set_visible(is_visible);
+    ImGui::SetNextItemOpen(true, ImGuiCond_Once);
+    if (ImGui::TreeNode("Renderable Data"))
+    {
+        bool is_visible = selected_renderable->is_visible();
+        ImGuiB3D::PropertyToggle("Visible", &is_visible, "Whether object gets drawn every frame.");
+        selected_renderable->set_visible(is_visible);
 
-    // @TODO: Make them selectable with an image button?
-    if (selected_renderable->get_material())
-    {
-        ImGui::Text("Material: %s", selected_renderable->get_material()->get_object_name().c_str());
-    }
-    if (selected_renderable->get_mesh())
-    {
-        ImGui::Text("Mesh: %s", selected_renderable->get_mesh()->get_object_name().c_str());
+        // @TODO: Make them selectable with an image button?
+        if (selected_renderable->get_material())
+        {
+            ImGui::Text("Material: %s", selected_renderable->get_material()->get_object_name().c_str());
+        }
+        if (selected_renderable->get_mesh())
+        {
+            ImGui::Text("Mesh: %s", selected_renderable->get_mesh()->get_object_name().c_str());
+        }
+
+        ImGui::TreePop();
     }
 }
 

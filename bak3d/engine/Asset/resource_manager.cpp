@@ -33,6 +33,7 @@ THE SOFTWARE.
 #include "texture.h"
 #include "Core/logger.h"
 #include "Renderer/renderer.h"
+#include "Scene/mesh_factory.h"
 
 using namespace std;
 
@@ -199,6 +200,22 @@ void ResourceManager::initialize_predefined_meshes()
 {
     add_mesh("Grid", new GridData());
     add_mesh("Quad", new QuadData());
+
+    auto cube_geometry = MeshFactory::build_cube_geometry();
+    add_mesh("Cube", new MeshData(cube_geometry.vertices, cube_geometry.indices, "Cube"));
+
+    auto plane_geometry = MeshFactory::build_plane_geometry();
+    add_mesh("Plane", new MeshData(plane_geometry.vertices, plane_geometry.indices, "Plane"));
+
+    auto sphere_geometry = MeshFactory::build_sphere_geometry();
+    add_mesh("Sphere", new MeshData(sphere_geometry.vertices, sphere_geometry.indices, "Sphere"));
+
+    auto cylinder_geometry = MeshFactory::build_cylinder_geometry();
+    add_mesh("Cylinder", new MeshData(cylinder_geometry.vertices, cylinder_geometry.indices, "Cylinder"));
+
+    auto torus_geometry = MeshFactory::build_torus_geometry();
+    add_mesh("Torus", new MeshData(torus_geometry.vertices, torus_geometry.indices, "Torus"));
+    
     Renderer::initialize_screen_quad();
 }
 

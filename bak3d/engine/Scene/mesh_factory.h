@@ -1,4 +1,4 @@
-/* ===========================================================================
+﻿/* ===========================================================================
 The MIT License (MIT)
 
 Copyright (c) 2022-2026 George Mavroeidis - GeoGraphics
@@ -24,37 +24,26 @@ THE SOFTWARE.
 
 #pragma once
 
-#include <glad/glad.h>
-#include <vector>
-
-#include "Asset/mesh_data.h"
-#include "Core/global_definitions.h"
-#include "Scene/Objects/renderable_object.h"
+#include "Objects/mesh.h"
 
 /*
- * Renderable object made out of vertices and edges to form a shape out of surfaces.
+ * Struct that holds minimal vertex data for building a mesh object
  */
-class Mesh : public RenderableObject
+struct MeshGeometry
 {
-public:
-    Mesh(glm::vec3 position, const std::string& name, const MaterialRef& material, const std::string& mesh_data_name);
-    ~Mesh() override = default;
-    void update(float dt) override;
-    void draw() const override;
+    std::vector<Vertex> vertices;
+    std::vector<GLuint> indices;
 };
 
 /*
- * Extension of Mesh that handles multiple instances of the same mesh archetype
+ * Mesh factory utility class for generating primitives and subsequently more complex shapes
  */
-class InstancedMesh : public Mesh
+class MeshFactory
 {
-protected:
-    InstanceBuffer* m_ibo;
-    int m_num_instances;
 public:
-    InstancedMesh(const glm::vec3 position, std::vector<Vertex> vertices, std::vector<GLuint> indices, const std::string& name, const int initial_num_instances) : Mesh(position, name, nullptr, ""), m_ibo(nullptr), m_num_instances(initial_num_instances) {}
-    ~InstancedMesh() override = default;
-
-    void draw() const override { RenderableObject::draw(); };
-    int get_num_instances() const { return m_num_instances; }
+    static MeshGeometry build_cube_geometry();
+    static MeshGeometry build_plane_geometry(int subdivisions = 1);
+    static MeshGeometry build_sphere_geometry(int rings = 16, int segments = 32);
+    static MeshGeometry build_cylinder_geometry(int segments = 16);
+    static MeshGeometry build_torus_geometry(int major_segments = 16, int minor_segments = 8, float minor_radius = 0.25f);
 };

@@ -25,6 +25,8 @@ THE SOFTWARE.
 #include "scene_graph.h"
 
 #include "imgui_b3d_extensions.h"
+#include "Asset/resource_manager.h"
+#include "Scene/mesh_factory.h"
 #include "Scene/scene.h"
 #include "Scene/scene_manager.h"
 
@@ -169,12 +171,20 @@ void SceneGraph::draw_add_object_popup()
         }
         if (ImGui::BeginMenu("Primitives"))
         {
-            ImGui::MenuItem("Cube");
-            ImGui::MenuItem("Sphere");
-            ImGui::MenuItem("Pyramid");
-            ImGui::MenuItem("Cone");
-            ImGui::MenuItem("Torus");
-            ImGui::MenuItem("Suzanne");
+            for (const PrimitiveMeshInfo& primitive : PrimitiveMeshInfos)
+            {
+                if (ImGui::MenuItem(primitive.name))
+                {
+                    SceneManager::get_current_scene()->instantiate<Mesh>(
+                        object_to_parent,
+                        spawn_position,
+                        primitive.name,
+                        ResourceManager::get_material("default_material"),
+                        primitive.name
+                    );
+                }
+            }
+
             ImGui::EndMenu();
         }
         if (ImGui::BeginMenu("VFX"))

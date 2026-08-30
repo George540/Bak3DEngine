@@ -24,21 +24,18 @@ THE SOFTWARE.
 
 #include "mesh.h"
 
-#include <iostream>
 #include <utility>
 
 #include "Asset/mesh_data.h"
 #include "Asset/resource_manager.h"
-#include "Asset/texture.h"
 
 using namespace std;
 
-Mesh::Mesh(vector<Vertex> vertices, vector<GLuint> indices, const std::string& name) :
-    RenderableObject(nullptr, glm::vec3(0.0f, 0.0f, 0.0f), name), // no initial material and position at first
-	m_vertices(std::move(vertices)),
-	m_indices(std::move(indices))
+Mesh::Mesh(const glm::vec3 position, const std::string& name, const MaterialRef& material, const std::string& mesh_data_name) :
+    RenderableObject(material, position, name)
 {
     object_type = SceneObjectType::Mesh;
+    m_mesh_slot = make_mesh_slot(ResourceManager::get_mesh(mesh_data_name));
 }
 
 void Mesh::update(float dt)
@@ -49,8 +46,4 @@ void Mesh::update(float dt)
 void Mesh::draw() const
 {
     RenderableObject::draw();
-
-    (*m_mesh_slot)->get_vao()->bind();
-    glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(m_indices.size()), GL_UNSIGNED_INT, nullptr);
-    (*m_mesh_slot)->get_vao()->unbind();
 }

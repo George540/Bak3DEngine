@@ -51,14 +51,12 @@ void RendererPasses::render_pass_opaque_geometry()
 {
     DebugScopeGroup scope("Opaque Geometry Pass");
 
-    /*for (const RenderableObject* obj : SceneManager::get_current_scene()->get_renderable_objects(SceneObjectType::Mesh))
+    glDepthMask(GL_TRUE);
+
+    for (const RenderableObject* obj : SceneManager::get_current_scene()->get_all_meshes())
     {
         obj->draw();
     }
-    for (const RenderableObject* obj : SceneManager::get_current_scene()->get_renderable_objects(SceneObjectType::Model))
-    {
-        obj->draw();
-    }*/
 }
 
 void RendererPasses::render_pass_sprites()

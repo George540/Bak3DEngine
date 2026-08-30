@@ -251,6 +251,33 @@ struct Face
 };
 static constexpr GLsizei FACE_SIZE = sizeof(Face);
 
+enum class PrimitiveMeshType : uint32_t
+{
+    Cube,
+    Plane,
+    Sphere,
+    Cylinder,
+    Torus,
+    Suzanne,
+    Count
+};
+
+struct PrimitiveMeshInfo
+{
+    PrimitiveMeshType type;
+    const char* name;
+};
+
+inline constexpr std::array PrimitiveMeshInfos =
+{
+    PrimitiveMeshInfo {.type = PrimitiveMeshType::Cube, .name = "Cube" },
+    PrimitiveMeshInfo {.type = PrimitiveMeshType::Plane, .name = "Plane" },
+    PrimitiveMeshInfo {.type = PrimitiveMeshType::Sphere, .name = "Sphere" },
+    PrimitiveMeshInfo {.type = PrimitiveMeshType::Cylinder, .name = "Cylinder" },
+    PrimitiveMeshInfo {.type = PrimitiveMeshType::Torus, .name = "Torus" },
+    PrimitiveMeshInfo {.type = PrimitiveMeshType::Suzanne, .name = "Suzanne" }
+};
+
 using ShaderStageMap = std::unordered_map<GLenum, std::string>;
 
 inline const char* get_shader_stage_name_file_extension(GLenum stage)
