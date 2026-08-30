@@ -50,6 +50,14 @@ namespace
                 flags |= ImGuiTreeNodeFlags_Leaf;
             }
 
+            const bool is_grayed_out = !scene_object->is_active || !child->is_active;
+            int pushed_colors = 0;
+            if (is_grayed_out)
+            {
+                ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.5f, 0.5f, 0.5f, 1.0f));
+                pushed_colors++;
+            }
+
             const char* child_name = child->get_object_name().c_str();
             ImGui::SetNextItemOpen(true, ImGuiCond_Once);
             const bool is_tree_open = ImGui::TreeNodeEx(child_name, flags, "%s", child_name);
@@ -62,6 +70,11 @@ namespace
             {
                 draw_subtree(child.get());
                 ImGui::TreePop();
+            }
+
+            if (pushed_colors > 0)
+            {
+                ImGui::PopStyleColor(pushed_colors);
             }
         }
     }

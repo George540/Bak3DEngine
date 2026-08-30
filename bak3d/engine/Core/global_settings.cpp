@@ -36,18 +36,6 @@ const char* GlobalSettings::to_string(GlobalSettingOption enum_setting)
         case GlobalSettingOption::DebugGeometry_Enabled: return "Enable Debug Geometry";
         case GlobalSettingOption::VisualMode: return "Visual Mode";
         case GlobalSettingOption::BackgroundColor: return "Background Color";
-        case GlobalSettingOption::Light_Enabled: return "Enabled";
-        case GlobalSettingOption::Light_Type: return "Type";
-        case GlobalSettingOption::Light_HorizontalRotation: return "Horizontal Rotation";
-        case GlobalSettingOption::Light_VerticalRotation: return "Vertical Rotation";
-        case GlobalSettingOption::Light_Scaling: return "Scaling";
-        case GlobalSettingOption::Light_OriginDistance: return "Origin Distance";
-        case GlobalSettingOption::Light_Color: return "Color";
-        case GlobalSettingOption::Light_Intensity: return "Intensity";
-        case GlobalSettingOption::Light_Point_Attenuation_Radius: return "Attenuation Radius";
-        case GlobalSettingOption::Light_Spot_ConeAngle_Size: return "Cone Size";
-        case GlobalSettingOption::Light_Spot_ConeAngle_Inner_CutOff: return "Inner Cutoff";
-        case GlobalSettingOption::Light_Spot_ConeAngle_Outer_CutOff: return "Outer Cutoff";
         case GlobalSettingOption::AA_MSAA_Enabled: return "MSAA Enabled";
         case GlobalSettingOption::AA_MSAA_Samples: return "MSAA Samples";
         case GlobalSettingOption::PostProcessing_Enabled: return "Enabled";
@@ -76,18 +64,6 @@ void GlobalSettings::initialize()
     global_settings[GlobalSettingOption::DebugGeometry_Enabled] = static_cast<uint32_t>(OverlaysFlags::All);
     global_settings[GlobalSettingOption::VisualMode] = 0;
     global_settings[GlobalSettingOption::BackgroundColor] = glm::vec4(0.133f, 0.168f, 0.2f, 1.0f);
-    global_settings[GlobalSettingOption::Light_Enabled] = true;
-    global_settings[GlobalSettingOption::Light_Type] = static_cast<uint32_t>(1);
-    global_settings[GlobalSettingOption::Light_HorizontalRotation] = 45.0f;
-    global_settings[GlobalSettingOption::Light_VerticalRotation] = 135.0f;
-    global_settings[GlobalSettingOption::Light_Scaling] = 0.5f;
-    global_settings[GlobalSettingOption::Light_OriginDistance] = 5.0f;
-    global_settings[GlobalSettingOption::Light_Color] = glm::vec4(1.0f);
-    global_settings[GlobalSettingOption::Light_Intensity] = 1.0f;
-    global_settings[GlobalSettingOption::Light_Point_Attenuation_Radius] = 100.0f;
-    global_settings[GlobalSettingOption::Light_Spot_ConeAngle_Size] = 1.0f;
-    global_settings[GlobalSettingOption::Light_Spot_ConeAngle_Inner_CutOff] = 12.5f;
-    global_settings[GlobalSettingOption::Light_Spot_ConeAngle_Outer_CutOff] = 17.5f;
     global_settings[GlobalSettingOption::AA_MSAA_Enabled] = true;
     global_settings[GlobalSettingOption::AA_MSAA_Samples] = 4; // turns to 4x4 when passed to GLFW
     global_settings[GlobalSettingOption::PostProcessing_Enabled] = false;

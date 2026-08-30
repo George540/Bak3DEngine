@@ -52,6 +52,15 @@ namespace
 
     char selected_object_name_buffer[64] = "";
 
+    void set_active_status_for_object_hierarchy(const SceneObject* selected_object)
+    {
+        for (const auto& child : selected_object->children)
+        {
+            child->is_active = selected_object->is_active;
+            set_active_status_for_object_hierarchy(child.get());
+        }
+    }
+
     void draw_property_button_selection_item(string* selected_name, const char* label, const char* tooltip_desc)
     {
         // Make popup ID as unique as possible to avoid duplicates
@@ -239,7 +248,10 @@ void Details::draw_object()
 
 void Details::draw_scene_object_section(SceneObject* selected_object)
 {
-    ImGui::Checkbox("##Active", &selected_object->is_active);
+    if (ImGui::Checkbox("##active", &selected_object->is_active))
+    {
+        set_active_status_for_object_hierarchy(selected_object);
+    }
 
     ImGui::SameLine();
     
