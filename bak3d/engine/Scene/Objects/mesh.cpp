@@ -38,6 +38,13 @@ Mesh::Mesh(const glm::vec3 position, const std::string& name, const MaterialRef&
     m_mesh_slot = make_mesh_slot(ResourceManager::get_mesh(mesh_data_name));
 }
 
+Mesh::Mesh(const MeshRef& mesh_ref, const std::string& name) :
+    RenderableObject(nullptr, glm::vec3(0.0f, 0.0f, 0.0f), name)
+{
+    object_type = SceneObjectType::Mesh;
+    m_mesh_slot = make_mesh_slot(mesh_ref);
+}
+
 void Mesh::update(float dt)
 {
     RenderableObject::update(dt);

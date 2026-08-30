@@ -38,6 +38,7 @@ class Mesh : public RenderableObject
 {
 public:
     Mesh(glm::vec3 position, const std::string& name, const MaterialRef& material, const std::string& mesh_data_name);
+    Mesh(const MeshRef& mesh_ref, const std::string& name);
     ~Mesh() override = default;
     void update(float dt) override;
     void draw() const override;
@@ -57,4 +58,14 @@ public:
 
     void draw() const override { RenderableObject::draw(); };
     int get_num_instances() const { return m_num_instances; }
+};
+
+class ModelNodeObject : public SceneObject
+{
+public:
+    ModelNodeObject(const glm::vec3 position, const std::string& name) : SceneObject(position, name)
+    {
+        object_type = SceneObjectType::Model;
+    }
+    ~ModelNodeObject() override = default;
 };

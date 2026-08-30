@@ -27,6 +27,7 @@ THE SOFTWARE.
 #include <map>
 #include <ranges>
 
+#include "Asset/model.h"
 #include "Objects/advanced_particle_system.h"
 #include "Objects/camera.h"
 #include "Objects/light.h"
@@ -95,6 +96,8 @@ public:
 		}
 	}
 
+	void instantiate_model(const ModelRef& model, SceneObject* parent = nullptr, glm::vec3 position = glm::vec3(0.0f));
+
 	SceneObject* get_root() const { return m_root.get(); }
 	Camera* get_current_camera() const { return m_current_camera; }
 	std::vector<SceneObject*> get_all_objects_of_type(SceneObjectType type);
@@ -114,6 +117,7 @@ public:
 
 private:
 	void initialize_default_scene_objects();
+	void instantiate_model_mesh(const ModelRef& model, SceneObject* model_root, const ModelNode* model_node, const glm::mat4& accumulated_transform);
 	
 	std::string get_unique_object_name(const std::string& name) const;
 	void register_object(SceneObject* object);

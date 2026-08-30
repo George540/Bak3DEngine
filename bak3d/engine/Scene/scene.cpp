@@ -22,14 +22,16 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 =========================================================================== */
 
-#include <glm/ext.hpp>
 #include <filesystem>
+#include <glm/ext.hpp>
+#include <glm/gtx/matrix_decompose.hpp>
 
 #include "scene.h"
 
 #include <ranges>
 
 #include "editor.h"
+#include "Asset/model.h"
 #include "Asset/resource_manager.h"
 #include "Core/global_settings.h"
 #include "Input/event_manager.h"
@@ -47,6 +49,57 @@ Scene::Scene()
 Scene::~Scene()
 {
 
+}
+
+void Scene::instantiate_model(const ModelRef& model, SceneObject* parent, glm::vec3 position)
+{
+    if (!model || !model->get_root_node())
+    {
+        return;
+    }
+
+    const ModelNode* root_node = model->get_root_node();
+
+    ModelNodeObject* model_root = instantiate<ModelNodeObject>(parent, position, model->get_object_name());
+
+    for (const MeshRef& mesh_ref : root_node->meshes)
+    {
+        const Mesh* mesh_object = instantiate<Mesh>(model_root, mesh_ref, mesh_ref->get_object_name());
+        mesh_object->set_material(model->get_current_material());
+    }
+    
+    for (auto& child_node : root_node->children)
+    {
+        instantiate_model_mesh(model, model_root, child_node.get(), root_node->local_transform);
+    }
+}
+
+void Scene::instantiate_model_mesh(const ModelRef& model, SceneObject* model_root, const ModelNode* model_node, const glm::mat4& accumulated_transform)
+{
+    const glm::mat4 node_transform = accumulated_transform * model_node->local_transform;
+
+    if (!model_node->meshes.empty())
+    {
+        glm::vec3 scale, translation, skew;
+        glm::vec4 perspective;
+        glm::quat rotation;
+        glm::decompose(node_transform, scale, rotation, translation, skew, perspective);
+
+        for (const MeshRef& mesh_ref : model_node->meshes)
+        {
+            Mesh* mesh_object = instantiate<Mesh>(model_root, mesh_ref, mesh_ref->get_object_name());
+            mesh_object->set_material(model->get_current_material());
+
+            mesh_object->transform.set_local_position(translation);
+            mesh_object->transform.set_local_euler_rotation(glm::degrees(glm::eulerAngles(rotation)));
+            mesh_object->transform.set_local_scale(scale);
+        }
+    }
+
+    for (auto& child : model_node->children)
+    {
+        instantiate_model_mesh(model, model_root, child.get(), node_transform);
+    }
 }
 
 SceneObject* Scene::get_object_in_scene(const SceneObjectType type, const int index)
@@ -81,7 +134,7 @@ void Scene::initialize_default_scene_objects()
     instantiate<Grid>(nullptr);
     instantiate<Light>(nullptr, LightType::Point, glm::vec3(-2.5f, 2.5f, 2.5f));
     instantiate<Mesh>(nullptr, glm::vec3(0.0f), "Cube", ResourceManager::get_material("default_material"), "Cube");
-
+    
     B3D_LOG_INFO("Scene initialized.");
 }
 
@@ -199,6 +252,8 @@ void Scene::register_object(SceneObject* object)
             m_meshes.push_back(mesh);
             break;
         }
+        case SceneObjectType::Model:
+            break;
         case SceneObjectType::ParticleSystem:
         {
             auto* particle_system = dynamic_cast<ParticleSystem*>(object);
@@ -269,6 +324,8 @@ void Scene::unregister_object(SceneObject* object)
             erase(m_meshes, mesh);
             break;
         }
+        case SceneObjectType::Model:
+            break;
         case SceneObjectType::ParticleSystem:
         {
             auto* particle_system = dynamic_cast<ParticleSystem*>(object);
