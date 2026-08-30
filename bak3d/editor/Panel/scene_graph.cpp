@@ -163,7 +163,10 @@ void SceneGraph::draw_add_object_popup()
         }
         if (ImGui::BeginMenu("VFX"))
         {
-            ImGui::MenuItem("Sprite Particles");
+            if (ImGui::MenuItem("Sprite Particles"))
+            {
+                SceneManager::get_current_scene()->instantiate<ParticleSystem>(nullptr, spawn_position);
+            }
             ImGui::MenuItem("Advanced Particles");
             ImGui::EndMenu();
         }

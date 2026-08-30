@@ -34,7 +34,7 @@ THE SOFTWARE.
 class ParticleSystem : public RenderableObject
 {
 public:
-    explicit ParticleSystem(const std::string& name = "ParticleSystem");
+    explicit ParticleSystem(glm::vec3 position, const std::string& name = "ParticleSystem");
     ~ParticleSystem() override;
 
     void update(float dt) override;
@@ -50,7 +50,7 @@ private:
     void ensure_ibo_capacity(const ParticleEmitter& emitter);
     bool emitter_name_exists(const std::string& name) const;
 
-    // Per-emitter IBO map: emitter name → IBO
+    // Per-emitter IBO map
     struct EmitterGPUData
     {
         std::unique_ptr<InstanceBuffer> ibo;

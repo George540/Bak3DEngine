@@ -27,6 +27,7 @@ THE SOFTWARE.
 #include "editor_panel.h"
 #include "Scene/Objects/light.h"
 #include "Scene/Objects/Particle/particle_emitter.h"
+#include "Scene/Objects/Particle/particle_system.h"
 
 /*
  *  Panel view for object properties.
@@ -43,6 +44,6 @@ private:
     void draw_scene_object_section(SceneObject* scene_object);
     void draw_light_section(Light* light);
     void draw_model_section();
-    void draw_particle_system_section();
+    void draw_particle_system_section(ParticleSystem* particle_system);
     void draw_particle_emitter_section(ParticleEmitter& emitter);
 };

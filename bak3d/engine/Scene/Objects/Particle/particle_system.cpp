@@ -7,12 +7,11 @@
 
 using namespace std;
 
-ParticleSystem::ParticleSystem(const string& name)
-    : RenderableObject(ResourceManager::get_material("particle"),
-                glm::vec3(0.0f),
-                        name)
+ParticleSystem::ParticleSystem(glm::vec3 position, const string& name)
+    : RenderableObject(ResourceManager::get_material("particle"), position, name)
 {
     object_type = SceneObjectType::ParticleSystem;
+    m_mesh_slot = make_mesh_slot(ResourceManager::get_mesh("Quad"));
 
     // Add one emitter by default
     add_emitter();
@@ -40,34 +39,27 @@ void ParticleSystem::ensure_ibo_capacity(const ParticleEmitter& emitter)
     const GLsizei byte_size = static_cast<GLsizei>(sizeof(ParticleInstanceData)) * needed;
 
     // Allocate new IBO
-    gpu_data.ibo = std::make_unique<InstanceBuffer>(byte_size, nullptr, GL_DYNAMIC_DRAW);
+    gpu_data.ibo = make_unique<InstanceBuffer>(byte_size, nullptr, GL_DYNAMIC_DRAW);
     gpu_data.current_capacity = needed;
 
-    // (Re)build VAO — fully configure it once here, never again until next resize
-    gpu_data.vao = std::make_unique<VertexArray>();
+    gpu_data.vao = make_unique<VertexArray>();
     gpu_data.vao->bind();
 
     // Attribute 0: quad vertex from the shared VBO
-    // VBO must be bound when glVertexAttribPointer is called so VAO records it
     (*m_mesh_slot)->get_vbo()->bind();
     gpu_data.vao->set_attrib_pointer(0, 4, GL_FLOAT, GL_FALSE, VEC4_SIZE, nullptr);
 
     // Attributes 1-4: per-instance data from this emitter's IBO
     gpu_data.ibo->bind();
     constexpr GLsizei stride = sizeof(ParticleInstanceData);
-    gpu_data.vao->set_attrib_pointer(1, 4, GL_FLOAT, GL_FALSE, stride,
-        reinterpret_cast<void*>(offsetof(ParticleInstanceData, position)), 1);
-    gpu_data.vao->set_attrib_pointer(2, 4, GL_FLOAT, GL_FALSE, stride,
-        reinterpret_cast<void*>(offsetof(ParticleInstanceData, color)), 1);
-    gpu_data.vao->set_attrib_pointer(3, 1, GL_FLOAT, GL_FALSE, stride,
-        reinterpret_cast<void*>(offsetof(ParticleInstanceData, scale)), 1);
-
+    gpu_data.vao->set_attrib_pointer(1, 4, GL_FLOAT, GL_FALSE, stride, reinterpret_cast<void*>(offsetof(ParticleInstanceData, position)), 1);
+    gpu_data.vao->set_attrib_pointer(2, 4, GL_FLOAT, GL_FALSE, stride, reinterpret_cast<void*>(offsetof(ParticleInstanceData, color)), 1);
+    gpu_data.vao->set_attrib_pointer(3, 1, GL_FLOAT, GL_FALSE, stride, reinterpret_cast<void*>(offsetof(ParticleInstanceData, scale)), 1);
     (*m_mesh_slot)->get_ebo()->bind();
-    (*m_mesh_slot)->get_vbo()->unbind();
     gpu_data.vao->unbind();
 }
 
-bool ParticleSystem::emitter_name_exists(const std::string& name) const
+bool ParticleSystem::emitter_name_exists(const string& name) const
 {
     return ranges::any_of(m_emitters, [&name](const unique_ptr<ParticleEmitter>& e){ return e->get_name() == name; });
 }
@@ -122,11 +114,13 @@ void ParticleSystem::draw() const
             continue;
         }
 
-        // Single bind — all attribute state already recorded in this VAO
         it->second.vao->bind();
 
         const TextureRef& texture = emitter->get_texture();
-        if (texture) texture->bind(0);
+        if (texture)
+        {
+            texture->bind(0);
+        }
 
         glDrawElementsInstanced(
             GL_TRIANGLES,
@@ -170,8 +164,7 @@ ParticleEmitter* ParticleSystem::add_emitter(const string& name, const ParticleE
     ParticleEmitter* raw = emitter.get();
     m_emitters.push_back(std::move(emitter));
 
-    // Ensure GPU slot exists immediately
-    m_emitter_gpu[unique_name]; // default-constructs EmitterGPUData
+    m_emitter_gpu[unique_name];
     ensure_ibo_capacity(*raw);
 
     B3D_LOG_INFO("ParticleSystem: emitter '%s' added (%d max particles).", unique_name.c_str(), cfg.max_particles);
@@ -181,8 +174,7 @@ ParticleEmitter* ParticleSystem::add_emitter(const string& name, const ParticleE
 
 void ParticleSystem::remove_emitter(const string& name)
 {
-    const auto it = ranges::find_if(m_emitters,
-                                    [&name](const unique_ptr<ParticleEmitter>& e){ return e->get_name() == name; });
+    const auto it = ranges::find_if(m_emitters, [&name](const unique_ptr<ParticleEmitter>& e){ return e->get_name() == name; });
 
     if (it == m_emitters.end())
     {
@@ -203,7 +195,7 @@ void ParticleSystem::remove_last_emitter()
         return;
     }
 
-    const std::string name = m_emitters.back()->get_name();
+    const string name = m_emitters.back()->get_name();
     m_emitters.pop_back();
     m_emitter_gpu.erase(name);
 

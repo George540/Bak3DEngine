@@ -65,18 +65,15 @@ void RendererPasses::render_pass_sprites()
 {
     DebugScopeGroup scope("Sprites Pass");
 
-    /*const ParticleSystem* particle_system = Scene::instance->get_particle_system();
-    if (!particle_system)
-    {
-        return;
-    }*/
-
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glDepthMask(GL_FALSE);
     glDisable(GL_CULL_FACE);
 
-    //particle_system->draw();
+    for (const ParticleSystem* particle_system : SceneManager::get_current_scene()->get_all_particle_systems())
+    {
+        particle_system->draw();
+    }
 
     glDepthMask(GL_TRUE);
     glDisable(GL_BLEND);

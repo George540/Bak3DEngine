@@ -203,6 +203,12 @@ void Details::update()
 
             draw_light_section(dynamic_cast<Light*>(selected_object));
         }
+        else if (selected_object->get_object_type() == SceneObjectType::ParticleSystem)
+        {
+            ImGuiB3D::SeparatorWithSpacing();
+
+            draw_particle_system_section(dynamic_cast<ParticleSystem*>(selected_object));
+        }
     }
     else
     {
@@ -423,45 +429,38 @@ void Details::draw_model_section()
     }*/
 }
 
-void Details::draw_particle_system_section()
+void Details::draw_particle_system_section(ParticleSystem* particle_system)
 {
-    /*if (m_current_particle_system)
+    const int emitters_num = particle_system->get_emitters().size();
+    ImGui::Text("Emitters (%d)", emitters_num);
+
+    ImGui::SameLine();
+
+    if (ImGui::Button("+", ImVec2(40, 0)))
     {
-        int emitters_num = m_current_particle_system->get_emitters().size();
-        ImGui::Text("Emitters (%d)", emitters_num);
-
-        ImGui::SameLine();
-
-        if (ImGui::Button("+", ImVec2(40, 0)))
-        {
-            m_current_particle_system->add_emitter();
-        }
-
-        ImGui::SameLine();
-
-        if (ImGui::Button("-", ImVec2(40, 0)))
-        {
-            m_current_particle_system->remove_last_emitter();
-        }
-
-        for (auto& emitter : m_current_particle_system->get_emitters())
-        {
-            const string emitter_sub_label = emitter.get()->get_name();
-            ImGui::SetNextItemOpen(true, ImGuiCond_Once);
-            if (ImGui::TreeNodeEx(emitter_sub_label.c_str(), ImGuiTreeNodeFlags_Framed))
-            {
-                draw_particle_emitter_section(*emitter);
-
-                ImGui::TreePop();
-            }
-
-            ImGuiB3D::SeparatorWithSpacing();
-        }
+        particle_system->add_emitter();
     }
-    else
+
+    ImGui::SameLine();
+
+    if (ImGui::Button("-", ImVec2(40, 0)))
     {
-        ImGui::TextUnformatted("No particle system object exists.");
-    }*/
+        particle_system->remove_last_emitter();
+    }
+
+    for (auto& emitter : particle_system->get_emitters())
+    {
+        const string emitter_sub_label = emitter.get()->get_name();
+        ImGui::SetNextItemOpen(true, ImGuiCond_Once);
+        if (ImGui::TreeNodeEx(emitter_sub_label.c_str(), ImGuiTreeNodeFlags_Framed))
+        {
+            draw_particle_emitter_section(*emitter);
+
+            ImGui::TreePop();
+        }
+
+        ImGuiB3D::SeparatorWithSpacing();
+    }
 }
 
 void Details::draw_particle_emitter_section(ParticleEmitter& emitter)
