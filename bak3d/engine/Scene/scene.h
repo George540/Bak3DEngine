@@ -110,7 +110,7 @@ public:
 	std::vector<ParticleSystem*>& get_all_particle_systems() { return m_particle_systems; }
 	std::vector<AdvancedParticleSystem*>& get_all_advanced_particle_systems() { return m_advanced_particle_systems; }
 
-	void update(float dt) const;
+	void update(float dt);
 
 private:
 	void initialize_default_scene_objects();
@@ -118,6 +118,8 @@ private:
 	std::string get_unique_object_name(const std::string& name) const;
 	void register_object(SceneObject* object);
 	void unregister_object(SceneObject* object);
+
+	void delete_selected_object();
 	
 	Camera* m_current_camera = nullptr;
 	SceneObject* m_selected_scene_object = nullptr;

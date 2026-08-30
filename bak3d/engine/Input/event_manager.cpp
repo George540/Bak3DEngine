@@ -401,3 +401,8 @@ bool EventManager::is_key_moving_down_down()
 {
 	return is_key_down(GLFW_KEY_E);
 }
+
+bool EventManager::is_delete_key_down()
+{
+	return is_key_down(GLFW_KEY_DELETE);
+}

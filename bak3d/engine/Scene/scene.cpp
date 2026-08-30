@@ -32,6 +32,7 @@ THE SOFTWARE.
 #include "editor.h"
 #include "Asset/resource_manager.h"
 #include "Core/global_settings.h"
+#include "Input/event_manager.h"
 #include "Objects/camera.h"
 #include "Objects/grid.h"
 #include "Objects/light.h"
@@ -58,7 +59,7 @@ SceneObject* Scene::get_object_in_scene(const SceneObjectType type, const int in
 	return object;
 }
 
-void Scene::update(float dt) const
+void Scene::update(float dt)
 {
 	for (const auto& type_storage : m_scene_objects_indexed | views::values)
 	{
@@ -67,6 +68,8 @@ void Scene::update(float dt) const
 			object->update(dt);
 		}
 	}
+
+    delete_selected_object();
 }
 
 void Scene::initialize_default_scene_objects()
@@ -285,6 +288,15 @@ void Scene::unregister_object(SceneObject* object)
 		default:
             assert(false && "Cannot unregister SceneObjectType::Max");
             break;
+    }
+}
+
+void Scene::delete_selected_object()
+{
+    if (EventManager::is_delete_key_down() && m_selected_scene_object)
+    {
+        destroy(m_selected_scene_object);
+        m_selected_scene_object = nullptr;
     }
 }
 

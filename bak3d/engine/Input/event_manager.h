@@ -117,6 +117,7 @@ public:
 	static bool is_key_moving_left_down();
 	static bool is_key_moving_up_down();
 	static bool is_key_moving_down_down();
+	static bool is_delete_key_down();
 };
 
 #endif
