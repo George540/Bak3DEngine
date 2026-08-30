@@ -51,6 +51,7 @@ namespace
             }
 
             const char* child_name = child->get_object_name().c_str();
+            ImGui::SetNextItemOpen(true, ImGuiCond_Once);
             const bool is_tree_open = ImGui::TreeNodeEx(child_name, flags, "%s", child_name);
             if (ImGui::IsItemClicked())
             {
@@ -130,24 +131,26 @@ void SceneGraph::draw_add_object_popup()
             spawn_position = current_camera->get_camera_position() + (current_camera->get_forward_vector() * 10.0f);
         }
 
+        SceneObject* object_to_parent = SceneManager::get_current_scene()->get_selected_scene_object();
+
         if (ImGui::BeginMenu("Lights"))
         {
             if (ImGui::MenuItem("Directional Light"))
             {
-                SceneManager::get_current_scene()->instantiate<Light>(nullptr, LightType::Directional, spawn_position);
+                SceneManager::get_current_scene()->instantiate<Light>(object_to_parent, LightType::Directional, spawn_position);
             }
             if (ImGui::MenuItem("Spot Light"))
             {
-                SceneManager::get_current_scene()->instantiate<Light>(nullptr, LightType::Spot, spawn_position);
+                SceneManager::get_current_scene()->instantiate<Light>(object_to_parent, LightType::Spot, spawn_position);
             }
             if (ImGui::MenuItem("Point Light"))
             {
-                SceneManager::get_current_scene()->instantiate<Light>(nullptr, LightType::Point, spawn_position);
+                SceneManager::get_current_scene()->instantiate<Light>(object_to_parent, LightType::Point, spawn_position);
             }
             if (ImGui::MenuItem("Area Light"))
             {
                 // @TODO: Implement Area Light
-                SceneManager::get_current_scene()->instantiate<Light>(nullptr, LightType::Point, spawn_position);
+                SceneManager::get_current_scene()->instantiate<Light>(object_to_parent, LightType::Point, spawn_position);
             }
             ImGui::EndMenu();
         }
@@ -165,11 +168,11 @@ void SceneGraph::draw_add_object_popup()
         {
             if (ImGui::MenuItem("Sprite Particles"))
             {
-                SceneManager::get_current_scene()->instantiate<ParticleSystem>(nullptr, spawn_position);
+                SceneManager::get_current_scene()->instantiate<ParticleSystem>(object_to_parent, spawn_position);
             }
             if (ImGui::MenuItem("Advanced Particles"))
             {
-                SceneManager::get_current_scene()->instantiate<AdvancedParticleSystem>(nullptr, spawn_position);
+                SceneManager::get_current_scene()->instantiate<AdvancedParticleSystem>(object_to_parent, spawn_position);
             }
             ImGui::EndMenu();
         }

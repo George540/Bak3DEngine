@@ -97,7 +97,7 @@ public:
 
         for (auto&& child : children)
         {
-            child->update_self_and_children();
+            child->force_update_self_and_children();
         }
     }
 
