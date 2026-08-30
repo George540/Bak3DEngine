@@ -41,7 +41,9 @@ public:
     void update() override;
     void end_frame() override;
 private:
-    void draw_scene_object_section(SceneObject* scene_object);
+    void draw_object();
+    void draw_scene_object_section(SceneObject* selected_object);
+    void draw_renderable_object_section(RenderableObject* selected_renderable);
     void draw_light_section(Light* light);
     void draw_model_section();
     void draw_particle_system_section(ParticleSystem* particle_system);

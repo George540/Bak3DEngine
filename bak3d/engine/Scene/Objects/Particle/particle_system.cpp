@@ -66,7 +66,7 @@ bool ParticleSystem::emitter_name_exists(const string& name) const
 
 void ParticleSystem::update(const float dt)
 {
-    if (!m_visible)
+    if (!m_is_visible)
     {
         return;
     }
@@ -93,7 +93,7 @@ void ParticleSystem::update(const float dt)
 
 void ParticleSystem::draw() const
 {
-    if (!m_visible)
+    if (!m_is_visible)
     {
         return;
     }

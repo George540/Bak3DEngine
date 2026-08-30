@@ -54,7 +54,7 @@ Light::Light(const LightType type, const glm::vec3 position) :
 
 void Light::update(float dt)
 {
-	if (m_is_dirty)
+	if (m_is_dirty || transform.is_dirty())
 	{
 		update_light_data_ubo();
 

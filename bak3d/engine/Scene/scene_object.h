@@ -51,6 +51,7 @@ public:
     SceneObjectType object_type;
 
     bool m_is_dirty = true;
+    bool is_active = true;
 
     SceneObject() : SceneObject(glm::vec3(0.0f, 0.0f, 0.0f), "SceneObject") {}
     SceneObject(const glm::vec3 position, const std::string& name) : Bak3DObject(name) { transform.set_local_position(position); }
@@ -115,6 +116,11 @@ public:
 
     virtual void update(float dt)
     {
+        if (!is_active)
+        {
+            return;
+        }
+
         update_self_and_children();
     }
 };

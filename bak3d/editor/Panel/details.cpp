@@ -50,6 +50,8 @@ namespace
 
     vector<string> m_light_type_items = { };
 
+    char selected_object_name_buffer[64] = "";
+
     void draw_property_button_selection_item(string* selected_name, const char* label, const char* tooltip_desc)
     {
         // Make popup ID as unique as possible to avoid duplicates
@@ -193,27 +195,7 @@ void Details::update()
 {
     EditorPanel::update();
 
-    if (SceneObject* selected_object = SceneManager::get_current_scene()->get_selected_scene_object())
-    {
-        draw_scene_object_section(selected_object);
-        
-        if (selected_object->get_object_type() == SceneObjectType::Light)
-        {
-            ImGuiB3D::SeparatorWithSpacing();
-
-            draw_light_section(dynamic_cast<Light*>(selected_object));
-        }
-        else if (selected_object->get_object_type() == SceneObjectType::ParticleSystem)
-        {
-            ImGuiB3D::SeparatorWithSpacing();
-
-            draw_particle_system_section(dynamic_cast<ParticleSystem*>(selected_object));
-        }
-    }
-    else
-    {
-        ImGui::TextDisabled("No object currently selected to inspect. Select in the dropdown above.");
-    }
+    draw_object();
 }
 
 void Details::end_frame()
@@ -221,48 +203,124 @@ void Details::end_frame()
     EditorPanel::end_frame();
 }
 
-void Details::draw_scene_object_section(SceneObject* scene_object)
+void Details::draw_object()
 {
+    if (SceneObject* selected_object = SceneManager::get_current_scene()->get_selected_scene_object())
+    {
+        draw_scene_object_section(selected_object);
+
+        if (const auto selected_renderable = dynamic_cast<RenderableObject*>(selected_object))
+        {
+            ImGuiB3D::SeparatorWithSpacing();
+
+            draw_renderable_object_section(selected_renderable);
+
+            if (selected_renderable->get_object_type() == SceneObjectType::Light)
+            {
+                ImGuiB3D::SeparatorWithSpacing();
+
+                draw_light_section(dynamic_cast<Light*>(selected_renderable));
+            }
+            else if (selected_renderable->get_object_type() == SceneObjectType::ParticleSystem)
+            {
+                ImGuiB3D::SeparatorWithSpacing();
+
+                draw_particle_system_section(dynamic_cast<ParticleSystem*>(selected_renderable));
+            }
+        }
+
+        ImGui::EndDisabled();
+    }
+    else
+    {
+        ImGui::TextDisabled("No object currently selected to inspect. Select from the Scene Graph to view details.");
+    }
+}
+
+void Details::draw_scene_object_section(SceneObject* selected_object)
+{
+    ImGui::Checkbox("##Active", &selected_object->is_active);
+
+    ImGui::SameLine();
+    
+    ImGui::PushID(selected_object);
+
+    // Safely sync the buffer with the object name when there is no active input
+    if (!ImGui::IsItemActive())
+    {
+        strncpy_s(selected_object_name_buffer, selected_object->get_object_name().c_str(), sizeof(selected_object_name_buffer) - 1);
+        selected_object_name_buffer[sizeof(selected_object_name_buffer) - 1] = '\0';
+    }
+    
+    ImGui::SetNextItemWidth(-FLT_MIN);
+    if (ImGui::InputText("##object_name", selected_object_name_buffer, IM_ARRAYSIZE(selected_object_name_buffer), ImGuiInputTextFlags_EnterReturnsTrue))
+    {
+        selected_object->set_object_name(string(selected_object_name_buffer));
+    }
+
+    ImGui::PopID();
+
+    ImGuiB3D::SeparatorWithSpacing();
+
+    ImGui::BeginDisabled(!selected_object->is_active);
+    
     ImGui::SetNextItemOpen(true, ImGuiCond_Once);
     if (ImGui::TreeNode("Transform"))
     {
         // Position
-        glm::vec3 position = scene_object->transform.get_local_position();
+        glm::vec3 position = selected_object->transform.get_local_position();
         if (ImGuiB3D::PropertyDragFloat3("Position", &position, 0.1f, 0.0f, 0.0f, "%.3f", "Translate scene object."))
         {
-            scene_object->transform.set_local_position(position);
+            selected_object->transform.set_local_position(position);
         }
         ImGui::SameLine();
         if (ImGui::Button("Reset##Position"))
         {
-            scene_object->transform.set_local_position(glm::vec3(0.0f));
+            selected_object->transform.set_local_position(glm::vec3(0.0f));
         }
 
         // Euler Rotation
-        glm::vec3 rotation = scene_object->transform.get_local_euler_rotation();
+        glm::vec3 rotation = selected_object->transform.get_local_euler_rotation();
         if (ImGuiB3D::PropertyDragFloat3("Rotation", &rotation, 0.1f, 0.0f, 0.0f, "%.3f", "Rotate scene object based on Euler angles."))
         {
-            scene_object->transform.set_local_euler_rotation(rotation);
+            selected_object->transform.set_local_euler_rotation(rotation);
         }
         ImGui::SameLine();
         if (ImGui::Button("Reset##Rotation"))
         {
-            scene_object->transform.set_local_euler_rotation(glm::vec3(0.0f));
+            selected_object->transform.set_local_euler_rotation(glm::vec3(0.0f));
         }
 
         // Scale
-        glm::vec3 scale = scene_object->transform.get_local_scale();
+        glm::vec3 scale = selected_object->transform.get_local_scale();
         if (ImGuiB3D::PropertyDragFloat3("Scale", &scale, 0.1f, 0.0f, 0.0f, "%.3f", "Scale scene object."))
         {
-            scene_object->transform.set_local_scale(scale);
+            selected_object->transform.set_local_scale(scale);
         }
         ImGui::SameLine();
         if (ImGui::Button("Reset##Scale"))
         {
-            scene_object->transform.set_local_scale(glm::vec3(1.0f));
+            selected_object->transform.set_local_scale(glm::vec3(1.0f));
         }
 
         ImGui::TreePop();
+    }
+}
+
+void Details::draw_renderable_object_section(RenderableObject* selected_renderable)
+{
+    bool is_visible = selected_renderable->is_visible();
+    ImGuiB3D::PropertyToggle("Visible", &is_visible, "Whether object gets drawn every frame.");
+    selected_renderable->set_visible(is_visible);
+
+    // @TODO: Make them selectable with an image button?
+    if (selected_renderable->get_material())
+    {
+        ImGui::Text("Material: %s", selected_renderable->get_material()->get_object_name().c_str());
+    }
+    if (selected_renderable->get_mesh())
+    {
+        ImGui::Text("Mesh: %s", selected_renderable->get_mesh()->get_object_name().c_str());
     }
 }
 

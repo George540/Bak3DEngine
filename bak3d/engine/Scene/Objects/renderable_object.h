@@ -43,7 +43,7 @@ protected:
     MeshSlot m_mesh_slot;
     MaterialSlot m_material_slot;
 
-    bool m_visible = true;
+    bool m_is_visible = true;
 
     void apply_material() const { if (has_material()) (*m_material_slot)->apply(); }
 public:
@@ -63,8 +63,8 @@ public:
     bool has_material() const { return m_material_slot && *m_material_slot && m_material_slot->is_valid(); }
     MaterialRef get_material() const { return *m_material_slot; }
 
-    void set_visible(bool visible) { m_visible = visible; }
-    bool is_visible() const { return m_visible; }
+    void set_visible(bool visible) { m_is_visible = visible; }
+    bool is_visible() const { return m_is_visible; }
 };
 
 /*
