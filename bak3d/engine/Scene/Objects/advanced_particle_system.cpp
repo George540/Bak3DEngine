@@ -35,12 +35,12 @@ static constexpr GLuint PARTICLE_INITIAL_COUNT = 30000000;
 static constexpr GLuint PARTICLE_COMMAND_SLOT = 0; // single batch for now (expand for multiple emitters later)
 static constexpr GLuint EMIT_WORK_GROUP_COUNT = (PARTICLE_INITIAL_COUNT + WORK_GROUP_LOCAL_SIZE - 1) / WORK_GROUP_LOCAL_SIZE;
 
-AdvancedParticleSystem::AdvancedParticleSystem(const std::string& name)
-    : RenderableObject(ResourceManager::get_material("particle_advanced"),
-                glm::vec3(0.0f),
-                        name)
+AdvancedParticleSystem::AdvancedParticleSystem(const glm::vec3 position, const std::string& name)
+    : RenderableObject(ResourceManager::get_material("particle_advanced"), position, name)
 {
     object_type = SceneObjectType::AdvancedParticleSystem;
+    m_vao = make_unique<VertexArray>();
+    m_vao->bind();
     
     m_emit_compute_shader = ResourceManager::get_shader("particle_advanced_emit");
     if (!m_emit_compute_shader || !m_emit_compute_shader->is_shader_compiled())
@@ -92,9 +92,9 @@ void AdvancedParticleSystem::draw() const
 
     glEnable(GL_PROGRAM_POINT_SIZE);
 
-    (*m_mesh_slot)->get_vao()->bind();
+    m_vao->bind();
     m_draw_indirect_command_buffer->draw_command(GL_POINTS, PARTICLE_COMMAND_SLOT);
-    (*m_mesh_slot)->get_vao()->unbind();
+    m_vao->unbind();
 
     glDisable(GL_PROGRAM_POINT_SIZE);
 }

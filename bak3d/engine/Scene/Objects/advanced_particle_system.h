@@ -34,7 +34,7 @@ THE SOFTWARE.
 class AdvancedParticleSystem : public RenderableObject, ISimulatable
 {
 public:
-    explicit AdvancedParticleSystem(const std::string& name = "AdvancedParticleSystem");
+    explicit AdvancedParticleSystem(glm::vec3 position = glm::vec3(0.0f), const std::string& name = "AdvancedParticleSystem");
     ~AdvancedParticleSystem() override = default;
 
     void update(float dt) override;
@@ -43,6 +43,8 @@ public:
 private:
     void emit() const override;
     void simulate() const override;
+
+    std::unique_ptr<VertexArray> m_vao;
 
     ShaderRef m_emit_compute_shader = nullptr;
     ShaderRef m_simulate_compute_shader = nullptr;

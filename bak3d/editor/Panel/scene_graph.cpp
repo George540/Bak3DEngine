@@ -167,7 +167,10 @@ void SceneGraph::draw_add_object_popup()
             {
                 SceneManager::get_current_scene()->instantiate<ParticleSystem>(nullptr, spawn_position);
             }
-            ImGui::MenuItem("Advanced Particles");
+            if (ImGui::MenuItem("Advanced Particles"))
+            {
+                SceneManager::get_current_scene()->instantiate<AdvancedParticleSystem>(nullptr, spawn_position);
+            }
             ImGui::EndMenu();
         }
         ImGui::EndPopup();

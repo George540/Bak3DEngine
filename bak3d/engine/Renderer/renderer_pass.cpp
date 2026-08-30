@@ -82,13 +82,7 @@ void RendererPasses::render_pass_sprites()
 
 void RendererPasses::render_pass_transparency()
 {
-    /*DebugScopeGroup scope("Transparency Pass (WBOIT)");
-
-    AdvancedParticleSystem* advanced_particles = Scene::instance->get_advanced_particle_system();
-    if (!advanced_particles)
-    {
-        return;
-    }
+    DebugScopeGroup scope("Transparency Pass (WBOIT)");
 
     WBOITFrameBuffer* wboit_fbo = Renderer::get_wboit_frame_buffer();
     FrameBuffer* resolved_base_fbo = Renderer::get_main_frame_buffer();
@@ -114,11 +108,14 @@ void RendererPasses::render_pass_transparency()
         glDepthMask(GL_FALSE);
         glEnable(GL_BLEND);
 
-        glBlendFunci(0, GL_ONE, GL_ONE);                  // accumulation target: additive
+        glBlendFunci(0, GL_ONE, GL_ONE); // accumulation target: additive
         glBlendFunci(1, GL_ZERO, GL_ONE_MINUS_SRC_COLOR); // revealage target: product of (1 - alpha)
         glBlendEquation(GL_FUNC_ADD);
 
-        advanced_particles->draw();
+        for (const AdvancedParticleSystem* advanced_particle_system : SceneManager::get_current_scene()->get_all_advanced_particle_systems())
+        {
+            advanced_particle_system->draw();
+        }
 
         glDisable(GL_BLEND);
         glDepthMask(GL_TRUE);
@@ -160,7 +157,7 @@ void RendererPasses::render_pass_transparency()
         glDisable(GL_BLEND);
 
         // Unbind in the next pass(es)
-    }*/
+    }
 }
 
 void RendererPasses::render_pass_post_processing()
