@@ -113,6 +113,8 @@ public:
 	void update(float dt) const;
 
 private:
+	void initialize_default_scene_objects();
+	
 	std::string get_unique_object_name(const std::string& name) const;
 	void register_object(SceneObject* object);
 	void unregister_object(SceneObject* object);

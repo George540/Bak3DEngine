@@ -40,18 +40,7 @@ using namespace std;
 
 Scene::Scene()
 {
-	m_root = make_unique<SceneObject>(glm::vec3(0.0f), "SceneRoot");
-
-	// Camera Setup
-	m_current_camera = instantiate<Camera>(nullptr, glm::vec3(10.0f, 5.0f, 10.0f));
-
-	instantiate<Grid>(nullptr);
-	instantiate<Light>(nullptr, LightType::Point, glm::vec3(-5.0f, 5.0f, 5.0f));
-
-	/*auto models = ResourceManager::Models;
-	instantiate_model(ResourceManager::get_model("mushroom.obj"));#1#*/
-
-	B3D_LOG_INFO("Scene initialized.");
+	initialize_default_scene_objects();
 }
 
 Scene::~Scene()
@@ -78,6 +67,19 @@ void Scene::update(float dt) const
 			object->update(dt);
 		}
 	}
+}
+
+void Scene::initialize_default_scene_objects()
+{
+    m_root = make_unique<SceneObject>(glm::vec3(0.0f), "SceneRoot");
+
+    m_current_camera = instantiate<Camera>(nullptr, glm::vec3(5.0f, 3.0f, 5.0f));
+
+    instantiate<Grid>(nullptr);
+    instantiate<Light>(nullptr, LightType::Point, glm::vec3(-2.5f, 2.5f, 2.5f));
+    instantiate<Mesh>(nullptr, glm::vec3(0.0f), "Cube", ResourceManager::get_material("default_material"), "Cube");
+
+    B3D_LOG_INFO("Scene initialized.");
 }
 
 std::string Scene::get_unique_object_name(const std::string& name) const
