@@ -65,7 +65,7 @@ public:
 
         T* child_raw = child.get();
         child_raw->parent = this;
-        child_raw->transform.mark_dirty();
+        child_raw->transform.set_dirty(true);
         children.emplace_back(std::move(child));
 
         return child_raw;
@@ -111,6 +111,10 @@ public:
 
     void clear_dirty()
     {
+        if (transform.is_dirty())
+        {
+            transform.set_dirty(false);
+        }
         m_is_dirty = false;
     }
 
@@ -121,6 +125,10 @@ public:
             return;
         }
 
-        update_self_and_children();
+        if (m_is_dirty || transform.is_dirty())
+        {
+            update_self_and_children();
+            clear_dirty();
+        }
     }
 };

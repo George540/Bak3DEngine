@@ -16,16 +16,23 @@ layout (std140, binding = 0) uniform Camera
 
 uniform mat4 model;
 
-layout (std140, binding = 1) uniform LightData
+struct LightData
 {
-    vec4 position;  // .rgb = position,  .a = cut_off       (cosine of inner cone angle)
-    vec4 direction; // .rgb = direction, .a = outer_cut_off (cosine of outer cone angle)
-    vec4 ambient;   // .rgb = ambient,   .a = radius        (attenuation radius)
+    vec4 position;  // .rgb = position,  .a = cut_off
+    vec4 direction; // .rgb = direction, .a = outer_cut_off
+    vec4 ambient;   // .rgb = ambient,   .a = radius
     vec4 diffuse;   // .rgb = diffuse,   .a = intensity
     vec4 specular;  // .rgb = specular,  .a = PADDING
     int type;
     float padding[3];
-} light_data;
+};
+
+layout (std430, binding = 15) buffer LightDataBuffer
+{
+    LightData lights[];
+} light_buffer;
+
+uniform int active_light_count;
 
 layout (std140, binding = 2) uniform PageData
 {
@@ -71,14 +78,14 @@ vec3 apply_billboarding(
     return world_position + (camera_right * rotated_vertex.x + camera_up * rotated_vertex.y) * scale;
 }
 
-float get_light_distance(vec3 frag_position)
+float get_light_distance(LightData light, vec3 frag_position)
 {
-    return length(light_data.position.xyz - frag_position);
+    return length(light.position.xyz - frag_position);
 }
 
-vec3 get_light_direction(vec3 frag_position)
+vec3 get_light_direction(LightData light, vec3 frag_position)
 {
-    return normalize(light_data.position.xyz - frag_position);
+    return normalize(light.position.xyz - frag_position);
 }
 
 vec3 get_view_direction(vec3 frag_position)
@@ -131,10 +138,10 @@ float calculate_point_alpha_falloff(vec2 point_coord, float softness)
     return 1.0 - smoothstep(1.0 - softness, 1.0, radius);
 }
 
-float process_attenuation(vec3 frag_position)
+float process_attenuation(LightData light, vec3 frag_position)
 {
-    float distance = get_light_distance(frag_position);
-    float radius = light_data.ambient.a;
+    float distance = get_light_distance(light, frag_position);
+    float radius = light.ambient.a;
     float c = 1.0;
     float l = 4.5 / radius;
     float q = 75.0 / (radius * radius);
@@ -160,27 +167,30 @@ float calculate_translucency(vec3 view_direction, vec3 light_direction, float sc
     return mix(isotropic_scatter, directional_scatter, 0.8);
 }
 
-vec3 process_particle_light(vec3 frag_position, vec3 view_direction, float scatter_power)
+vec3 process_particle_light(LightData light, vec3 frag_position, vec3 view_direction, float scatter_power)
 {
     vec3 light_direction;
     float attenuation = 1.0;
     float light_intensity = 1.0;
 
-    if (light_data.type == LIGHT_TYPE_DIRECTIONAL)
+    if (light.type == LIGHT_TYPE_DIRECTIONAL)
     {
-        light_direction = normalize(-light_data.direction.xyz);
+        light_direction = normalize(-light.direction.xyz);
     }
     else
     {
-        light_direction = get_light_direction(frag_position);
-        attenuation = process_attenuation(frag_position);
+        // Compute direction from the specific light's position
+        light_direction = normalize(light.position.xyz - frag_position);
 
-        if (light_data.type == LIGHT_TYPE_SPOT || light_data.type == LIGHT_TYPE_AREA)
+        // Pass the light's explicit attenuation radius (.a channel of ambient)
+        attenuation = process_attenuation(light, frag_position);
+
+        if (light.type == LIGHT_TYPE_SPOT || light.type == LIGHT_TYPE_AREA)
         {
-            vec3 world_spotlight_direction = normalize(light_data.direction.xyz);
+            vec3 world_spotlight_direction = normalize(light.direction.xyz);
             float theta = dot(light_direction, -world_spotlight_direction);
-            float cut_off = light_data.position.a;
-            float outer_cut_off  = light_data.direction.a;
+            float cut_off = light.position.a;
+            float outer_cut_off = light.direction.a;
             float epsilon = cut_off - outer_cut_off;
             light_intensity = clamp((theta - outer_cut_off) / max(epsilon, 0.001), 0.0, 1.0);
         }
@@ -190,15 +200,31 @@ vec3 process_particle_light(vec3 frag_position, vec3 view_direction, float scatt
     float translucency = calculate_translucency(view_direction, light_direction, scatter_power);
 
     // Add an isotropic/wrapped diffuse component for side angles (90 degrees)
-    // This simulates multi-scattering where light scatters evenly out the sides of the volume.
     float side_scattering = clamp(dot(light_direction, view_direction) * 0.5 + 0.5, 0.0, 1.0);
 
     // Smoothly blend directional translucency with all-around side scattering
-    // Using 0.15 to 0.3 as a baseline ensures the particle doesn't go pitch black from the side.
-    float final_scattering = max(translucency, side_scattering * 0.25); // @TODO: To UBO
+    float final_scattering = max(translucency, side_scattering * 0.25);
 
-    vec3 ambient = light_data.ambient.rgb;
-    vec3 scattered = light_data.diffuse.rgb * final_scattering;
+    vec3 ambient = light.ambient.rgb;
+    vec3 scattered = light.diffuse.rgb * final_scattering;
 
-    return (ambient + scattered) * attenuation * light_intensity * light_data.diffuse.a;
+    // Accumulate all factors alongside the light intensity (.a channel of diffuse)
+    return (ambient + scattered) * attenuation * light_intensity * light.diffuse.a;
+}
+
+vec3 calculate_total_particle_lighting(vec3 frag_position, vec3 view_direction, float scatter_power)
+{
+    vec3 total_scattered_light = vec3(0.0);
+
+    // Dynamic iteration over the unsized SSBO array up to the active light count uniform
+    for (int i = 0; i < active_light_count; ++i)
+    {
+        // Extract the current light payload chunk locally
+        LightData light = light_buffer.lights[i];
+
+        // Accumulate this specific light's translucent volumetric contribution
+        total_scattered_light += process_particle_light(light, frag_position, view_direction, scatter_power);
+    }
+
+    return total_scattered_light;
 }

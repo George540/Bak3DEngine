@@ -27,7 +27,7 @@ THE SOFTWARE.
 #include "Buffers/data_buffer.h"
 #include "Buffers/frame_buffer.h"
 #include "Core/global_settings.h"
-#include "Scene/Objects/quad.h"
+#include "Scene/Objects/light.h"
 
 struct GLFWwindow;
 
@@ -45,6 +45,8 @@ private:
 	static std::unique_ptr<WBOITFrameBuffer> r_wboit_fbo;
 
 	static std::unique_ptr<UniformBuffer> r_debug_view_ubo;
+
+	static std::unique_ptr<ShaderStorageBuffer> r_lights_ssbo;
 public:
 	static void initialize();
 	static void shutdown();
@@ -69,4 +71,5 @@ public:
 private:
 	static void initialize_buffers();
 	static void query_gpu_limitations();
+	static void update_light_data_buffer(const std::vector<Light*>& active_lights);
 };

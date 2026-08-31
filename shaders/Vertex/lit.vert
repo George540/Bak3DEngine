@@ -13,35 +13,25 @@ out VS_OUT
     vec3 FragPos;
     vec3 Normal;
     vec2 TexCoord;
-    vec3 TangentLightPos;
-    vec3 TangentViewPos;
-    vec3 TangentFragPos;
-    vec3 TangentLightDir;
+    mat3 TBN;
 } vs_out;
 
 void main()
 {
     vs_out.FragPos = vec3(model * vec4(aPos, 1.0));
-    vs_out.TexCoord = aTexCoords;  
-    vs_out.Normal = mat3(transpose(inverse(model))) * aNormal;
+    vs_out.TexCoord = aTexCoords;
 
+    vec3 N = normalize(mat3(transpose(inverse(model))) * aNormal);
+    vs_out.Normal = N;
     vec3 T = normalize(vec3(model * vec4(aTangent, 0.0)));
-    vec3 N = normalize(vec3(model * vec4(aNormal, 0.0)));
-    T = normalize(T - dot(T, N) * N); // re-orthogonalize T with respect to N
-    vec3 B = cross(N, T); // then retrieve perpendicular vector B with the cross product of T and N
-
-    // Correct handedness using mesh bitangent
+    T = normalize(T - dot(T, N) * N);
+    vec3 B = cross(N, T);
     if (dot(cross(N, T), vec3(model * vec4(aBitangent, 0.0))) < 0.0)
     {
         B = -B;
     }
 
-    mat3 TBN = transpose(mat3(T, B, N));
+    vs_out.TBN = mat3(T, B, N);
 
-    vs_out.TangentLightPos = TBN * light_data.position.rgb;
-    vs_out.TangentViewPos  = TBN * camera_data.position.xyz;
-    vs_out.TangentFragPos  = TBN * vs_out.FragPos;
-    vs_out.TangentLightDir = TBN * normalize(-light_data.direction.rgb);
-
-    gl_Position = camera_data.projection * camera_data.view * model * vec4(aPos, 1.0);
+    gl_Position = camera_data.projection * camera_data.view * vec4(vs_out.FragPos, 1.0);
 }

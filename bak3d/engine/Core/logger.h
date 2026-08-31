@@ -99,7 +99,7 @@ public:
         std::string elapsed_time_formatted = get_elapsed_time_formatted();
         int length = std::snprintf(header_buffer, sizeof(header_buffer), "[%s][%s] %s:%d - ", elapsed_time_formatted.c_str(), tag, file, line);
 
-        char log_buffer[256];
+        char log_buffer[512];
         length = std::snprintf(log_buffer, sizeof(log_buffer), fmt, args...);
 
         LogEntry log_entry;

@@ -35,7 +35,9 @@ THE SOFTWARE.
 #include "Asset/texture.h"
 #include "Core/global_settings.h"
 #include "Core/logger.h"
+#include "Renderer/renderer.h"
 #include "Scene/scene.h"
+#include "Scene/scene_manager.h"
 
 Light::Light(const LightType type, const glm::vec3 position) :
 	RenderableObject(ResourceManager::get_material("light_icon"), position, "Light")
@@ -43,8 +45,7 @@ Light::Light(const LightType type, const glm::vec3 position) :
 	m_type = type;
 	object_type = SceneObjectType::Light;
 
-	// @TODO: Replace with struct payload instead of manual size
-	m_light_data_ubo = std::make_unique<UniformBuffer>(6 * VEC4_SIZE /*Temporary size*/, nullptr, 1, GL_DYNAMIC_DRAW);
+	m_ssbo_index = 0;
 
 	m_mesh_slot = make_mesh_slot(ResourceManager::get_mesh("Quad"));
 	set_texture_by_type(m_type);
@@ -54,13 +55,6 @@ Light::Light(const LightType type, const glm::vec3 position) :
 
 void Light::update(float dt)
 {
-	if (m_is_dirty || transform.is_dirty())
-	{
-		update_light_data_ubo();
-
-		m_is_dirty = false;
-	}
-
 	RenderableObject::update(dt);
 }
 
@@ -193,35 +187,16 @@ void Light::set_cone_size(const float size)
 	m_is_dirty = true;
 }
 
-void Light::update_light_data_ubo() const
+LightDataPayload Light::get_light_data_payload() const
 {
-	m_light_data_ubo->bind();
-
-	const glm::vec3 position = transform.get_global_position();
-	// vec4 position
-	m_light_data_ubo->bind_buffer_sub_data(&position,        VEC3_SIZE,  0 * VEC4_SIZE + 0);
-	m_light_data_ubo->bind_buffer_sub_data(&m_inner_cut_off, FLOAT_SIZE, 0 * VEC4_SIZE + VEC3_SIZE);
-
-	// vec4 direction
-	m_light_data_ubo->bind_buffer_sub_data(&m_direction,			 VEC3_SIZE,  1 * VEC4_SIZE + 0);
-	m_light_data_ubo->bind_buffer_sub_data(&m_outer_cut_off,		 FLOAT_SIZE, 1 * VEC4_SIZE + VEC3_SIZE);
-
-	// vec4 ambient (.a = radius)
-	m_light_data_ubo->bind_buffer_sub_data(&m_ambient,			 VEC3_SIZE,  2 * VEC4_SIZE + 0);
-	m_light_data_ubo->bind_buffer_sub_data(&m_attenuation_radius, FLOAT_SIZE, 2 * VEC4_SIZE + VEC3_SIZE);
-
-	// vec4 diffuse (.a = intensity)
-	m_light_data_ubo->bind_buffer_sub_data(&m_diffuse,			 VEC3_SIZE,  3 * VEC4_SIZE + 0);
-	m_light_data_ubo->bind_buffer_sub_data(&m_intensity,			 FLOAT_SIZE, 3 * VEC4_SIZE + VEC3_SIZE);
-
-	// vec4 specular (.a = unused)
-	m_light_data_ubo->bind_buffer_sub_data(&m_specular,			 VEC3_SIZE,  4 * VEC4_SIZE + 0);
-
-	// int type
-	const int32_t type = static_cast<int32_t>(m_type);
-	m_light_data_ubo->bind_buffer_sub_data(&type,				 INT_SIZE,   5 * VEC4_SIZE);
-
-	m_light_data_ubo->unbind();
+	LightDataPayload payload {};
+	payload.position = glm::vec4(transform.get_global_position(), m_inner_cut_off);
+	payload.direction = glm::vec4(m_direction, m_outer_cut_off);
+	payload.ambient = glm::vec4(m_ambient, m_attenuation_radius);
+	payload.diffuse = glm::vec4(m_diffuse, m_intensity);
+	payload.specular = glm::vec4(m_specular, 0.0f);
+	payload.type = static_cast<int32_t>(m_type);
+	return payload;
 }
 
 void Light::set_texture_by_type(const LightType type)

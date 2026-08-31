@@ -25,7 +25,6 @@ THE SOFTWARE.
 #pragma once
 
 #include "renderable_object.h"
-#include "Renderer/Buffers/data_buffer.h"
 
 enum class LightType : int
 {
@@ -75,7 +74,7 @@ protected:
 	float m_outer_cut_off = glm::cos(glm::radians(m_outer_angle)); // glm::cos(glm::radians(outer_degrees))
 	float m_cone_size = 1.0f;
 
-	std::unique_ptr<UniformBuffer> m_light_data_ubo;
+	size_t m_ssbo_index = 0;
 
 	TextureRef m_sprite_texture;
 public:
@@ -84,8 +83,6 @@ public:
 
 	void update(float dt) override;
 	void draw() const override;
-
-	UniformBuffer* get_camera_data_ubo() const { return m_light_data_ubo.get(); }
 
 	// Type
 	LightType get_type() const { return m_type; }
@@ -116,7 +113,9 @@ public:
 	// Cone angles in degrees — stored internally as cosines (spot only)
 	void set_cone_angles(float inner_degrees, float outer_degrees);
 	void set_cone_size(float size);
+
+	LightDataPayload get_light_data_payload() const;
+	size_t get_ssbo_index() const { return m_ssbo_index; }
 private:
-	void update_light_data_ubo() const;
 	void set_texture_by_type(LightType type);
 };

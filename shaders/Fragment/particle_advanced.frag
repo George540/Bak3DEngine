@@ -25,7 +25,9 @@ void main()
 
     vec3 world_position = position[vs_particle_index].xyz;
     vec3 view_direction = get_view_direction(world_position);
-    vec3 lighting = process_particle_light(world_position, view_direction, scatter_power);
+
+    vec3 lighting = calculate_total_particle_lighting(world_position, view_direction, scatter_power);
+
     vec3 color = particle_albedo * lighting;
 
     float linear_depth = get_linear_depth(world_position);

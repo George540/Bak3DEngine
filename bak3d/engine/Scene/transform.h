@@ -67,7 +67,7 @@ public:
     glm::vec3 get_forward() const { return -m_global_model_matrix[2]; }
 
     bool is_dirty() const { return m_is_dirty; }
-    void mark_dirty() { m_is_dirty = true; }
+    void set_dirty(bool dirty = true) { m_is_dirty = dirty; }
 
 protected:
     void compute_local_model_matrix()

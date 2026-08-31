@@ -24,9 +24,6 @@ THE SOFTWARE.
 
 #include "mesh.h"
 
-#include <utility>
-
-#include "Asset/mesh_data.h"
 #include "Asset/resource_manager.h"
 
 using namespace std;

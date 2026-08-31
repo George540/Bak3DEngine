@@ -54,6 +54,7 @@ void RenderableObject::draw() const
 
 	(*m_material_slot)->bind_textures_cache();
 	(*m_material_slot)->set_mat4("model", transform.get_global_model_matrix());
+	(*m_material_slot)->set_int("active_light_count", SceneManager::get_current_scene()->get_all_lights().size());
 	apply_material();
 
 	(*m_mesh_slot)->draw();

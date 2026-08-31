@@ -40,15 +40,28 @@ namespace
 {
     bool check_compile_errors(unsigned int shader_id, const string& shader_type, const string& shader_name)
     {
-        GLint success;
-        GLchar infoLog[1024];
+        GLint success = GL_FALSE;
+        GLint log_length = 0;
+
         if (shader_type != "PROGRAM")
         {
             glGetShaderiv(shader_id, GL_COMPILE_STATUS, &success);
             if (!success)
             {
-                glGetShaderInfoLog(shader_id, 1024, nullptr, infoLog);
-                B3D_LOG_ERROR("Shader compilation error of type: %s%s\n %s", shader_name.c_str(), shader_type.c_str(), infoLog);
+                glGetShaderiv(shader_id, GL_INFO_LOG_LENGTH, &log_length);
+                
+                string info_log(log_length, '\0');
+                glGetShaderInfoLog(shader_id, log_length, nullptr, info_log.data());
+
+                GLint actual_type = 0;
+                glGetShaderiv(shader_id, GL_SHADER_TYPE, &actual_type);
+                string stage_str = "UNKNOWN";
+                if      (actual_type == GL_VERTEX_SHADER)   stage_str = "VERTEX";
+                else if (actual_type == GL_FRAGMENT_SHADER) stage_str = "FRAGMENT";
+                else if (actual_type == GL_GEOMETRY_SHADER) stage_str = "GEOMETRY";
+                else if (actual_type == GL_COMPUTE_SHADER)  stage_str = "COMPUTE";
+
+                B3D_LOG_ERROR("[%s] (%s SHADER) Compilation failed:\n%s", shader_name.c_str(), stage_str.c_str(), info_log.c_str());
             }
         }
         else
@@ -56,12 +69,17 @@ namespace
             glGetProgramiv(shader_id, GL_LINK_STATUS, &success);
             if (!success)
             {
-                glGetProgramInfoLog(shader_id, 1024, nullptr, infoLog);
-                B3D_LOG_ERROR("Shader linking error of type: %s%s\n %s", shader_name.c_str(), shader_type.c_str(), infoLog);
+                glGetProgramiv(shader_id, GL_INFO_LOG_LENGTH, &log_length);
+                
+                string info_log(log_length, '\0');
+                glGetProgramInfoLog(shader_id, log_length, nullptr, info_log.data());
+
+                B3D_LOG_ERROR("[%s] (PROGRAM) Linking failed:\n%s", shader_name.c_str(), info_log.c_str());
             }
         }
 
-        return success == 0;
+        // Returns true if there WAS an error (success == 0), maintaining standard boolean validation flow
+        return success == GL_FALSE;
     }
 
     string resolve_includes(const string& source, const string& shader_dir)
@@ -144,7 +162,7 @@ Shader::Shader()
     shader_stage_sources.emplace(GL_FRAGMENT_SHADER, filesystem::absolute("shaders/line.frag").string());
 }
 
-Shader::Shader(const ShaderStageMap& shader_stage_sources, const std::string& shader_name)
+Shader::Shader(const ShaderStageMap& shader_stage_sources, const string& shader_name)
     : Asset(shader_stage_sources.begin()->second, shader_name)
     , m_stages(shader_stage_sources)
     , m_compiled(false)

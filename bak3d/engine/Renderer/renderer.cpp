@@ -38,7 +38,9 @@ THE SOFTWARE.
 #include "debug_scope.h"
 #include "post_processor.h"
 #include "renderer_pass.h"
+#include "Asset/resource_manager.h"
 #include "Scene/scene.h"
+#include "Scene/scene_manager.h"
 #include "Scene/Objects/quad.h"
 
 using namespace std;
@@ -49,6 +51,7 @@ unique_ptr<MultisampleFrameBuffer> Renderer::r_msaa_fbo;
 unique_ptr<FrameBuffer> Renderer::r_main_fbo;
 unique_ptr<FrameBuffer> Renderer::r_dbo;
 unique_ptr<UniformBuffer> Renderer::r_debug_view_ubo;
+unique_ptr<ShaderStorageBuffer> Renderer::r_lights_ssbo;
 unique_ptr<WBOITFrameBuffer> Renderer::r_wboit_fbo;
 
 
@@ -58,9 +61,13 @@ constexpr bool IS_OPENGL_DEBUG_VERBOSE = false;
 
 namespace
 {
+	std::vector<LightDataPayload> m_scratch_payloads;
+
 	PagesData m_pages_data = PagesData();
 
 	Quad* m_quad = nullptr;
+
+	int m_current_active_lights = 0;
 }
 
 void Renderer::initialize()
@@ -119,6 +126,8 @@ void Renderer::begin_frame()
 	r_debug_view_ubo->bind();
 	r_debug_view_ubo->bind_buffer_sub_data(&m_pages_data, PAGES_DATA_SIZE, 0);
 	r_debug_view_ubo->unbind();
+
+	update_light_data_buffer(SceneManager::get_current_scene()->get_all_lights());
 }
 
 void Renderer::draw_frame()
@@ -241,6 +250,7 @@ void Renderer::shutdown()
 	r_main_fbo.reset();
 	r_msaa_fbo.reset();
 	r_debug_view_ubo.reset();
+	r_lights_ssbo.reset();
 }
 
 PagesData Renderer::get_pages_data()
@@ -306,6 +316,8 @@ void Renderer::initialize_buffers()
 
 	// Pages Data (Debug View) Uniform Buffer: Store debug data for different debug views and other debugging options
 	r_debug_view_ubo = make_unique<UniformBuffer>(PAGES_DATA_SIZE, nullptr, 2, GL_DYNAMIC_DRAW);
+
+	r_lights_ssbo = make_unique<ShaderStorageBuffer>(0, nullptr, 15, GL_DYNAMIC_DRAW);
 }
 
 void Renderer::query_gpu_limitations()
@@ -335,4 +347,29 @@ void Renderer::query_gpu_limitations()
 			     "that may be dispatched to a compute shader: %d", max_compute_work_group_invocations);
 
 	B3D_LOG_WARNING("----------OpenGL Limitations----------");
+}
+
+void Renderer::update_light_data_buffer(const vector<Light*>& active_lights)
+{
+	m_current_active_lights = static_cast<int>(active_lights.size());
+	
+	m_scratch_payloads.clear();
+	m_scratch_payloads.reserve(active_lights.size());
+
+	for (const auto& light : active_lights)
+	{
+		if (light->is_active) 
+		{
+			m_scratch_payloads.push_back(light->get_light_data_payload());
+		}
+	}
+	
+	r_lights_ssbo->bind();
+
+	const size_t total_byte_size = m_scratch_payloads.size() * LIGHT_DATA_PAYLOAD_SIZE;
+
+	r_lights_ssbo->bind_buffer_data(m_scratch_payloads.data(), total_byte_size);
+	r_lights_ssbo->bind_to_binding_point(15);
+
+	r_lights_ssbo->unbind();
 }
