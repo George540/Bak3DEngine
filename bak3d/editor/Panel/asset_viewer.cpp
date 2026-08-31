@@ -32,6 +32,7 @@ THE SOFTWARE.
 #include "Asset/model.h"
 #include "Asset/resource_manager.h"
 #include "Asset/texture.h"
+#include "Scene/scene_manager.h"
 
 using namespace std;
 
@@ -233,28 +234,12 @@ void AssetPanel::draw_asset_tile(const string& name, Asset* asset)
         return;
     }
 
-    const bool is_selected = (m_selected_texture == name);
     const ImVec2 image_size = { m_tile_size, m_tile_size };
-    const ImVec4 tint = is_selected
-                        ? ImVec4(0.6f, 0.85f, 1.0f, 1.0f)  // highlight tint
-                        : ImVec4(1.0f, 1.0f, 1.0f, 1.0f);
 
     const auto texture_asset = dynamic_cast<Texture2D*>(asset);
     const ImTextureID text_id = texture_asset ? texture_asset->get_texture_id() : asset->get_object_id();
 
     ImGui::PushID(name.c_str());
-
-    // Selection highlight
-    if (is_selected)
-    {
-        const ImVec2 cursor = ImGui::GetCursorScreenPos();
-        ImGui::GetWindowDrawList()->AddRectFilled(
-            cursor,
-            { cursor.x + m_tile_size + 4.0f, cursor.y + m_tile_size + 4.0f },
-            IM_COL32(100, 160, 255, 80),
-            4.0f
-        );
-    }
 
     string label_asset = "##" + name;
     ImGui::BeginChild(label_asset.c_str(), ImVec2(image_size.x * 2, image_size.y * 1.3f));
@@ -266,15 +251,26 @@ void AssetPanel::draw_asset_tile(const string& name, Asset* asset)
             image_size,
             { 0, 1 }, { 1, 0 }, // UV coords (flip second pair for OpenGL if needed)
             ImVec4(0, 0, 0, 0), // background colour
-            tint
+            ImVec4(1, 1, 1, 1) // neutral tint
         );
 
-        if (clicked)
+        if (ImGui::IsItemActive() || ImGui::IsItemHovered())
         {
-            m_selected_texture = (is_selected ? "" : name); // toggle
+            const ImVec2 rect_min = ImGui::GetItemRectMin();
+            const ImVec2 rect_max = ImGui::GetItemRectMax();
+            const ImU32 overlay_color = ImGui::IsItemActive()
+                ? IM_COL32(100, 160, 255, 120)  // pressed: stronger
+                : IM_COL32(100, 160, 255, 60);  // hovered: subtle
+            ImGui::GetWindowDrawList()->AddRectFilled(rect_min, rect_max, overlay_color, 4.0f);
         }
 
-        // Label
+        if (const auto model_asset = dynamic_cast<Model*>(asset); clicked)
+        {
+            const glm::vec3 spawn_position = SceneManager::get_current_scene()->process_spawn_position();
+            SceneObject* object_to_parent = SceneManager::get_current_scene()->get_selected_scene_object();
+            SceneManager::get_current_scene()->instantiate_model(ResourceManager::get_model(model_asset->get_file_name()), object_to_parent, spawn_position);
+        }
+
         if (m_show_labels)
         {
             draw_truncated_tile_label(name);
@@ -282,7 +278,6 @@ void AssetPanel::draw_asset_tile(const string& name, Asset* asset)
     }
     ImGui::EndChild();
 
-    // Tooltip
     if (m_show_tooltips && ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNormal))
     {
         ImGuiB3D::AssetTooltip(asset);

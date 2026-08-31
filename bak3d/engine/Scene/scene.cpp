@@ -112,6 +112,16 @@ SceneObject* Scene::get_object_in_scene(const SceneObjectType type, const int in
 	return object;
 }
 
+glm::vec3 Scene::process_spawn_position() const
+{
+    glm::vec3 spawn_position = glm::vec3(0.0f);
+    if (m_current_camera)
+    {
+        spawn_position = m_current_camera->get_camera_position() + m_current_camera->get_forward_vector() * 10.0f;
+    }
+    return spawn_position;
+}
+
 void Scene::update(float dt)
 {
 	for (const auto& type_storage : m_scene_objects_indexed | views::values)
@@ -336,7 +346,6 @@ void Scene::unregister_object(SceneObject* object)
         case SceneObjectType::AdvancedParticleSystem:
         {
             auto* particle_system = dynamic_cast<AdvancedParticleSystem*>(object);
-
             assert(particle_system);
             erase(m_advanced_particle_systems, particle_system);
             break;

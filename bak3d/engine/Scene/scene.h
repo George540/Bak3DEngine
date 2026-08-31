@@ -35,6 +35,8 @@ THE SOFTWARE.
 #include "Objects/renderable_object.h"
 #include "Objects/Particle/particle_system.h"
 
+using namespace std;
+
 /*
  * This is the class that contains all the scene's data. Runs in the main loop of the project.
  */
@@ -71,16 +73,24 @@ public:
 	void destroy(T* object)
 	{
 		static_assert(std::is_base_of_v<SceneObject, T>, "destroy<T>() requires a SceneObject-derived type.");
+		static_assert(!std::is_const_v<T>, "destroy<T>() cannot be called on a const object pointer.");
 
 		if (!object)
 		{
 			return;
 		}
 
-		// Unregister the entire subtree
+		// Unregister the entire subtree.
+		// Avoid skipped/dangling children by snapshotting the children as raw pointers.
+		vector<SceneObject*> children_snapshot;
+		children_snapshot.reserve(object->children.size());
 		for (const auto& child : object->children)
 		{
-			destroy(child.get());
+			children_snapshot.push_back(child.get());
+		}
+		for (SceneObject* child : children_snapshot)
+		{
+			destroy(child);
 		}
 
 		// Remove this object from all non-owning indexes
@@ -105,6 +115,8 @@ public:
 
 	SceneObject* get_selected_scene_object() const { return m_selected_scene_object; }
 	void set_selected_scene_object(SceneObject* object) { m_selected_scene_object = object; }
+
+	glm::vec3 process_spawn_position() const;
 
 	std::vector<Camera*>& get_all_cameras() { return m_cameras; }
 	std::vector<Light*>& get_all_lights() { return m_lights; }

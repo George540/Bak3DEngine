@@ -140,11 +140,7 @@ void SceneGraph::draw_add_object_popup()
     {
         ImGui::SeparatorText("Add Object");
 
-        glm::vec3 spawn_position = glm::vec3(0.0f);
-        if (const Camera* current_camera = SceneManager::get_current_scene()->get_current_camera())
-        {
-            spawn_position = current_camera->get_camera_position() + (current_camera->get_forward_vector() * 10.0f);
-        }
+        glm::vec3 spawn_position = SceneManager::get_current_scene()->process_spawn_position();
 
         SceneObject* object_to_parent = SceneManager::get_current_scene()->get_selected_scene_object();
 
