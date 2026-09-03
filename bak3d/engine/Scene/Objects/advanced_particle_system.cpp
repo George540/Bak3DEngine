@@ -28,6 +28,7 @@ THE SOFTWARE.
 #include "Asset/resource_manager.h"
 #include "Input/event_manager.h"
 #include "Renderer/debug_scope.h"
+#include "Scene/scene_manager.h"
 
 using namespace std;
 
@@ -88,6 +89,7 @@ void AdvancedParticleSystem::draw() const
     }
     particle_shader->use();
     particle_shader->set_float("viewport_height", static_cast<float>(EventManager::get_viewport_height()));
+    particle_shader->set_int("active_light_count", SceneManager::get_current_scene()->get_all_lights().size());
     apply_material();
 
     glEnable(GL_PROGRAM_POINT_SIZE);

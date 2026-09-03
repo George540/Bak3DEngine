@@ -271,7 +271,6 @@ enum class PrimitiveMeshType : uint32_t
     Sphere,
     Cylinder,
     Torus,
-    Suzanne,
     Count
 };
 
@@ -287,8 +286,7 @@ inline constexpr std::array PrimitiveMeshInfos =
     PrimitiveMeshInfo {.type = PrimitiveMeshType::Plane, .name = "Plane" },
     PrimitiveMeshInfo {.type = PrimitiveMeshType::Sphere, .name = "Sphere" },
     PrimitiveMeshInfo {.type = PrimitiveMeshType::Cylinder, .name = "Cylinder" },
-    PrimitiveMeshInfo {.type = PrimitiveMeshType::Torus, .name = "Torus" },
-    PrimitiveMeshInfo {.type = PrimitiveMeshType::Suzanne, .name = "Suzanne" }
+    PrimitiveMeshInfo {.type = PrimitiveMeshType::Torus, .name = "Torus" }
 };
 
 using ShaderStageMap = std::unordered_map<GLenum, std::string>;

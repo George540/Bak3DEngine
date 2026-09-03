@@ -274,8 +274,8 @@ void Model::load_material_textures(aiMaterial* mat, aiTextureType type)
 	}
 }
 
-void Model::set_current_material(const std::string& material_name)
+void Model::set_current_material(const std::string& material_name) const
 {
 	// Write into the shared slot. All meshes see this instantly
-	*m_current_material_slot = ResourceManager::get_material(material_name);
+	*m_current_material_slot = ResourceManager::get_material(material_name) ? ResourceManager::get_material(material_name) : ResourceManager::get_material("default_material");
 }

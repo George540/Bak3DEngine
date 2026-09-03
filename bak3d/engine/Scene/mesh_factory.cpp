@@ -79,7 +79,7 @@ MeshGeometry MeshFactory::build_cube_geometry()
 
     assert(vertices.size() == 24 && indices.size() == 36 && "Cube primitive vertex/index count invariant broken");
 
-    return {.vertices = std::move(vertices), .indices = std::move(indices) };
+    return {.vertices = move(vertices), .indices = move(indices) };
 }
 
 MeshGeometry MeshFactory::build_plane_geometry(int subdivisions)
@@ -127,7 +127,7 @@ MeshGeometry MeshFactory::build_plane_geometry(int subdivisions)
         }
     }
 
-    return {.vertices = std::move(vertices), .indices = std::move(indices) };
+    return {.vertices = move(vertices), .indices = move(indices) };
 }
 
 MeshGeometry MeshFactory::build_sphere_geometry(int rings, int segments)
@@ -186,7 +186,7 @@ MeshGeometry MeshFactory::build_sphere_geometry(int rings, int segments)
         }
     }
 
-    return {.vertices = std::move(vertices), .indices = std::move(indices) };
+    return {.vertices = move(vertices), .indices = move(indices) };
 }
 
 MeshGeometry MeshFactory::build_cylinder_geometry(int segments)
@@ -283,7 +283,7 @@ MeshGeometry MeshFactory::build_cylinder_geometry(int segments)
     add_cap(-half_height, { 0.0f, -1.0f, 0.0f }, false);
     add_cap( half_height, { 0.0f,  1.0f, 0.0f }, true);
 
-    return {.vertices = std::move(vertices), .indices = std::move(indices) };
+    return {.vertices = move(vertices), .indices = move(indices) };
 }
 
 MeshGeometry MeshFactory::build_torus_geometry(int major_segments, int minor_segments, float minor_radius)
@@ -346,5 +346,5 @@ MeshGeometry MeshFactory::build_torus_geometry(int major_segments, int minor_seg
         }
     }
 
-    return {.vertices = std::move(vertices), .indices = std::move(indices) };
+    return {.vertices = move(vertices), .indices = move(indices) };
 }

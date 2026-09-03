@@ -28,6 +28,7 @@ THE SOFTWARE.
 #include "renderable_object.h"
 
 #include "Asset/mesh_data.h"
+#include "Asset/resource_manager.h"
 #include "Scene/scene.h"
 #include "Scene/scene_manager.h"
 
@@ -36,7 +37,8 @@ using namespace std;
 RenderableObject::RenderableObject(const MaterialRef& material, const glm::vec3 position, const std::string& name)
 	: SceneObject(position, name)
 {
-	m_material_slot = make_material_slot(material);
+	// Make sure that the default material is used as a fallback
+	m_material_slot = make_material_slot(material ? material : ResourceManager::get_material("default_material"));
 	m_mesh_slot = make_mesh_slot();
 
 	update_self_and_children();

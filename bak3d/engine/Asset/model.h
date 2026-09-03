@@ -62,7 +62,7 @@ public:
 
 	const ModelNode* get_root_node() const { return m_root_node.get(); }
 
-	void set_current_material(const std::string& material_name);
+	void set_current_material(const std::string& material_name) const;
 	MaterialRef get_current_material() const { return *m_current_material_slot; }
 
 	// Model stats

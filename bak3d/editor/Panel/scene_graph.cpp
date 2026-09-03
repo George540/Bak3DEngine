@@ -180,6 +180,10 @@ void SceneGraph::draw_add_object_popup()
                     );
                 }
             }
+            if (ImGui::MenuItem("Suzane"))
+            {
+                SceneManager::get_current_scene()->instantiate_model(ResourceManager::get_model("suzanne.obj"), object_to_parent, spawn_position);
+            }
 
             ImGui::EndMenu();
         }
