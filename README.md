@@ -90,29 +90,36 @@ Development will start Fall 2026
 |:ballot_box_with_check:| **Compute Pipeline** | Add compute shaders in the Renderer for opening the possibility for more rendering features. |
 |:ballot_box_with_check:| **Advanced GPU Particles** | Particle System is barely keeping up. A new and more capable approach is needed, like compute shaders, new buffer objects, culling, etc. |
 |:ballot_box_with_check:| **Multiple Objects in scene** | Support multiple objects in scene, even from the same type. |
-|☐| **Terrain** | Simple terrain concept for loading a height map into a plane mesh, used for lighting purposes. |
 |:ballot_box_with_check:| **Scene Graph** | Add a scene graph for proper handling of multiple objects. |
 |☐| **GPU Culling (Frustrum, Occlusion, Instance, Distance)** | As the scene grows, we need to handle it at scale with culling unecessary or unseen objects. |
-|☐| **Bonus: Rigidbody demo setup** | If time and motivation, add a simple rigidbody structure for fun physics. |
-|☐| **Bonus: FPV movement** | make camera move around the scene without just being restricted in orbit. |
+|:ballot_box_with_check:| **Bonus: FPV movement** | make camera move around the scene without just being restricted in orbit. |
 
-### [v1.3 - The Abstraction Update](https://github.com/George540/Bak3DEngine/milestone/2)
-Completed in April 18 2026. (v1.1 got released in September 2022).
+### [v1.5 - The Advanced Engine World](https://github.com/George540/Bak3DEngine/milestone/3)
+Development will start 2027 TBD
 | Status | Feature | Description |
 | :---: | :--- | :--- |
-|:ballot_box_with_check:| **Project Building** | Set up a propert build set up with build scripts in CMake and python for automated set up processes and support of multiple platforms. |
-|:ballot_box_with_check:| **Class Abstraction** | Create an organized but simple structure for different concepts that are reused often (objects, buffers, materials, shaders, textures, lights, etc). |
-|:ballot_box_with_check:| **FrameBuffers** | Surprisingly I never had framebuffers set up, so if I want better control of the final output image, I need that. |
-|:ballot_box_with_check:| **ImGui Editor Overhaul** | A more professional and user-fiendly look is needed as the engine grows. Flexible panels and different windows will be added. |
-|:ballot_box_with_check:| **Logging System** | Create a universal logging system to output verbose logs, warnings and errors. Will output in ImGui panel. |
-|:ballot_box_with_check:| **Asset Viewer** | New panel to view all assets found in content folders, such as models, textures and shaders. |
-|:ballot_box_with_check:| **Refined Object Settings** | They are quite hard to understand right now for both models and particles. Currently setting it up just like an ECS-based view. |
-|:ballot_box_with_check:| **Post Processing** | Add some basic post processing settings to be applied to the viewport framebuffer Also considering rendering passes. |
-|:ballot_box_with_check:| **Profiling Metrics** | Add a dedicated system and panel for profiling different features and other important metrics. |
-|:ballot_box_with_check:| **Light Types** | More light types to add such as spot, point and directional (maybe even area). For now, just make the single light in the scene to change type. |
-|:ballot_box_with_check:| **Bug fixing** | Fix minor bugs in some features I have left behind. |
-|:ballot_box_with_check:| **Code restructuring** | Some more important code overhaul that will be easier to build on top of in the future. |
-|:ballot_box_with_check:| **Bonus: QoL Features** | Add shader recompiling at runtime to test shader changes faster and integrate RenderDoc for rapid GPU captures. |
+|☐| **LUT Atmosphere** | Render realistic sky and atmosphere using LUT atmospheric scattering. |
+|☐| **Terrain** | Simple terrain concept for loading a height map into a plane mesh, used for lighting purposes. |
+|☐| **Rigidbodies** | Add physics for different shapes and rigidbodies using compute shaders. |
+|☐| **Cloudscapes with Volumetric Raymarching** | If time and motivation, add a simple rigidbody structure for fun physics. |
+|☐| **Full Post Processing** | Implement the full post process tack (Blur, DoF, Tonemapping & hdr, Reflections, Full Color Grading, Motion Blue, Lens Flare, Film Grain, GTAO, AA (MSAA, SMAA, DLSS, FSR, XeSS, TSR) |
+|☐| **Post Process Volumes** | Implement global and local volumes with different shapes |
+|☐| **Skeletal Animation and Physics** | Implement Skeletal Animation, physics, state machines and graph editors. |
+|☐| **Level Editor** | Full ECS, play-in-viewport, multi-level editor with prefabs, expanding the current Scene Graph structure |
+
+### [v1.6 - Project Tempest](https://github.com/George540/Bak3DEngine/milestone/3)
+Development will start 2028 TBD (Big Project and just an idea. Taking the engine to the next level)
+| Status | Feature | Description |
+| :---: | :--- | :--- |
+|☐| **Editor QoL** | Asset editor visualizers, shader editors, multi-entity editing, etc |
+|☐| **Profile In-Editor Tools** | GPU/CPU timers, breadcrumbs, crash reports, more logs, etc |
+|☐| **RHI Command List** | Implement an RHI to abstract GPU commands for different API's. |
+|☐| **Vulkan** | Implement the Vulkan 1.4 API into the RHI with HLSL and/or Slang support. |
+|☐| **SDL** | Implement SDL as the new input and window library. |
+|☐| **Bindless Rendering** | Make all rendering bindless for all APIs. |
+|☐| **Streaming** | Make textures virtual with texture streaming. |
+|☐| **Geometry and Tessellation Shaders** | Add new types of shaders in the Shader pipeline. |
+|☐| **Node Graphs** | Make and use Node graphs for animation, compositing, physics and more. |
 
 I am open for requests as well as open to any support to help implement these features, although I am willing to try to implement most of these myself whenever I can. Just let me know!
 
