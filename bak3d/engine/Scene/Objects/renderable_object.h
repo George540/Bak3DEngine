@@ -24,6 +24,8 @@ THE SOFTWARE.
 
 #pragma once
 
+#include <glm/detail/type_quat.hpp>
+
 #include "Asset/material.h"
 #include "Core/global_definitions.h"
 #include "Core/core_interface.h"
@@ -74,11 +76,23 @@ public:
 class InstancedRenderableObject : public RenderableObject
 {
 protected:
-    InstanceBuffer* m_ibo;
-    std::vector<Transform> m_instances_transforms;
+    std::unique_ptr<InstanceBuffer> m_instance_buffer;
+    std::unique_ptr<VertexArray> m_instanced_vao;
+    std::vector<InstanceGPUData> m_instances;
+    int m_capacity = 0;
+
+    void ensure_capacity();
+    void upload_instance_data() const;
 public:
     InstancedRenderableObject(const MaterialRef& material, const glm::vec3 position, const std::string& name);
     ~InstancedRenderableObject() override;
 
     void draw() const override;
+
+    int add_instance(const glm::vec3& position, const glm::quat& rotation = glm::quat(1, 0, 0, 0), float scale = 1.0f, const glm::vec4& color = glm::vec4(1, 0, 0, 0));
+    void remove_instance(int index);
+    void set_instance_data(int index, const glm::vec3& position, const glm::quat& rotation, float scale, const glm::vec4& color);
+
+    std::vector<InstanceGPUData> get_instances() const { return m_instances; }
+    int  get_instance_count() const { return static_cast<int>(m_instances.size()); }
 };

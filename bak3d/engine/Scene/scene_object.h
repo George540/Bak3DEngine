@@ -50,7 +50,7 @@ public:
 
     SceneObjectType object_type;
 
-    bool m_is_dirty = true;
+    mutable bool m_is_dirty = true;
     bool is_active = true;
 
     SceneObject() : SceneObject(glm::vec3(0.0f, 0.0f, 0.0f), "SceneObject") {}

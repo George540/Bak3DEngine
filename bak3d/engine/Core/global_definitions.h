@@ -1,4 +1,4 @@
-﻿/* ===========================================================================
+/* ===========================================================================
 The MIT License (MIT)
 
 Copyright (c) 2022-2026 George Mavroeidis - GeoGraphics
@@ -465,6 +465,18 @@ static const std::vector<GLuint> QUAD_INDICES =
     0, 1, 2,  // First triangle (bottom-left, bottom-right, top-right)
     2, 3, 0   // Second triangle (top-right, top-left, bottom-left)
 };
+
+struct InstanceGPUData
+{
+    glm::vec3 position;       // 12 bytes (x, y, z)
+    float     scale;          //  4 bytes (uniform scale)
+    glm::vec2 rotation_half;  //  4 bytes (packed Quaternion)
+    uint32_t  color_packed;   //  4 bytes (RGBA8 packed into a single uint)
+};
+static constexpr GLsizei INSTANCE_GPU_DATA_SIZE = sizeof(InstanceGPUData);
+static_assert(sizeof(InstanceGPUData) == 28, "InstanceGPUData must stay tightly packed for GPU upload");
+// Total: 24 to 28 bytes depending on alignment/packing technique
+
 
 /*
  * ======================== POST PROCESS DEFINITIONS ========================

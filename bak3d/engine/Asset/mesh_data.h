@@ -58,6 +58,9 @@ public:
     const VertexArray* get_vao() const { return m_vao; }
     const VertexBuffer* get_vbo() const { return m_vbo; }
     const ElementBuffer* get_ebo() const { return m_ebo; }
+    GLsizei get_index_count() const { return m_index_count; }
+
+    virtual void bind_vertex_attributes() const {}
 
 protected:
     VertexArray* m_vao = nullptr;
@@ -75,6 +78,8 @@ public:
     MeshData(std::vector<Vertex> vertices, std::vector<GLuint> indices, const std::string& name);
     ~MeshData() override = default;
 
+    void bind_vertex_attributes() const override;
+
     const std::vector<Vertex>& get_vertices() const { return m_vertices; }
     const std::vector<GLuint>& get_indices() const { return m_indices; }
 
@@ -88,6 +93,8 @@ class QuadData : public PrimitiveData
 public:
     QuadData();
     ~QuadData() override = default;
+
+    void bind_vertex_attributes() const override;
 };
 
 class GridData : public PrimitiveData
@@ -96,6 +103,8 @@ public:
     GridData();
     GridData(int num_of_elements, float grid_size);
     ~GridData() override = default;
+
+    void bind_vertex_attributes() const override;
 private:
     int m_number_of_slices;
     float m_grid_size;
@@ -106,4 +115,6 @@ class BoundingBoxData : public PrimitiveData
 public:
     BoundingBoxData();
     ~BoundingBoxData() override = default;
+
+    void bind_vertex_attributes() const override;
 };

@@ -41,17 +41,22 @@ MeshData::MeshData(vector<Vertex> vertices, vector<GLuint> indices, const string
     m_vbo = new VertexBuffer(VERTEX_SIZE * m_vertices.size(), m_vertices.data());
     m_ebo = new ElementBuffer(UINT_SIZE * m_indices.size(), m_indices.data());
 
+    MeshData::bind_vertex_attributes();
+
+    m_vao->unbind();
+
+    m_index_count = static_cast<GLsizei>(m_indices.size());
+}
+
+void MeshData::bind_vertex_attributes() const
+{
     m_vao->set_attrib_pointer(0, 3, GL_FLOAT, GL_FALSE, VERTEX_SIZE, nullptr);
     m_vao->set_attrib_pointer(1, 3, GL_FLOAT, GL_FALSE, VERTEX_SIZE, reinterpret_cast<void*>(offsetof(Vertex, normal)));
     m_vao->set_attrib_pointer(2, 2, GL_FLOAT, GL_FALSE, VERTEX_SIZE, reinterpret_cast<void*>(offsetof(Vertex, tex_coords)));
     m_vao->set_attrib_pointer(3, 3, GL_FLOAT, GL_FALSE, VERTEX_SIZE, reinterpret_cast<void*>(offsetof(Vertex, tangent)));
     m_vao->set_attrib_pointer(4, 3, GL_FLOAT, GL_FALSE, VERTEX_SIZE, reinterpret_cast<void*>(offsetof(Vertex, bitangent)));
-    m_vao->set_attrib_pointer(5, 4, GL_INT, GL_FALSE, VERTEX_SIZE, reinterpret_cast<void*>(offsetof(Vertex, m_BoneIDs)));
+    m_vao->set_attrib_pointer(5, 4, GL_INT,   GL_FALSE, VERTEX_SIZE, reinterpret_cast<void*>(offsetof(Vertex, m_BoneIDs)));
     m_vao->set_attrib_pointer(6, 4, GL_FLOAT, GL_FALSE, VERTEX_SIZE, reinterpret_cast<void*>(offsetof(Vertex, m_Weights)));
-
-    m_vao->unbind();
-
-    m_index_count = static_cast<GLsizei>(m_indices.size());
 }
 
 QuadData::QuadData() : PrimitiveData("Quad")
@@ -59,11 +64,17 @@ QuadData::QuadData() : PrimitiveData("Quad")
     m_vbo = new VertexBuffer(static_cast<GLsizei>(QUAD_VERTICES.size()) * VEC4_SIZE, QUAD_VERTICES.data());
     m_ebo = new ElementBuffer(static_cast<GLsizei>(QUAD_INDICES.size()) * UINT_SIZE, QUAD_INDICES.data());
 
-    // <vec2: vertex position , vec2: texture coordinates>
-    m_vao->set_attrib_pointer(0, 4, GL_FLOAT, GL_FALSE, VEC4_SIZE, nullptr);
+    QuadData::bind_vertex_attributes();
+    
     m_vao->unbind();
 
     m_index_count = static_cast<GLsizei>(QUAD_INDICES.size());
+}
+
+void QuadData::bind_vertex_attributes() const
+{
+    // <vec2: vertex position , vec2: texture coordinates>
+    m_vao->set_attrib_pointer(0, 4, GL_FLOAT, GL_FALSE, VEC4_SIZE, nullptr);
 }
 
 GridData::GridData() : GridData(40, 20.0f) {}
@@ -101,12 +112,18 @@ GridData::GridData(const int num_of_elements, const float grid_size) : Primitive
     m_vbo = new VertexBuffer(VEC3_SIZE * vertices.size(), vertices.data());
     m_ebo = new ElementBuffer(UVEC4_SIZE * indices.size(), indices.data());
 
-    m_vao->set_attrib_pointer(0, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
-    m_vao->set_attrib_pointer(1, 3, GL_FLOAT, GL_FALSE, 2 * VEC3_SIZE, reinterpret_cast<void*>(VEC3_SIZE));
+    GridData::bind_vertex_attributes();
+
     m_vao->unbind();
 
     m_index_count = indices.size() * 4;
     m_draw_mode = GL_LINES;
+}
+
+void GridData::bind_vertex_attributes() const
+{
+    m_vao->set_attrib_pointer(0, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
+    m_vao->set_attrib_pointer(1, 3, GL_FLOAT, GL_FALSE, 2 * VEC3_SIZE, reinterpret_cast<void*>(VEC3_SIZE));
 }
 
 BoundingBoxData::BoundingBoxData() : PrimitiveData("BoundingBox")
@@ -114,9 +131,15 @@ BoundingBoxData::BoundingBoxData() : PrimitiveData("BoundingBox")
     m_vbo = new VertexBuffer(VEC3_SIZE * CUBE_VERTICES_WIREFRAME.size(), CUBE_VERTICES_WIREFRAME.data());
     m_ebo = new ElementBuffer(UINT_SIZE * CUBE_INDICES_WIREFRAME.size(), CUBE_INDICES_WIREFRAME.data());
 
-    m_vao->set_attrib_pointer(0, 3, GL_FLOAT, GL_FALSE, VEC3_SIZE, nullptr);
+    BoundingBoxData::bind_vertex_attributes();
+
     m_vao->unbind();
 
     m_index_count = 24;
     m_draw_mode = GL_LINES;
+}
+
+void BoundingBoxData::bind_vertex_attributes() const
+{
+    m_vao->set_attrib_pointer(0, 3, GL_FLOAT, GL_FALSE, VEC3_SIZE, nullptr);
 }
