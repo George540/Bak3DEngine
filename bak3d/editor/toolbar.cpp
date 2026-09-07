@@ -92,8 +92,13 @@ void Toolbar::draw_view_menu()
 {
     if (ImGui::BeginMenu("Window"))
     {
-        for (const auto& panel : Bak3DEditor::get_panels())
+        for (const auto& [name, panel] : Bak3DEditor::get_panels())
         {
+            if (name == "Splash Screen")
+            {
+                continue;
+            }
+
             if (ImGui::MenuItem(panel->get_editor_panel_title()))
             {
             
@@ -116,9 +121,10 @@ void Toolbar::draw_help_menu()
         {
             
         }
-        if (ImGui::MenuItem("Start Menu"))
+        if (ImGui::MenuItem("Splash Screen"))
         {
-            
+            const auto panel = Bak3DEditor::get_panel("Splash Screen");
+            panel->set_visible(true);
         }
 
         ImGui::EndMenu();

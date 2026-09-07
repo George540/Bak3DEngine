@@ -29,7 +29,7 @@ THE SOFTWARE.
 
 constexpr static float IMGUI_SPLASH_SCREEN_PADDING_HORIZONTAL = 10.0f;
 
-SplashScreen::SplashScreen() : EditorPanel("SplashScreen")
+SplashScreen::SplashScreen() : EditorPanel("Splash Screen")
 {
     ImGui::SetWindowFocus(m_title);
     m_size = ImVec2(500, 600);
@@ -60,6 +60,11 @@ void SplashScreen::begin_frame()
 
 void SplashScreen::update()
 {
+    if (!m_visible)
+    {
+        return;
+    }
+
     draw_splash_image();
 
     ImGuiB3D::SeparatorWithSpacing(2);

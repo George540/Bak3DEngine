@@ -29,6 +29,7 @@ THE SOFTWARE.
 #include <imgui_internal.h>
 #include <implot.h>
 #include <iostream>
+#include <ranges>
 
 #include "toolbar.h"
 #include "Core/logger.h"
@@ -47,7 +48,7 @@ using namespace std;
 
 namespace
 {
-    std::vector<std::shared_ptr<EditorPanel>> m_panels;
+    map<string, shared_ptr<EditorPanel>> m_panels;
     const char* editor_space_name = "##editor_window";
     float editor_time_elapsed = 0;
 }
@@ -89,14 +90,14 @@ void Bak3DEditor::initialize()
     const auto glsl_version = "#version 460";
     ImGui_ImplOpenGL3_Init(glsl_version);
 
-    m_panels.emplace_back(make_shared<Viewport>());
-    m_panels.emplace_back(make_shared<Environment>());
-    m_panels.emplace_back(make_shared<Details>());
-    m_panels.emplace_back(make_shared<SceneGraph>());
-    m_panels.emplace_back(make_shared<AssetPanel>());
-    m_panels.emplace_back(make_shared<Metrics>());
-    m_panels.emplace_back(make_shared<Console>());
-    m_panels.emplace_back(make_shared<SplashScreen>());
+    m_panels["Viewport"] = make_shared<Viewport>();
+    m_panels["Environment"] = make_shared<Environment>();
+    m_panels["Details"] = make_shared<Details>();
+    m_panels["Scene"] = make_shared<SceneGraph>();
+    m_panels["Assets"] = make_shared<AssetPanel>();
+    m_panels["Metrics"] = make_shared<Metrics>();
+    m_panels["Console"] = make_shared<Console>();
+    m_panels["Splash Screen"] = make_shared<SplashScreen>();
 
     B3D_LOG_INFO("ImGui and editor initialized.");
 }
@@ -124,9 +125,18 @@ float Bak3DEditor::get_editor_lifetime()
     return editor_time_elapsed;
 }
 
-std::vector<std::shared_ptr<EditorPanel>> Bak3DEditor::get_panels()
+map<string, shared_ptr<EditorPanel>> Bak3DEditor::get_panels()
 {
     return m_panels;
+}
+
+shared_ptr<EditorPanel> Bak3DEditor::get_panel(const string& name)
+{
+    if (const auto it = m_panels.find(string(name)); it != m_panels.end())
+    {
+        return it->second;
+    }
+    return nullptr;
 }
 
 void Bak3DEditor::begin_frame()
@@ -230,7 +240,7 @@ void Bak3DEditor::update_panels(const ImGuiViewport* viewport)
     }
 
     // 7. Update all panels if visible
-    for (const shared_ptr<EditorPanel>& panel : m_panels)
+    for (const auto& panel : m_panels | views::values)
     {
         panel->begin_frame();
         panel->update();

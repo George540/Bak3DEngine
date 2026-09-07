@@ -26,8 +26,9 @@ THE SOFTWARE.
 
 #include <imgui.h>
 
+#include <map>
 #include <memory>
-#include <vector>
+#include <string>
 
 #include "Panel/editor_panel.h"
 
@@ -42,7 +43,8 @@ public:
     static void shutdown();
 
     static float get_editor_lifetime();
-    static std::vector<std::shared_ptr<EditorPanel>> get_panels();
+    static std::map<std::string, std::shared_ptr<EditorPanel>> get_panels();
+    static std::shared_ptr<EditorPanel> get_panel(const std::string& name);
 private:
     static void begin_frame();
     static void end_frame();
