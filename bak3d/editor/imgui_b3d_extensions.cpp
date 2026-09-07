@@ -44,7 +44,7 @@ namespace
     // @TODO: Remove padding and favour table format for property labels and widgets
     float align_to_label_column()
     {
-        const float total_width  = ImGui::GetContentRegionAvail().x;  // snapshot before cursor moves
+        const float total_width  = ImGui::GetWindowContentRegionMax().x - ImGui::GetWindowContentRegionMin().x;
         const float label_col    = total_width * LABEL_HORIZONTAL_WIDTH_RATIO;
         const float widget_width = total_width - label_col - VALUE_INNER_PADDING;
 
