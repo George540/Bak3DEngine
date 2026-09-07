@@ -158,55 +158,80 @@ void Viewport::draw_visual_modes_selection()
         ImGui::OpenPopup("Visual Modes Popup");
     }
 
-    ImGui::SetNextWindowSize(ImVec2(150.0f, 0.0f));
+    ImGui::SetNextWindowSize(ImVec2(250.0f, 0.0f));
     if (ImGui::BeginPopup("Visual Modes Popup"))
     {
         ImGui::SeparatorText("Visual Modes");
 
         int view_selection = GlobalSettings::get_global_setting_value<int>(GlobalSettingOption::VisualMode);
-        ImGui::RadioButton("Lit", &view_selection, 0);
-        ImGui::RadioButton("Depth", &view_selection, 1);
-        GlobalSettings::set_global_setting<int>(GlobalSettingOption::VisualMode, view_selection);
-
         PagesData pages_data = Renderer::get_pages_data();
-        pages_data.debug_mode = view_selection;
 
+        // Initialize Table
+        if (ImGui::BeginTable("VisualModesTable", 2, ImGuiTableFlags_SizingStretchProp | ImGuiTableFlags_NoSavedSettings))
         {
-            // Depth Test Near and Far @TODO: Clean that up from the popup
-            if (view_selection != 1)
+            // Setup columns: Left holds selection, Right holds settings
+            ImGui::TableSetupColumn("Selection", ImGuiTableColumnFlags_WidthStretch, 0.4f);
+            ImGui::TableSetupColumn("Settings", ImGuiTableColumnFlags_WidthStretch, 0.6f);
+
+            for (int view_mode_num = 0; view_mode_num < static_cast<int>(DebugViewMode::Count); ++view_mode_num)
             {
-                ImGui::BeginDisabled();
+                const auto view_mode = static_cast<DebugViewMode>(view_mode_num);
+                ImGui::TableNextRow();
+                ImGui::TableSetColumnIndex(0);
+                ImGui::RadioButton(to_string(view_mode), &view_selection, view_mode_num);
+
+                ImGui::TableSetColumnIndex(1);
+
+                if (view_mode_num == static_cast<int>(DebugViewMode::Depth))
+                {
+                    const bool is_disabled = (view_selection != view_mode_num);
+                    if (is_disabled) 
+                    { 
+                        ImGui::BeginDisabled(); 
+                    }
+
+                    ImGui::PushItemWidth(60.0f); // Slightly wider item width for the sliders
+
+                    // Option 1: Near Distance
+                    ImGui::Text("Near");
+                    ImGui::SameLine();
+                    ImGui::SliderFloat("##Near", &pages_data.depth_settings.r, 0.1f, pages_data.depth_settings.g - 0.01f, "%.1f");
+                    if (ImGui::IsItemHovered())
+                    {
+                        ImGuiB3D::ToolTipExtendedText("Set the depth testing near distance with black color.\nThis determines how near the pixel is to the viewpoint.", TOOL_TIP_WIDTH);
+                    }
+
+                    // Option 2: Far Distance
+                    ImGui::Spacing(); 
+                    ImGui::Text("Far "); // Added space to match alignment of "Near"
+                    ImGui::SameLine();
+                    ImGui::SliderFloat("##Far", &pages_data.depth_settings.g, pages_data.depth_settings.r, 10.0f, "%.1f");
+                    if (ImGui::IsItemHovered())
+                    {
+                        ImGuiB3D::ToolTipExtendedText("Set the depth testing far distance with white color.\nThis determines how far the pixel is to the viewpoint.", TOOL_TIP_WIDTH);
+                    }
+
+                    ImGui::PopItemWidth();
+
+                    if (is_disabled) 
+                    { 
+                        ImGui::EndDisabled(); 
+                    }
+                }
             }
 
-            ImGui::Text("Near");
-            ImGui::SameLine();
-            ImGui::PushItemWidth(50.0f);
-            ImGui::SliderFloat("##Near", &pages_data.depth_settings.r, 0.1f, pages_data.depth_settings.g - 0.01f, "%.1f");
-            if (ImGui::IsItemHovered())
-            {
-                ImGuiB3D::ToolTipExtendedText("Set the depth testing near distance with black color.\nThis determines how near the pixel is to the viewpoint.", TOOL_TIP_WIDTH);
-            }
-
-            ImGui::Text("Far");
-            ImGui::SameLine();
-            ImGui::SliderFloat("##Far", &pages_data.depth_settings.g, pages_data.depth_settings.r, 10.0f, "%.1f");
-            ImGui::PopItemWidth();
-            if (ImGui::IsItemHovered())
-            {
-                ImGuiB3D::ToolTipExtendedText("Set the depth testing far distance with white color.\nThis determines how far the pixel is to the viewpoint.", TOOL_TIP_WIDTH);
-            }
-
-            if (view_selection != 1)
-            {
-                ImGui::EndDisabled();
-            }
+            ImGui::EndTable();
         }
 
+        // Apply changes back to global states
+        GlobalSettings::set_global_setting<int>(GlobalSettingOption::VisualMode, view_selection);
+        pages_data.debug_mode = view_selection;
         Renderer::set_pages_data(pages_data);
 
         ImGui::EndPopup();
     }
 }
+
 
 void Viewport::draw_editor_overlays_selection()
 {

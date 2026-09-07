@@ -55,7 +55,7 @@ constexpr static float POST_PROCESS_COLORING_SLIDER_CLAMP = 10.0f;
 struct PagesData
 {
     glm::vec4 depth_settings = glm::vec4(0.1f, 1.0f, 0.0f, 0.0f);
-    int debug_mode = 1;
+    int debug_mode = 2;
     float _padding[3]; 
 };
 static constexpr GLsizei PAGES_DATA_SIZE = sizeof(PagesData);
@@ -64,10 +64,26 @@ static constexpr GLsizei PAGES_DATA_SIZE = sizeof(PagesData);
 enum class DebugViewMode : int32_t
 {
     Lit = 0,
-    Depth = 1,
-    AO = 2,
-    Max
+    Unlit = 1,
+    Depth = 2,
+    ShadowMask = 3,
+    AO = 4,
+    Count
 };
+
+inline const char* to_string(const DebugViewMode debug_view_enum)
+{
+    switch (debug_view_enum)
+    {
+        case DebugViewMode::Lit: return "Lit";
+        case DebugViewMode::Unlit: return "Unlit";
+        case DebugViewMode::Depth: return "Depth";
+        case DebugViewMode::ShadowMask: return "Shadows";
+        case DebugViewMode::AO: return "AO";
+        case DebugViewMode::Count: return "Count";
+        default: return "unknown";
+    }
+}
 
 enum class OverlaysFlags : uint32_t
 {
