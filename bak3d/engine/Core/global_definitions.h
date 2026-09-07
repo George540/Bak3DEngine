@@ -59,7 +59,7 @@ struct PagesData
     float _padding[3]; 
 };
 static constexpr GLsizei PAGES_DATA_SIZE = sizeof(PagesData);
-// @TODO: Make a sizeof constexpr for every custom sturct that is used as a size
+// @TODO: Make a sizeof constexpr for every custom stuct that is used as a size
 
 enum class DebugViewMode : int32_t
 {

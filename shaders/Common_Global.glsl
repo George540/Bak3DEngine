@@ -58,12 +58,13 @@ float pcg_hash_rand01(uint seed)
 }
 
 vec3 apply_billboarding(
-    vec3 world_position,
-    vec2 vertex_xy,
-    float rotation,
-    float scale,
-    mat4 view)
+        vec3 world_position,
+        vec2 vertex_xy,
+        float rotation,
+        float scale,
+        mat4 view)
 {
+    // Extract camera alignment vectors from the view matrix
     vec3 camera_right = vec3(view[0][0], view[1][0], view[2][0]);
     vec3 camera_up = vec3(view[0][1], view[1][1], view[2][1]);
 
@@ -74,12 +75,28 @@ vec3 apply_billboarding(
     float sin_theta = sin(rotation_radians);
 
     vec2 rotated_vertex = vec2(
-    cos_theta * centered_vertex.x - sin_theta * centered_vertex.y,
-    sin_theta * centered_vertex.x + cos_theta * centered_vertex.y
+            cos_theta * centered_vertex.x - sin_theta * centered_vertex.y,
+            sin_theta * centered_vertex.x + cos_theta * centered_vertex.y
     );
 
-    return world_position + (camera_right * rotated_vertex.x + camera_up * rotated_vertex.y) * scale;
+    // If scale is 0.0, calculate a dynamic scale based on distance to camera
+    float final_scale = scale;
+    if (scale == 0.0)
+    {
+        // Transform the object's world position into view space to get its depth (0-2)
+        // that represents the camera forward vector, while view[3][2] is the translation offset.
+        float depth = -(view[0][2] * world_position.x +
+                        view[1][2] * world_position.y +
+                        view[2][2] * world_position.z +
+                        view[3][2]);
+
+        // Use depth as the baseline scale factor.
+        final_scale = depth * 0.1; // @TODO: Modify constant screen size from editor slider
+    }
+
+    return world_position + (camera_right * rotated_vertex.x + camera_up * rotated_vertex.y) * final_scale;
 }
+
 
 float get_light_distance(LightData light, vec3 frag_position)
 {

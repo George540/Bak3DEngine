@@ -11,14 +11,11 @@ void main()
     // Extract world position from the model matrix's translation column
     vec3 worldPos = vec3(model[3]);
 
-    // Extract uniform scale from the model matrix (X column magnitude)
-    float scale = length(vec3(model[0]));
-
     vec3 worldPosition = apply_billboarding(
         worldPos,
         vertex.xy,
         0.0, // no rotation for a light marker
-        scale,
+        0.0,
         camera_data.view
     );
 
