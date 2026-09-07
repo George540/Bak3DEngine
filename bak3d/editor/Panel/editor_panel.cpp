@@ -62,3 +62,12 @@ void EditorPanel::end_frame()
     }
     ImGui::End();
 }
+
+void EditorPanel::set_visible(const bool visible)
+{
+    if (visible)
+    {
+        ImGui::SetWindowFocus(m_title);
+    }
+    m_visible = visible;
+}

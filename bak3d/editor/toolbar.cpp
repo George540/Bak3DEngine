@@ -101,7 +101,7 @@ void Toolbar::draw_view_menu()
 
             if (ImGui::MenuItem(panel->get_editor_panel_title()))
             {
-            
+                panel->set_visible(true);
             }
         }
 

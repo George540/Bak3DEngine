@@ -49,6 +49,9 @@ private:
     static void begin_frame();
     static void end_frame();
 
+    static void set_editor_global_style();
+    static void set_dark_pastel_style();
+
     static void update_window();
     static void update_panels(const ImGuiViewport* viewport);
 };

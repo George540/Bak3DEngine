@@ -42,7 +42,7 @@ public:
 
     const char* get_editor_panel_title() const { return m_title; }
 
-    void set_visible(const bool visible) { m_visible = visible; }
+    void set_visible(const bool visible);
 protected:
     virtual void draw_toolbar() {}
     
