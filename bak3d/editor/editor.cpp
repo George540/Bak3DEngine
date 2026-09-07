@@ -30,6 +30,7 @@ THE SOFTWARE.
 #include <implot.h>
 #include <iostream>
 
+#include "toolbar.h"
 #include "Core/logger.h"
 #include "Panel/asset_viewer.h"
 #include "Panel/console.h"
@@ -119,6 +120,11 @@ float Bak3DEditor::get_editor_lifetime()
     return editor_time_elapsed;
 }
 
+std::vector<std::shared_ptr<EditorPanel>> Bak3DEditor::get_panels()
+{
+    return m_panels;
+}
+
 void Bak3DEditor::begin_frame()
 {
     // Start the Dear ImGui frame
@@ -145,6 +151,9 @@ void Bak3DEditor::update_window()
     editor_time_elapsed += ImGui::GetIO().DeltaTime;
     // 1. Set Main Viewport properties and style
     const ImGuiViewport* viewport = ImGui::GetMainViewport();
+
+    Toolbar::draw_toolbar();
+
     ImGui::SetNextWindowPos(viewport->WorkPos);
     ImGui::SetNextWindowSize(viewport->WorkSize);
     ImGui::SetNextWindowViewport(viewport->ID);

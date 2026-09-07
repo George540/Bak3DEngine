@@ -24,28 +24,15 @@ THE SOFTWARE.
 
 #pragma once
 
-#include <imgui.h>
-
-/*
- * Base class for creating sub-windows or panels with different ImGui widgets.
- */
-class EditorPanel
+class Toolbar
 {
 public:
-    EditorPanel();
-    EditorPanel(const char* title);
-    virtual ~EditorPanel() = default;
+    static void draw_toolbar();
+private:
+    static void draw_engine_icon();
+    static void draw_file_menu();
+    static void draw_view_menu();
+    static void draw_help_menu();
 
-    virtual void begin_frame();
-    virtual void update();
-    virtual void end_frame();
-
-    const char* get_editor_panel_title() const { return m_title; }
-protected:
-    virtual void draw_toolbar() {}
-    
-    bool m_visible;
-    int m_flags;
-    const char* m_title = "Title";
-    ImVec2 m_size = ImVec2(0.0f, -1.0f);
+    static void draw_simulation_buttons();
 };

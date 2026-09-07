@@ -26,6 +26,11 @@ THE SOFTWARE.
 
 #include <imgui.h>
 
+#include <memory>
+#include <vector>
+
+#include "Panel/editor_panel.h"
+
 /*
  * Static class for processing the ImGui Editor side of the engine.
  */
@@ -37,6 +42,7 @@ public:
     static void shutdown();
 
     static float get_editor_lifetime();
+    static std::vector<std::shared_ptr<EditorPanel>> get_panels();
 private:
     static void begin_frame();
     static void end_frame();
