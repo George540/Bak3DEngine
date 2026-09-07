@@ -24,19 +24,21 @@ THE SOFTWARE.
 
 #pragma once
 
+#include "editor_panel.h"
+
 /*
- * Global static editor Toolbar setup for the entire engine.
- * Locked into place and never gets moved around.
+ * A special panel that is appearing at the start of the editor.
+ * Can be closed after clicking away.
  */
-class Toolbar
+class SplashScreen : public EditorPanel
 {
 public:
-    static void draw_toolbar();
+    SplashScreen();
+    void begin_frame() override;
+    void update() override;
+    void end_frame() override;
 private:
-    static void draw_engine_icon();
-    static void draw_file_menu();
-    static void draw_view_menu();
-    static void draw_help_menu();
-
-    static void draw_simulation_buttons();
+    void draw_splash_image();
+    void draw_intro_text();
+    void draw_links_column_left();
 };

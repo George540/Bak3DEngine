@@ -39,6 +39,7 @@ THE SOFTWARE.
 #include "Panel/environment.h"
 #include "Panel/metrics.h"
 #include "Panel/scene_graph.h"
+#include "Panel/splash_screen.h"
 #include "Panel/viewport.h"
 #include "Renderer/renderer.h"
 
@@ -59,7 +60,9 @@ constexpr auto window_flags =
         ImGuiWindowFlags_NoMove                |
         ImGuiWindowFlags_NoBringToFrontOnFocus |
         ImGuiWindowFlags_NoNavFocus            |
-        ImGuiWindowFlags_NoBackground;
+        ImGuiWindowFlags_NoBackground          |
+        ImGuiWindowFlags_NoScrollbar           |
+        ImGuiWindowFlags_NoScrollWithMouse;
 
 void Bak3DEditor::initialize()
 {
@@ -93,6 +96,7 @@ void Bak3DEditor::initialize()
     m_panels.emplace_back(make_shared<AssetPanel>());
     m_panels.emplace_back(make_shared<Metrics>());
     m_panels.emplace_back(make_shared<Console>());
+    m_panels.emplace_back(make_shared<SplashScreen>());
 
     B3D_LOG_INFO("ImGui and editor initialized.");
 }
