@@ -61,7 +61,7 @@ void Toolbar::draw_engine_icon()
     const ImTextureID engine_icon_id = ResourceManager::get_texture("bak3d_icon.png")->get_texture_id();
     ImGui::Image(engine_icon_id, ImVec2(20.0f, 20.0f), ImVec2(0, 1), ImVec2(1, 0));
 
-    ImGui::TextUnformatted("Bak3D Engine v1.3");
+    ImGui::TextUnformatted(ENGINE_VERSION);
 }
 
 void Toolbar::draw_file_menu()

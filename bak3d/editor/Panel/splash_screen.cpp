@@ -24,6 +24,7 @@ THE SOFTWARE.
 
 #include "splash_screen.h"
 
+#include "editor.h"
 #include "imgui_b3d_extensions.h"
 #include "Asset/resource_manager.h"
 
@@ -114,9 +115,17 @@ void SplashScreen::draw_splash_image()
     const ImTextureID splash_screen_image_id = texture_ref->get_texture_id();
     const ImVec2 texture_size = ImVec2(texture_ref->get_width(), texture_ref->get_height());
 
+    ImVec2 image_position = ImGui::GetCursorScreenPos();
     ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0.0f, 0.0f));
     ImGui::Image(splash_screen_image_id, texture_size, ImVec2(0, 1), ImVec2(1, 0));
     ImGui::PopStyleVar();
+
+    const ImVec2 bottom_position = ImGui::GetCursorScreenPos();
+
+    ImGui::SetCursorScreenPos(ImVec2(image_position.x + 10.0f, image_position.y + 10.0f));
+    ImGui::Text(ENGINE_VERSION);
+
+    ImGui::SetCursorScreenPos(bottom_position);
 }
 
 void SplashScreen::draw_intro_text()

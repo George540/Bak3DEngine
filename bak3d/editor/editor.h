@@ -32,6 +32,8 @@ THE SOFTWARE.
 
 #include "Panel/editor_panel.h"
 
+constexpr static const char* ENGINE_VERSION = "Bak3D Engine v1.3";
+
 /*
  * Static class for processing the ImGui Editor side of the engine.
  */
