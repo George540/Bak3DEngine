@@ -31,6 +31,17 @@ THE SOFTWARE.
 #include "Scene/scene_object.h"
 
 /*
+ * Termporary frustrum structure for culling object (temporarily lights)
+ */
+struct Frustum
+{
+	std::array<glm::vec4, 6> planes;           
+
+	static Frustum get_frustum_structure(const glm::mat4& view_projection);
+	bool intersects_sphere(const glm::vec3& center, float radius) const; // @TODO: Make BVH and shape-agnostic
+};
+
+/*
  * Camera class that contains every information for moving the viewport in world space.
  * Contains other camera parameters.
  */
@@ -50,12 +61,15 @@ public:
 
 	[[nodiscard]] glm::vec3 get_forward_vector() const;
 	[[nodiscard]] glm::vec3 get_right_vector() const;
+	[[nodiscard]] Frustum get_frustum() const { return m_frustum; };
 
 private:
 	double m_cam_speed = 20.0f;
 	double m_horizontal_angle = 135.0; // horizontal angle
 	double m_vertical_angle = -20.0;   // vertical angle
 	float m_fov = 45.0f; // camera zoom
+
+	Frustum m_frustum = Frustum();
 
 	std::unique_ptr<UniformBuffer> m_camera_data_ubo;
 };

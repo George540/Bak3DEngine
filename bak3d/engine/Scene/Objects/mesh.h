@@ -24,10 +24,6 @@ THE SOFTWARE.
 
 #pragma once
 
-#include <glad/glad.h>
-#include <vector>
-
-#include "Asset/mesh_data.h"
 #include "Core/global_definitions.h"
 #include "Scene/Objects/renderable_object.h"
 
@@ -47,7 +43,7 @@ public:
 /*
  * Extension of Mesh that handles multiple instances of the same mesh archetype
  */
-class InstancedMesh : public Mesh
+/*class InstancedMesh : public InstancedRenderableObject
 {
 protected:
     InstanceBuffer* m_ibo;
@@ -59,7 +55,7 @@ public:
     void draw() const override { RenderableObject::draw(); };
     int get_num_instances() const { return m_num_instances; }
 };
-
+*/
 class ModelNodeObject : public SceneObject
 {
 public:

@@ -131,7 +131,7 @@ void SceneGraph::draw_scene_graph()
 
 void SceneGraph::draw_add_object_popup()
 {
-    if (ImGuiB3D::ColoredButton("+",  ImVec2(40, 0), ImVec4(0.0f, 0.5f, 0.0f, 1.0f)))
+    if (ImGuiB3D::ColoredButton("+",  ImVec2(40, 0), ImVec4(0.0f, 1.0f, 0.0f, 1.0f)))
     {
         ImGui::OpenPopup("Add Object Popup");
     }
@@ -185,6 +185,18 @@ void SceneGraph::draw_add_object_popup()
                 SceneManager::get_current_scene()->instantiate_model(ResourceManager::get_model("suzanne.obj"), object_to_parent, spawn_position);
             }
 
+            ImGui::EndMenu();
+        }
+        if (ImGui::BeginMenu("Meshes"))
+        {
+            if (ImGui::MenuItem("Static Mesh"))
+            {
+                //SceneManager::get_current_scene()->instantiate<Mesh>(object_to_parent, spawn_position);
+            }
+            if (ImGui::MenuItem("Instanced Static Mesh"))
+            {
+                //SceneManager::get_current_scene()->instantiate<InstancedRenderableObject>(object_to_parent, spawn_position);
+            }
             ImGui::EndMenu();
         }
         if (ImGui::BeginMenu("VFX"))

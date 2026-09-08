@@ -45,8 +45,6 @@ private:
 	static std::unique_ptr<WBOITFrameBuffer> r_wboit_fbo;
 
 	static std::unique_ptr<UniformBuffer> r_debug_view_ubo;
-
-	static std::unique_ptr<ShaderStorageBuffer> r_lights_ssbo;
 public:
 	static void initialize();
 	static void shutdown();
@@ -65,11 +63,10 @@ public:
 	static WBOITFrameBuffer* get_wboit_frame_buffer() { return r_wboit_fbo.get(); }
 
 	static PagesData get_pages_data();
-	static void set_pages_data(PagesData pages_data);
+	static void set_pages_data(const PagesData& pages_data);
 
 	static void on_framebuffer_size_callback(GLFWwindow* window, int new_width, int new_height);
 private:
 	static void initialize_buffers();
 	static void query_gpu_limitations();
-	static void update_light_data_buffer(const std::vector<Light*>& active_lights);
 };

@@ -113,8 +113,9 @@ public:
 	// Cone angles in degrees — stored internally as cosines (spot only)
 	void set_cone_angles(float inner_degrees, float outer_degrees);
 	void set_cone_size(float size);
+	float get_effective_radius() const; // culling radius derived from attenuation falloff
 
-	LightDataPayload get_light_data_payload() const;
+	LightGPUData get_light_gpu_data_payload() const;
 	size_t get_ssbo_index() const { return m_ssbo_index; }
 private:
 	void set_texture_by_type(LightType type);

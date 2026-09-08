@@ -185,7 +185,7 @@ static constexpr GLsizei UINT_SIZE = sizeof(GLuint);
 static constexpr GLsizei INT_SIZE = sizeof(GLint);
 static constexpr GLsizei MAT4_SIZE = sizeof(glm::mat4);
 
-struct alignas(16) LightDataPayload
+struct alignas(16) LightGPUData
 {
     glm::vec4 position;  // xyz = position,  w = inner_cut_off
     glm::vec4 direction; // xyz = direction, w = outer_cut_off
@@ -196,7 +196,7 @@ struct alignas(16) LightDataPayload
     int32_t type;     // 4 bytes
     float padding[3]; // 12 bytes PADDING
 };
-static constexpr GLsizei LIGHT_DATA_PAYLOAD_SIZE = sizeof(LightDataPayload);
+static constexpr GLsizei LIGHT_GPU_DATA_SIZE = sizeof(LightGPUData);
 
 struct Vertex
 {

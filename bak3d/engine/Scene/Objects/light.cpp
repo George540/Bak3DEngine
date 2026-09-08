@@ -187,16 +187,42 @@ void Light::set_cone_size(const float size)
 	m_is_dirty = true;
 }
 
-LightDataPayload Light::get_light_data_payload() const
+float Light::get_effective_radius() const
 {
-	LightDataPayload payload {};
-	payload.position = glm::vec4(transform.get_global_position(), m_inner_cut_off);
-	payload.direction = glm::vec4(m_direction, m_outer_cut_off);
-	payload.ambient = glm::vec4(m_ambient, m_attenuation_radius);
-	payload.diffuse = glm::vec4(m_diffuse, m_intensity);
-	payload.specular = glm::vec4(m_specular, 0.0f);
-	payload.type = static_cast<int32_t>(m_type);
-	return payload;
+	if (m_type == LightType::Directional)
+	{
+		return numeric_limits<float>::max();
+	}
+
+	// Use the same attenuation model as in the shader.
+	constexpr float ATTENUATION_CUTOFF_THRESHOLD = 1.0f / 256.0f;
+	const float c = 1.0f;
+	const float l = 4.5f / m_attenuation_radius;
+	const float q = 75.0f / (m_attenuation_radius * m_attenuation_radius);
+	const float target = m_intensity / ATTENUATION_CUTOFF_THRESHOLD;
+
+	const float b_coefficient = l;
+	const float c_coefficient = c - target;
+	const float discriminant = b_coefficient * b_coefficient - 4.0f * q * c_coefficient;
+
+	if (discriminant < 0.0f || q <= 0.0f)
+	{
+		return m_attenuation_radius; // Just in case, but it shouldn't trigger
+	}
+
+	return (-b_coefficient + glm::sqrt(discriminant)) / (2.0f * q);
+}
+
+LightGPUData Light::get_light_gpu_data_payload() const
+{
+	LightGPUData data {};
+	data.position = glm::vec4(transform.get_global_position(), m_inner_cut_off);
+	data.direction = glm::vec4(m_direction, m_outer_cut_off);
+	data.ambient = glm::vec4(m_ambient, m_attenuation_radius);
+	data.diffuse = glm::vec4(m_diffuse, m_intensity);
+	data.specular = glm::vec4(m_specular, 0.0f);
+	data.type = static_cast<int32_t>(m_type);
+	return data;
 }
 
 void Light::set_texture_by_type(const LightType type)
