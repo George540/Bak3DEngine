@@ -6,8 +6,7 @@ out vec4 frag_color;
 
 #include "Common_Global.glsl"
 
-uniform sampler2D depth_texture;
-uniform sampler2D ao_texture;
+layout(binding = 0) uniform sampler2D debug_view_texture;
 // Add more textures for different views
 
 float linearize_depth(float depth)
@@ -21,22 +20,38 @@ float linearize_depth(float depth)
 
 void main()
 {
+    vec4 texture_sample = texture(debug_view_texture, TextCoords);
+
     switch (page_data.debug_mode)
     {
+        case DEBUG_VIEW_GBUFFER_POSITION:
+        {
+            frag_color = vec4(texture_sample.rgb, 1.0);
+            break;
+        }
+        case DEBUG_VIEW_GBUFFER_ALBEDO:
+        {
+            frag_color = vec4(texture_sample.rgb, 1.0);
+            break;
+        }
+        case DEBUG_VIEW_GBUFFER_NORMALS:
+        {
+            frag_color = vec4(texture_sample.rgb, 1.0);
+            break;
+        }
+        case DEBUG_VIEW_GBUFFER_SPECULAR:
+        {
+            frag_color = vec4(vec3(texture_sample.a), 1.0);
+            break;
+        }
         case DEBUG_VIEW_DEPTH:
         {
-            float raw_depth = texture(depth_texture, TextCoords).r;
+            float raw_depth = texture_sample.r;
             float linear_depth = linearize_depth(raw_depth);
             float normalized_depth = linear_depth / page_data.depth_settings.g;
             frag_color = vec4(vec3(normalized_depth), 1.0);
             break;
         }
-        // case DEBUG_VIEW_AO:
-        // {
-        //     float ao = texture(ao_texture, TextCoords).r;
-        //     frag_color = vec4(vec3(ao), 1.0);
-        //     break;
-        // }
         default:
             // Unhandled mode. Shouldn't be reached. Easy to spot with magenta color
             frag_color = vec4(1.0, 0.0, 1.0, 1.0);

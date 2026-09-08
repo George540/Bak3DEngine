@@ -85,7 +85,7 @@ void RendererPasses::render_pass_deferred_lighting()
     shader->set_int("g_position", 0);
 
     glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, gbuffer->get_normal_texture());
+    glBindTexture(GL_TEXTURE_2D, gbuffer->get_normals_texture());
     shader->set_int("g_normal", 1);
 
     glActiveTexture(GL_TEXTURE2);
@@ -283,14 +283,35 @@ void RendererPasses::render_pass_debug_view()
         return;
     }
 
+    const auto view_mode = static_cast<DebugViewMode>(GlobalSettings::get_global_setting_value<int>(GlobalSettingOption::VisualMode));
+
     Renderer::get_debug_view_buffer()->bind();
 
     debug_view_shader->use();
 
-    const int depth_texture = static_cast<int>(Renderer::get_main_frame_buffer()->get_depth_texture());
+    GLuint active_view_texture = 0;
+    switch (view_mode)
+    {
+    case DebugViewMode::GBuffer_Position:
+        active_view_texture = Renderer::get_gbuffer()->get_position_texture();
+        break;
+    case DebugViewMode::GBuffer_Albedo:
+    case DebugViewMode::GBuffer_Specular:
+        active_view_texture = Renderer::get_gbuffer()->get_albedo_spec_texture();
+        break;
+    case DebugViewMode::GBuffer_Normals:
+        active_view_texture = Renderer::get_gbuffer()->get_normals_texture();
+        break;
+    case DebugViewMode::Depth:
+        active_view_texture = Renderer::get_main_frame_buffer()->get_depth_texture();
+        break;
+    default:
+        break;
+    }
+
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, depth_texture);
-    debug_view_shader->set_int("depth_texture", 0);
+    glBindTexture(GL_TEXTURE_2D, active_view_texture);
+    debug_view_shader->set_int("debug_view_texture", 0);
 
     Renderer::draw_quad();
 

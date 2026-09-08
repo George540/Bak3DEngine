@@ -170,6 +170,11 @@ void Renderer::draw_frame()
 	}
 	RendererPasses::render_pass_forward_opaque();
 
+	if (!debug_view_active)
+	{
+		RendererPasses::render_pass_sprites();
+	}
+
 	glDisable(GL_DEPTH_TEST);
 	glDisable(GL_CULL_FACE);
 

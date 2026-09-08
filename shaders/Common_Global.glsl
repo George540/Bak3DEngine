@@ -3,12 +3,15 @@
 #define LIGHT_TYPE_SPOT        2
 #define LIGHT_TYPE_AREA        3
 
-#define DEBUG_VIEW_LIT        0
-#define DEBUG_VIEW_UNLIT      1
-#define DEBUG_VIEW_DEPTH      2
-#define DEBUG_VIEW_SHADOWMASK 3
-#define DEBUG_VIEW_AO         4
-#define DEBUG_VIEW_MAX        5
+#define DEBUG_VIEW_LIT              0
+#define DEBUG_VIEW_GBUFFER_POSITION 1
+#define DEBUG_VIEW_GBUFFER_ALBEDO   2
+#define DEBUG_VIEW_GBUFFER_NORMALS  3
+#define DEBUG_VIEW_GBUFFER_SPECULAR 4
+#define DEBUG_VIEW_DEPTH            5
+#define DEBUG_VIEW_SHADOWMASK       6
+#define DEBUG_VIEW_AO               7
+#define DEBUG_VIEW_MAX              8
 
 layout (std140, binding = 0) uniform Camera
 {

@@ -145,7 +145,7 @@ public:
     GBufferFrameBuffer(GLuint width, GLuint height, GLuint shared_depth_texture, const char* debug_name = nullptr);
 
     GLuint get_position_texture() const { return get_color_texture(0); }
-    GLuint get_normal_texture() const { return get_color_texture(1); } // .a = "written" mask
+    GLuint get_normals_texture() const { return get_color_texture(1); } // .a = "written" mask
     GLuint get_albedo_spec_texture() const { return get_color_texture(2); }
     GLuint get_material_texture() const { return get_color_texture(3); } // r=ambient, g=shininess/256
 protected:

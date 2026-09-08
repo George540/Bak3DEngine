@@ -64,10 +64,13 @@ static constexpr GLsizei PAGES_DATA_SIZE = sizeof(PagesData);
 enum class DebugViewMode : int32_t
 {
     Lit = 0,
-    Unlit = 1,
-    Depth = 2,
-    ShadowMask = 3,
-    AO = 4,
+    GBuffer_Position,
+    GBuffer_Albedo,
+    GBuffer_Normals,
+    GBuffer_Specular,
+    Depth,
+    ShadowMask,
+    AO,
     Count
 };
 
@@ -76,7 +79,10 @@ inline const char* to_string(const DebugViewMode debug_view_enum)
     switch (debug_view_enum)
     {
         case DebugViewMode::Lit: return "Lit";
-        case DebugViewMode::Unlit: return "Unlit";
+        case DebugViewMode::GBuffer_Position: return "GBuffer P";
+        case DebugViewMode::GBuffer_Albedo: return "GBuffer A";
+        case DebugViewMode::GBuffer_Normals: return "GBuffer N";
+        case DebugViewMode::GBuffer_Specular: return "GBuffer S";
         case DebugViewMode::Depth: return "Depth";
         case DebugViewMode::ShadowMask: return "Shadows";
         case DebugViewMode::AO: return "AO";
