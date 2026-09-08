@@ -84,9 +84,9 @@ Download and extract the latest .zip folder on the *Releases* section onto your 
 Development will start Fall 2026
 | Status | Feature | Description |
 | :---: | :--- | :--- |
-|:gear:| **Shadows** | With a complex environment scene, implementing CSM shadows will make it even more lively. |
-|☐| **PBR Lighting** | A fundamental rendering concept I've been looking forward to implement. PBR Materials as well as HDR and IBL. |
-|☐| **Deferred Rendering** | Apply the possibility to integrate rendering features at scale and keep it industry standard. Opens up the possibility for multiple lights in scene. |
+|☐| **Shadows** | With a complex environment scene, implementing CSM shadows will make it even more lively. |
+|:gear:| **PBR Lighting** | A fundamental rendering concept I've been looking forward to implement. PBR Materials as well as HDR and IBL. |
+|:ballot_box_with_check:| **Deferred Rendering** | Apply the possibility to integrate rendering features at scale and keep it industry standard. Opens up the possibility for multiple lights in scene. |
 |:ballot_box_with_check:| **Compute Pipeline** | Add compute shaders in the Renderer for opening the possibility for more rendering features. |
 |:ballot_box_with_check:| **Advanced GPU Particles** | Particle System is barely keeping up. A new and more capable approach is needed, like compute shaders, new buffer objects, culling, etc. |
 |:ballot_box_with_check:| **Multiple Objects in scene** | Support multiple objects in scene, even from the same type. |
