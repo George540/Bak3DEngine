@@ -269,8 +269,8 @@ void Viewport::draw_editor_overlays_selection()
     }
 
     uint32_t overlay_flags_numbered = static_cast<uint32_t>(current_overlay_flags);
-    if (GlobalSettings::get_global_setting_value<uint32_t>(GlobalSettingOption::DebugGeometry_Enabled) != overlay_flags_numbered)
+    if (GlobalSettings::get_global_setting_value<uint32_t>(GlobalSettingOption::DebugGeometryFlags) != overlay_flags_numbered)
     {
-        GlobalSettings::set_global_setting<uint32_t>(GlobalSettingOption::DebugGeometry_Enabled, overlay_flags_numbered);
+        GlobalSettings::set_global_setting<uint32_t>(GlobalSettingOption::DebugGeometryFlags, overlay_flags_numbered);
     }
 }
