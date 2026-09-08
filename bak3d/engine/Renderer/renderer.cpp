@@ -130,7 +130,7 @@ void Renderer::begin_frame()
 
 void Renderer::draw_frame()
 {
-	const auto view_mode = static_cast<DebugViewMode>(GlobalSettings::get_global_setting_value<int>(GlobalSettingOption::VisualMode));
+	const auto view_mode = static_cast<DebugViewMode>(GlobalSettings::get_global_setting_value<int>(GlobalSettingOption::ViewMode));
 	const bool debug_view_active = view_mode != DebugViewMode::Lit;
 	const bool post_process_enabled = GlobalSettings::get_global_setting_value<bool>(GlobalSettingOption::PostProcessing_Enabled);
 

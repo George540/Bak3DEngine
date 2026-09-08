@@ -139,7 +139,7 @@ enum class GlobalSettingOption : uint32_t
     Resources_ForceFail,
     Vsync,
     DebugGeometry_Enabled,
-    VisualMode,
+    ViewMode,
     BackgroundColor,
     AA_MSAA_Enabled,
     AA_MSAA_Samples,

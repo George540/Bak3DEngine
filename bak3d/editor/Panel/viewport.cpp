@@ -65,7 +65,7 @@ void Viewport::draw_viewport()
     }
 
     // Determine framebuffer to display
-    const auto view_mode = static_cast<DebugViewMode>(GlobalSettings::get_global_setting_value<int>(GlobalSettingOption::VisualMode));
+    const auto view_mode = static_cast<DebugViewMode>(GlobalSettings::get_global_setting_value<int>(GlobalSettingOption::ViewMode));
     const FrameBuffer* frame_buffer_main = view_mode != DebugViewMode::Lit
                                             ? Renderer::get_debug_view_buffer()
                                             : Renderer::get_main_frame_buffer();
@@ -153,21 +153,25 @@ void Viewport::draw_toolbar()
 
 void Viewport::draw_visual_modes_selection()
 {
-    if (ImGui::Button("Visual Modes"))
+    if (ImGui::Button("View Modes"))
     {
-        ImGui::OpenPopup("Visual Modes Popup");
+        ImGui::OpenPopup("View Modes Popup");
     }
 
-    ImGui::SetNextWindowSize(ImVec2(250.0f, 0.0f));
-    if (ImGui::BeginPopup("Visual Modes Popup"))
-    {
-        ImGui::SeparatorText("Visual Modes");
+    const ImVec2 button_position = ImGui::GetItemRectMin();
+    const float button_size_vertical = ImGui::GetItemRectSize().y;
 
-        int view_selection = GlobalSettings::get_global_setting_value<int>(GlobalSettingOption::VisualMode);
+    ImGui::SetNextWindowSize(ImVec2(250.0f, 0.0f));
+    ImGui::SetNextWindowPos(ImVec2(button_position.x, button_position.y + button_size_vertical));
+    if (ImGui::BeginPopup("View Modes Popup", ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoMove))
+    {
+        ImGui::SeparatorText("View Modes");
+
+        int view_selection = GlobalSettings::get_global_setting_value<int>(GlobalSettingOption::ViewMode);
         PagesData pages_data = Renderer::get_pages_data();
 
         // Initialize Table
-        if (ImGui::BeginTable("VisualModesTable", 2, ImGuiTableFlags_SizingStretchProp | ImGuiTableFlags_NoSavedSettings))
+        if (ImGui::BeginTable("ViewModesTable", 2, ImGuiTableFlags_SizingStretchProp | ImGuiTableFlags_NoSavedSettings))
         {
             // Setup columns: Left holds selection, Right holds settings
             ImGui::TableSetupColumn("Selection", ImGuiTableColumnFlags_WidthStretch, 0.4f);
@@ -224,7 +228,7 @@ void Viewport::draw_visual_modes_selection()
         }
 
         // Apply changes back to global states
-        GlobalSettings::set_global_setting<int>(GlobalSettingOption::VisualMode, view_selection);
+        GlobalSettings::set_global_setting<int>(GlobalSettingOption::ViewMode, view_selection);
         pages_data.debug_mode = view_selection;
         Renderer::set_pages_data(pages_data);
 
@@ -240,7 +244,11 @@ void Viewport::draw_editor_overlays_selection()
         ImGui::OpenPopup("Editor Overlays Popup");
     }
 
-    if (ImGui::BeginPopup("Editor Overlays Popup"))
+    const ImVec2 button_position = ImGui::GetItemRectMin();
+    const float button_size_vertical = ImGui::GetItemRectSize().y;
+
+    ImGui::SetNextWindowPos(ImVec2(button_position.x, button_position.y + button_size_vertical));
+    if (ImGui::BeginPopup("Editor Overlays Popup", ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoMove))
     {
         ImGui::SeparatorText("Editor Overlays");
 

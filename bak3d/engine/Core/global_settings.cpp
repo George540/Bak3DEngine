@@ -34,7 +34,7 @@ const char* GlobalSettings::to_string(GlobalSettingOption enum_setting)
         case GlobalSettingOption::Resources_ForceFail: return "Force Fail";
         case GlobalSettingOption::Vsync: return "VSync";
         case GlobalSettingOption::DebugGeometry_Enabled: return "Enable Debug Geometry";
-        case GlobalSettingOption::VisualMode: return "Visual Mode";
+        case GlobalSettingOption::ViewMode: return "View Mode";
         case GlobalSettingOption::BackgroundColor: return "Background Color";
         case GlobalSettingOption::AA_MSAA_Enabled: return "MSAA Enabled";
         case GlobalSettingOption::AA_MSAA_Samples: return "MSAA Samples";
@@ -62,7 +62,7 @@ void GlobalSettings::initialize()
     global_settings[GlobalSettingOption::Resources_ForceFail] = false;
     global_settings[GlobalSettingOption::Vsync] = false;
     global_settings[GlobalSettingOption::DebugGeometry_Enabled] = static_cast<uint32_t>(OverlaysFlags::All);
-    global_settings[GlobalSettingOption::VisualMode] = 0;
+    global_settings[GlobalSettingOption::ViewMode] = 0;
     global_settings[GlobalSettingOption::BackgroundColor] = glm::vec4(0.133f, 0.168f, 0.2f, 1.0f);
     global_settings[GlobalSettingOption::AA_MSAA_Enabled] = true;
     global_settings[GlobalSettingOption::AA_MSAA_Samples] = 4; // turns to 4x4 when passed to GLFW

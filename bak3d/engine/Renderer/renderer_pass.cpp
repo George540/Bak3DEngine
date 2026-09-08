@@ -283,7 +283,7 @@ void RendererPasses::render_pass_debug_view()
         return;
     }
 
-    const auto view_mode = static_cast<DebugViewMode>(GlobalSettings::get_global_setting_value<int>(GlobalSettingOption::VisualMode));
+    const auto view_mode = static_cast<DebugViewMode>(GlobalSettings::get_global_setting_value<int>(GlobalSettingOption::ViewMode));
 
     Renderer::get_debug_view_buffer()->bind();
 
