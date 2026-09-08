@@ -187,7 +187,67 @@ float calculate_translucency(vec3 view_direction, vec3 light_direction, float sc
     return mix(isotropic_scatter, directional_scatter, 0.8);
 }
 
-vec3 process_particle_light(LightData light, vec3 frag_position, vec3 view_direction, float scatter_power)
+vec3 process_deferred_light_contribution(
+        LightData light,
+        vec3 frag_pos,
+        vec3 normal,
+        vec3 albedo,
+        vec3 ambient_basis,
+        float specular_strength,
+        float shininess,
+        vec3 view_direction)
+{
+    vec3 light_direction;
+    float attenuation = 1.0;
+    float spot_intensity = 1.0;
+
+    if (light.type == LIGHT_TYPE_DIRECTIONAL)
+    {
+        light_direction = normalize(-light.direction.xyz);
+    }
+    else
+    {
+        light_direction = normalize(light.position.xyz - frag_pos);
+        float light_distance = length(light.position.xyz - frag_pos);
+        float radius = light.ambient.a;
+        // Attenuation handling
+        float c = 1.0;
+        float l = 4.5 / radius;
+        float q = 75.0 / (radius * radius);
+        attenuation = 1.0 / (c + l * light_distance + q * (light_distance * light_distance));
+
+
+        if (light.type == LIGHT_TYPE_SPOT || light.type == LIGHT_TYPE_AREA)
+        {
+            vec3 spot_direction = normalize(light.direction.xyz);
+            float theta = dot(light_direction, -spot_direction);
+            float cut_off = light.position.a;
+            float outer_cut_off = light.direction.a;
+            float epsilon = cut_off - outer_cut_off;
+            spot_intensity = clamp((theta - outer_cut_off) / max(epsilon, 0.001), 0.0, 1.0);
+        }
+    }
+
+    float diff = max(dot(normal, light_direction), 0.0);
+    vec3 halfway_dir = normalize(light_direction + view_direction);
+    float spec = pow(max(dot(normal, halfway_dir), 0.0), max(shininess, 1.0));
+
+    vec3 ambient_term = light.ambient.rgb * ambient_basis;
+    vec3 diffuse_term = light.diffuse.rgb * diff * albedo;
+    vec3 specular_term = light.specular.rgb * spec * specular_strength;
+
+    // spot cone, then distance attenuation, applied per-term
+    ambient_term *= spot_intensity;
+    diffuse_term *= spot_intensity;
+    specular_term *= spot_intensity;
+    ambient_term *= attenuation;
+    diffuse_term *= attenuation;
+    specular_term *= attenuation;
+
+    return (ambient_term + diffuse_term + specular_term) * light.diffuse.a;
+}
+
+vec3 process_particle_light_forward_translucency(LightData light, vec3 frag_position, vec3 view_direction, float scatter_power)
 {
     vec3 light_direction;
     float attenuation = 1.0;
@@ -243,7 +303,7 @@ vec3 calculate_total_particle_lighting(vec3 frag_position, vec3 view_direction, 
         LightData light = light_buffer.lights[i];
 
         // Accumulate this specific light's translucent volumetric contribution
-        total_scattered_light += process_particle_light(light, frag_position, view_direction, scatter_power);
+        total_scattered_light += process_particle_light_forward_translucency(light, frag_position, view_direction, scatter_power);
     }
 
     return total_scattered_light;

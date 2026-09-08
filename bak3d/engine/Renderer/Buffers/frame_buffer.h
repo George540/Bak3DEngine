@@ -118,6 +118,10 @@ private:
     GLsizei m_max_samples;
 };
 
+/*
+ * A FrameBuffer variant that handles blending between different passes and draw calls that support transparency.
+ * Note: This is only used in Forward and Forward+ rendering pipelines.
+ */
 class WBOITFrameBuffer : public FrameBuffer
 {
 public:
@@ -125,6 +129,25 @@ public:
 
     GLuint get_accum_texture() const { return get_color_texture(0); }
     GLuint get_revealage_texture() const { return get_color_texture(1); }
+protected:
+    void create_attachments() override;
+    std::vector<GLenum> get_draw_buffers() const override;
+    std::string get_color_attachment_label(size_t index) const override;
+};
+
+/*
+ * A FrameBuffer variant that handles deferred shading.
+ * Different color channels set up the gbuffer shader.
+ */
+class GBufferFrameBuffer : public FrameBuffer
+{
+public:
+    GBufferFrameBuffer(GLuint width, GLuint height, GLuint shared_depth_texture, const char* debug_name = nullptr);
+
+    GLuint get_position_texture() const { return get_color_texture(0); }
+    GLuint get_normal_texture() const { return get_color_texture(1); } // .a = "written" mask
+    GLuint get_albedo_spec_texture() const { return get_color_texture(2); }
+    GLuint get_material_texture() const { return get_color_texture(3); } // r=ambient, g=shininess/256
 protected:
     void create_attachments() override;
     std::vector<GLenum> get_draw_buffers() const override;

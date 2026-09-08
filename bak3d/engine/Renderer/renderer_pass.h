@@ -27,11 +27,15 @@ THE SOFTWARE.
 class RendererPasses
 {
 public:
-    static void render_pass_debug_geometry();   // axis / grid gizmos (skipped in debug view)
-    static void render_pass_opaque_geometry();  // depth-writing scene geometry (model)
-    static void render_pass_sprites();          // basic alpha-blended sprite ParticleSystem (skipped in debug view)
-    static void render_pass_transparency();     // WBOIT accumulate + composite (skipped in debug view)
-    static void render_pass_post_processing();  // skipped in debug view
-    static void render_pass_editor_overlays();  // light gizmo sprite, always drawn last
-    static void render_pass_debug_view();       // depth (and future AO/etc) visualization
+    static void render_pass_gbuffer();               // opaque deferred-tagged materials
+    static void render_pass_light_culling();         // frustum-cull lights, upload light GPU data
+    static void render_pass_deferred_lighting();     // full-screen deferred resolve
+    static void render_pass_forward_opaque();        // forward+ opaque geometry, rendered in a single pass
+    static void render_pass_debug_geometry();        // axis / grid gizmos (skipped in debug view)
+    static void render_pass_opaque_geometry();       // depth-writing scene geometry (model)
+    static void render_pass_sprites();               // basic alpha-blended sprite ParticleSystem (skipped in debug view)
+    static void render_pass_transparency();          // WBOIT accumulate + composite (skipped in debug view)
+    static void render_pass_post_processing();       // skipped in debug view
+    static void render_pass_editor_overlays();       // light gizmo sprite, always drawn last
+    static void render_pass_debug_view();            // depth (and future AO/etc) visualization
 };

@@ -52,8 +52,8 @@ unique_ptr<MultisampleFrameBuffer> Renderer::r_msaa_fbo;
 unique_ptr<FrameBuffer> Renderer::r_main_fbo;
 unique_ptr<FrameBuffer> Renderer::r_dbo;
 unique_ptr<UniformBuffer> Renderer::r_debug_view_ubo;
+unique_ptr<GBufferFrameBuffer> Renderer::r_gbuffer_fbo;
 unique_ptr<WBOITFrameBuffer> Renderer::r_wboit_fbo;
-
 
 #ifdef _DEBUG
 constexpr bool IS_OPENGL_DEBUG_VERBOSE = false;
@@ -66,8 +66,6 @@ namespace
 	PagesData m_pages_data = PagesData();
 
 	Quad* m_quad = nullptr;
-
-	int m_current_active_lights = 0;
 }
 
 void Renderer::initialize()
@@ -128,103 +126,69 @@ void Renderer::begin_frame()
 	r_debug_view_ubo->bind();
 	r_debug_view_ubo->bind_buffer_sub_data(&m_pages_data, PAGES_DATA_SIZE, 0);
 	r_debug_view_ubo->unbind();
-
-	LightRenderer::update_and_upload_data(SceneManager::get_current_scene()->get_all_lights(),
-										   SceneManager::get_current_scene()->get_current_camera()->get_frustum());
 }
 
 void Renderer::draw_frame()
 {
-    const bool msaa_enabled = GlobalSettings::get_global_setting_value<bool>(GlobalSettingOption::AA_MSAA_Enabled);
+	const auto view_mode = static_cast<DebugViewMode>(GlobalSettings::get_global_setting_value<int>(GlobalSettingOption::VisualMode));
+	const bool debug_view_active = view_mode != DebugViewMode::Lit;
 	const bool post_process_enabled = GlobalSettings::get_global_setting_value<bool>(GlobalSettingOption::PostProcessing_Enabled);
-    const auto view_mode = static_cast<DebugViewMode>(GlobalSettings::get_global_setting_value<int>(GlobalSettingOption::VisualMode));
-    const bool debug_view_active = view_mode != DebugViewMode::Lit;
 
-    if (msaa_enabled)
-    {
-        if (const int samples_setting = GlobalSettings::get_global_setting_value<int>(GlobalSettingOption::AA_MSAA_Samples);
-            r_msaa_fbo->get_samples() != samples_setting)
-        {
-            r_msaa_fbo->set_samples(samples_setting);
-        }
-    }
+	// ------------------------------------------------------------
+	// GBuffer Pass: Deferred Opaque, single sampled
+	// ------------------------------------------------------------
+	r_gbuffer_fbo->bind();
+	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+	glEnable(GL_DEPTH_TEST);
+	glDepthFunc(GL_LESS);
+	glEnable(GL_CULL_FACE);
+	glCullFace(GL_BACK);
+	RendererPasses::render_pass_gbuffer();
+	RendererPasses::render_pass_light_culling();
 
-    // ------------------------------------------------------------
-    // Bind opaque target (MSAA or single-sample) and clear
-    // ------------------------------------------------------------
-    const FrameBuffer* opaque_target = msaa_enabled
-        ? dynamic_cast<FrameBuffer*>(r_msaa_fbo.get())
-        : r_main_fbo.get();
-
-    opaque_target->bind();
-
-    const auto background_color = GlobalSettings::get_global_setting_value<glm::vec4>(GlobalSettingOption::BackgroundColor);
-    glClearColor(background_color.r, background_color.g, background_color.b, background_color.a);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-
-    glEnable(GL_DEPTH_TEST);
-    glEnable(GL_CULL_FACE);
-    glCullFace(GL_BACK);
-
-    // ------------------------------------------------------------
-    // Opaque geometry. In debug view, only depth-writing scene geometry
-    // renders, gizmos and sprites don't get to influence the depth buffer.
-    // ------------------------------------------------------------
-    if (!debug_view_active || !post_process_enabled)
-    {
-        RendererPasses::render_pass_debug_geometry();
-    }
-
-    RendererPasses::render_pass_opaque_geometry();
-
-    if (!debug_view_active)
-    {
-        RendererPasses::render_pass_sprites();
-    }
-
-    // ------------------------------------------------------------
-    // The ONLY resolve/blit in the whole pipeline. Every other FBO
-    // (WBOIT, debug-view, post-process ping-pong) shares r_main_fbo's
-    // depth-stencil texture object directly, so this single blit is all
-    // that's needed for depth to be correct everywhere downstream.
-    // ------------------------------------------------------------
-    glDisable(GL_DEPTH_TEST);
-    glDisable(GL_CULL_FACE);
-
-    {
-        DebugScopeGroup scope("MSAA Resolve (Color + Depth/Stencil)");
-
-        if (msaa_enabled)
-        {
-            r_msaa_fbo->resolve_to(r_main_fbo.get());
-        	r_main_fbo->bind();
-        }
-    }
-
-    if (debug_view_active)
-    {
-        RendererPasses::render_pass_debug_view();
-        return;
-    }
-
+	// ------------------------------------------------------------
+	// Deferred Rendering: Resolve into main
+	// ------------------------------------------------------------
 	r_main_fbo->bind();
+	const auto background_color = GlobalSettings::get_global_setting_value<glm::vec4>(GlobalSettingOption::BackgroundColor);
+	glClearColor(background_color.r, background_color.g, background_color.b, background_color.a);
+	glClear(GL_COLOR_BUFFER_BIT); // depth/stencil already holds GBuffer's values, don't touch them
+	glDisable(GL_DEPTH_TEST);
+	glDepthMask(GL_FALSE);
+	RendererPasses::render_pass_deferred_lighting();
+	glDepthMask(GL_TRUE);
 
-    // ------------------------------------------------------------
-    // Transparency (WBOIT) composites directly onto r_main_fbo
-    // ------------------------------------------------------------
-    RendererPasses::render_pass_transparency();
+	// ------------------------------------------------------------
+	// Forward+ Rendering: Depth testing against the shader depth buffer
+	// ------------------------------------------------------------
+	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_CULL_FACE);
+	if (!debug_view_active || !post_process_enabled)
+	{
+		RendererPasses::render_pass_debug_geometry();
+	}
+	RendererPasses::render_pass_forward_opaque();
 
-    // ------------------------------------------------------------
-    // Post processing (ping-pongs off r_main_fbo's color texture)
-    // ------------------------------------------------------------
+	glDisable(GL_DEPTH_TEST);
+	glDisable(GL_CULL_FACE);
+
+	if (debug_view_active)
+	{
+		RendererPasses::render_pass_debug_view();
+		return;
+	}
+
+	// ------------------------------------------------------------
+	// Forward+ Rendering: Transparency, Post Processing, Overlays
+	// ------------------------------------------------------------
+	RendererPasses::render_pass_transparency();
+
 	if (post_process_enabled)
 	{
 		RendererPasses::render_pass_post_processing();
 	}
 
-	// ------------------------------------------------------------
-	// Editor Overlays: always drawn last, on top of transparency
-	// ------------------------------------------------------------
 	RendererPasses::render_pass_editor_overlays();
 }
 
@@ -254,6 +218,8 @@ void Renderer::shutdown()
 	r_main_fbo.reset();
 	r_msaa_fbo.reset();
 	r_debug_view_ubo.reset();
+	r_gbuffer_fbo.reset();
+	r_wboit_fbo.reset();
 }
 
 PagesData Renderer::get_pages_data()
@@ -275,6 +241,7 @@ void Renderer::on_framebuffer_size_callback(GLFWwindow* window, const int new_wi
 	r_main_fbo->resize(new_width, new_height);
 	r_msaa_fbo->resize(new_width, new_height, r_main_fbo->get_depth_texture());
 	r_dbo->resize(new_width, new_height, r_main_fbo->get_depth_texture());
+	r_gbuffer_fbo->resize(new_width, new_height, r_main_fbo->get_depth_texture());
 	r_wboit_fbo->resize(new_width, new_height, r_main_fbo->get_depth_texture());
 	PostProcessor::resize(new_width, new_height, r_main_fbo->get_depth_texture());
 }
@@ -314,6 +281,12 @@ void Renderer::initialize_buffers()
 		r_main_fbo->get_depth_texture(),
 		"WBOIT_Transparency"
 		);
+
+	r_gbuffer_fbo = make_unique<GBufferFrameBuffer>(
+		EventManager::get_window_width(),
+		EventManager::get_window_height(),
+		r_main_fbo->get_depth_texture(),
+		"GBuffer");
 
 	// ========== GLOBAL UNIFORM BUFFERS (owned by the Renderer) ==========
 

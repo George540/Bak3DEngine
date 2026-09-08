@@ -25,17 +25,102 @@ THE SOFTWARE.
 #include "renderer_pass.h"
 
 #include "debug_scope.h"
+#include "light_renderer.h"
 #include "post_processor.h"
 #include "renderer.h"
 #include "Asset/resource_manager.h"
 #include "Core/global_settings.h"
 #include "Scene/scene_manager.h"
 
+namespace
+{
+    bool is_deferred_tagged(const Mesh* mesh)
+    {
+        return mesh->get_material()
+            && mesh->get_material()->get_shader()
+            && mesh->get_material()->get_shader()->get_object_name() == "gbuffer";
+    }
+}
+
+void RendererPasses::render_pass_gbuffer()
+{
+    DebugScopeGroup scope("GBuffer Pass (Deferred Opaque)");
+
+    for (const Mesh* mesh : SceneManager::get_current_scene()->get_all_meshes())
+    {
+        if (is_deferred_tagged(mesh))
+        {
+            mesh->draw();
+        }
+    }
+}
+
+void RendererPasses::render_pass_light_culling()
+{
+    DebugScopeGroup scope("Light Culling");
+
+    if (const Camera* camera = SceneManager::get_current_scene()->get_current_camera())
+    {
+        LightRenderer::update_and_upload_data(SceneManager::get_current_scene()->get_all_lights(), camera->get_frustum());
+    }
+}
+
+void RendererPasses::render_pass_deferred_lighting()
+{
+    DebugScopeGroup scope("Deferred Lighting Pass");
+
+    const ShaderRef shader = ResourceManager::get_shader("deferred_lit");
+    if (!shader || !shader->is_shader_compiled())
+    {
+        return;
+    }
+
+    const GBufferFrameBuffer* gbuffer = Renderer::get_gbuffer();
+
+    shader->use();
+
+    //gbuffer->bind_color_attachment(0);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, gbuffer->get_position_texture());
+    shader->set_int("g_position", 0);
+
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, gbuffer->get_normal_texture());
+    shader->set_int("g_normal", 1);
+
+    glActiveTexture(GL_TEXTURE2);
+    glBindTexture(GL_TEXTURE_2D, gbuffer->get_albedo_spec_texture());
+    shader->set_int("g_albedo_specular", 2);
+
+    glActiveTexture(GL_TEXTURE3);
+    glBindTexture(GL_TEXTURE_2D, gbuffer->get_material_texture());
+    shader->set_int("g_material", 3);
+
+    shader->set_int("light_count", LightRenderer::get_visible_light_count());
+
+    Renderer::draw_quad();
+
+    shader->unuse();
+}
+
+void RendererPasses::render_pass_forward_opaque()
+{
+    DebugScopeGroup scope("Forward Opaque Pass");
+
+    for (const Mesh* mesh : SceneManager::get_current_scene()->get_all_meshes())
+    {
+        if (!is_deferred_tagged(mesh))
+        {
+            mesh->draw();
+        }
+    }
+}
+
 void RendererPasses::render_pass_debug_geometry()
 {
     DebugScopeGroup scope("Debug Geometry Pass");
 
-    glDepthFunc(GL_ALWAYS);
+    glDepthFunc(GL_LEQUAL);
 
     if (GlobalSettings::get_global_setting_value<uint32_t>(GlobalSettingOption::DebugGeometry_Enabled) & static_cast<uint32_t>(OverlaysFlags::WorldGrid))
     {

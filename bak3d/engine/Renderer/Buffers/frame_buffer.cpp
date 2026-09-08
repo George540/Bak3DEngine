@@ -427,3 +427,42 @@ std::string WBOITFrameBuffer::get_color_attachment_label(const size_t index) con
     // Only two color attachments exist in this type of frame buffer
     return index == 0 ? "_Accum" : "_Revealage";
 }
+
+GBufferFrameBuffer::GBufferFrameBuffer(const GLuint width, const GLuint height, const GLuint shared_depth_texture, const char* debug_name)
+    : FrameBuffer(width, height, shared_depth_texture, debug_name ? debug_name : "GBuffer")
+{
+    destroy_framebuffer();
+    create_framebuffer();
+
+    B3D_LOG_INFO("GBuffer Frame Buffer Object enabled...");
+}
+
+void GBufferFrameBuffer::create_attachments()
+{
+    // Position (world space) with full float precision
+    create_texture_2d_attachment(GL_COLOR_ATTACHMENT0, GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_NEAREST, GL_NEAREST);
+    // Normal (world space, .a doubles as the deferred-lighting "written" mask)
+    create_texture_2d_attachment(GL_COLOR_ATTACHMENT1, GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_NEAREST, GL_NEAREST);
+    // Albedo (rgb) + specular strength (a)
+    create_texture_2d_attachment(GL_COLOR_ATTACHMENT2, GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE);
+    // Material params: r = ambient, g = shininess/256 (rescaled in lighting pass), b/a unused
+    create_texture_2d_attachment(GL_COLOR_ATTACHMENT3, GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE);
+
+    attach_shared_depth_texture();
+}
+
+std::vector<GLenum> GBufferFrameBuffer::get_draw_buffers() const
+{
+    return { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3 };
+}
+
+std::string GBufferFrameBuffer::get_color_attachment_label(const size_t index) const
+{
+    switch (index)
+    {
+    case 0: return "_Position";
+    case 1: return "_Normal";
+    case 2: return "_AlbedoSpecular";
+    default: return "_Material";
+    }
+}

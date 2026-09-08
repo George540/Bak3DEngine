@@ -42,6 +42,7 @@ private:
 	static std::unique_ptr<MultisampleFrameBuffer> r_msaa_fbo;
 	static std::unique_ptr<FrameBuffer> r_main_fbo;
 	static std::unique_ptr<FrameBuffer> r_dbo;
+	static std::unique_ptr<GBufferFrameBuffer> r_gbuffer_fbo;
 	static std::unique_ptr<WBOITFrameBuffer> r_wboit_fbo;
 
 	static std::unique_ptr<UniformBuffer> r_debug_view_ubo;
@@ -60,6 +61,7 @@ public:
 	static MultisampleFrameBuffer* get_msaa_frame_buffer() { return r_msaa_fbo.get(); }
 	static FrameBuffer* get_main_frame_buffer() { return r_main_fbo.get(); }
 	static FrameBuffer* get_debug_view_buffer() { return r_dbo.get(); }
+	static GBufferFrameBuffer* get_gbuffer() { return r_gbuffer_fbo.get(); }
 	static WBOITFrameBuffer* get_wboit_frame_buffer() { return r_wboit_fbo.get(); }
 
 	static PagesData get_pages_data();
