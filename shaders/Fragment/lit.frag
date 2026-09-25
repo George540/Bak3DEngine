@@ -49,10 +49,9 @@ vec3 get_view_dir()
 
 vec3 calc_ambient(vec3 light_ambient)
 {
-    float ambient_face = clamp(dot(normal, light_direction) * 0.5 + 0.5, 0.0, 1.0);
     if (material.use_diffuse_texture)
         return light_ambient * texture(material.diffuse_texture, fs_in.TexCoord).rgb;
-    return light_ambient * vec3(material.surface_parameters.x) * ambient_face;
+    return light_ambient * vec3(material.surface_parameters.x);
 }
 
 vec3 calc_diffuse(vec3 light_diffuse, vec3 light_direction, vec3 normal)
