@@ -37,7 +37,6 @@ THE SOFTWARE.
 #include "Core/logger.h"
 #include "Renderer/renderer.h"
 #include "Scene/scene.h"
-#include "Scene/scene_manager.h"
 
 Light::Light(const LightType type, const glm::vec3 position) :
 	RenderableObject(ResourceManager::get_material("light_icon"), position, "Light")
@@ -56,6 +55,11 @@ Light::Light(const LightType type, const glm::vec3 position) :
 void Light::update(float dt)
 {
 	RenderableObject::update(dt);
+
+	if (m_type == LightType::Directional || m_type == LightType::Spot || m_type == LightType::Area)
+	{
+		set_direction(transform.get_forward());
+	}
 }
 
 void Light::draw() const
@@ -78,6 +82,7 @@ void Light::set_type(const LightType type)
 
 	m_type = type;
 	set_texture_by_type(type);
+
 	m_is_dirty = true;
 }
 
@@ -89,6 +94,7 @@ void Light::set_ambient(const glm::vec3 ambient)
 	}
 
 	m_ambient = ambient;
+
 	m_is_dirty = true;
 }
 
@@ -100,6 +106,7 @@ void Light::set_diffuse(const glm::vec3 diffuse)
 	}
 
 	m_diffuse = diffuse;
+
 	m_is_dirty = true;
 }
 
@@ -111,6 +118,7 @@ void Light::set_specular(const glm::vec3 specular)
 	}
 
 	m_specular = specular;
+
 	m_is_dirty = true;
 }
 
@@ -122,6 +130,7 @@ void Light::set_intensity(const float intensity)
 	}
 
 	m_intensity = intensity;
+
 	m_is_dirty = true;
 }
 
@@ -134,6 +143,7 @@ void Light::set_direction(const glm::vec3 direction)
 	}
 
 	m_direction = normalized_direction;
+
 	m_is_dirty = true;
 }
 
@@ -155,6 +165,7 @@ void Light::set_attenuation(const float radius)
 	}
 
 	m_attenuation_radius = radius;
+
 	m_is_dirty = true;
 }
 
@@ -169,8 +180,7 @@ void Light::set_cone_angles(float inner_degrees, float outer_degrees)
 	m_inner_angle = inner_degrees;
 	m_outer_angle = outer_degrees;
 
-	m_inner_cut_off = glm::cos(glm::radians(m_inner_angle + m_cone_size));
-	m_outer_cut_off = glm::cos(glm::radians(m_outer_angle + m_cone_size));
+	recompute_cone_cutoffs();
 
 	m_is_dirty = true;
 }
@@ -183,6 +193,8 @@ void Light::set_cone_size(const float size)
 	}
 
 	m_cone_size = size;
+
+	recompute_cone_cutoffs();
 
 	m_is_dirty = true;
 }
@@ -235,4 +247,10 @@ void Light::set_texture_by_type(const LightType type)
 		case LightType::Area: m_sprite_texture = ResourceManager::get_texture("area_light_icon.png"); break;
 		default: m_sprite_texture = ResourceManager::get_texture("point_light_icon.png"); break;
 	}
+}
+
+void Light::recompute_cone_cutoffs()
+{
+	m_inner_cut_off = glm::cos(glm::radians(m_inner_angle + m_cone_size));
+	m_outer_cut_off = glm::cos(glm::radians(m_outer_angle + m_cone_size));
 }

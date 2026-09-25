@@ -62,7 +62,7 @@ protected:
 	LightType m_type = LightType::Point;
 
 	// DIRECTIONAL
-	glm::vec3 m_direction;
+	glm::vec3 m_direction = glm::vec3(0.0f, 0.0f, -1.0f);;
 
 	// POINT
 	float m_attenuation_radius = 32.0f;
@@ -119,4 +119,5 @@ public:
 	size_t get_ssbo_index() const { return m_ssbo_index; }
 private:
 	void set_texture_by_type(LightType type);
+	void recompute_cone_cutoffs();
 };
