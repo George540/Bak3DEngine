@@ -300,29 +300,29 @@ void Bak3DEditor::update_panels(const ImGuiViewport* viewport)
             ImGui::DockBuilderAddNode(window_id, ImGuiDockNodeFlags_DockSpace);
             ImGui::DockBuilderSetNodeSize(window_id, viewport->WorkSize);
 
-            ImGuiID dock_main_id = window_id;
+            const ImGuiID dock_main_id = window_id;
 
-            // 1. Isolate Details on the far right for Details (Full height)
+            // 1. Isolate the right column (full height) for Scene + Environment/Details
             ImGuiID dock_id_left_container;
-            const ImGuiID dock_id_environment = ImGui::DockBuilderSplitNode(dock_main_id, ImGuiDir_Right, 0.23f, nullptr, &dock_id_left_container);
+            const ImGuiID dock_id_right_container = ImGui::DockBuilderSplitNode(dock_main_id, ImGuiDir_Right, 0.3f, nullptr, &dock_id_left_container);
 
-            // 2. Split the left container horizontally for Viewport (Right or Middle) and Details (Right). This creates a bottom row that spans under everything except Details
+            // 1b. Split the right column vertically: Scene on top, Environment+Details (tabbed) below
+            ImGuiID dock_id_environment;
+            const ImGuiID dock_id_scene = ImGui::DockBuilderSplitNode(dock_id_right_container, ImGuiDir_Up, 0.33f, nullptr, &dock_id_environment);
+
+            // 2. Split the left container horizontally for Viewport (top row, full width now) and bottom row (Logger/Assets)
             ImGuiID dock_id_bottom_row;
-            const ImGuiID dock_id_top_row = ImGui::DockBuilderSplitNode(dock_id_left_container, ImGuiDir_Up, 0.72f, nullptr, &dock_id_bottom_row);
+            const ImGuiID dock_id_viewport = ImGui::DockBuilderSplitNode(dock_id_left_container, ImGuiDir_Up, 0.72f, nullptr, &dock_id_bottom_row);
 
-            // 3. Split the top row vertically for Scene (Left) and Viewport (Right)
-            ImGuiID dock_id_viewport;
-            const ImGuiID dock_id_scene = ImGui::DockBuilderSplitNode(dock_id_top_row, ImGuiDir_Left, 0.15f, nullptr, &dock_id_viewport);
-
-            // 4. Split the bottom row vertically for Logger (Left) and Assets (Right)
+            // 3. Split the bottom row vertically for Logger (Left) and Assets (Right)
             ImGuiID dock_id_assets;
             const ImGuiID dock_id_logger = ImGui::DockBuilderSplitNode(dock_id_bottom_row, ImGuiDir_Left, 0.4f, nullptr, &dock_id_assets);
 
-            // 5. Assign Windows and finish
+            // 4. Assign Windows and finish
             ImGui::DockBuilderDockWindow("Viewport", dock_id_viewport);
+            ImGui::DockBuilderDockWindow("Scene", dock_id_scene);
             ImGui::DockBuilderDockWindow("Environment", dock_id_environment);
             ImGui::DockBuilderDockWindow("Details", dock_id_environment);
-            ImGui::DockBuilderDockWindow("Scene", dock_id_scene);
             ImGui::DockBuilderDockWindow("Logger", dock_id_logger);
             ImGui::DockBuilderDockWindow("Assets", dock_id_assets);
             ImGui::DockBuilderDockWindow("Metrics", dock_id_assets);
