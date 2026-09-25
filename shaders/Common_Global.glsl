@@ -232,10 +232,12 @@ vec3 process_deferred_light_contribution(
     }
 
     float diff = max(dot(normal, light_direction), 0.0);
+    float ambient_face = clamp(dot(normal, light_direction) * 0.5 + 0.5, 0.0, 1.0);
+    
     vec3 halfway_dir = normalize(light_direction + view_direction);
     float spec = pow(max(dot(normal, halfway_dir), 0.0), max(shininess, 1.0));
 
-    vec3 ambient_term = light.ambient.rgb * ambient_basis;
+    vec3 ambient_term = light.ambient.rgb * ambient_basis * ambient_face;
     vec3 diffuse_term = light.diffuse.rgb * diff * albedo;
     vec3 specular_term = light.specular.rgb * spec * specular_strength;
 
