@@ -17,7 +17,7 @@ namespace
     ImVec2 viewport_panel_size = ImVec2(0, 0);
     bool m_camera_look_started_in_viewport = false;
 
-    OverlaysFlags current_overlay_flags = OverlaysFlags::All;
+    OverlaysFlags current_overlay_flags = OverlaysFlags::None;
 
     vector<OverlayFlagsDefinition> overlay_flags_list;
 }
@@ -25,6 +25,8 @@ namespace
 Viewport::Viewport() : EditorPanel("Viewport")
 {
     m_flags |= ImGuiWindowFlags_NoScrollbar;
+
+    current_overlay_flags = static_cast<OverlaysFlags>(GlobalSettings::get_global_setting_value<uint32_t>(GlobalSettingOption::EditorOverlayFlags));
 
     overlay_flags_list =
     {
@@ -194,7 +196,7 @@ void Viewport::draw_visual_modes_selection()
                         ImGui::BeginDisabled(); 
                     }
 
-                    ImGui::PushItemWidth(60.0f); // Slightly wider item width for the sliders
+                    ImGui::PushItemWidth(60.0f);
 
                     // Option 1: Near Distance
                     ImGui::Text("Near");
@@ -207,7 +209,7 @@ void Viewport::draw_visual_modes_selection()
 
                     // Option 2: Far Distance
                     ImGui::Spacing(); 
-                    ImGui::Text("Far "); // Added space to match alignment of "Near"
+                    ImGui::Text("Far ");
                     ImGui::SameLine();
                     ImGui::SliderFloat("##Far", &pages_data.depth_settings.g, pages_data.depth_settings.r, 10.0f, "%.1f");
                     if (ImGui::IsItemHovered())
@@ -247,30 +249,72 @@ void Viewport::draw_editor_overlays_selection()
     const ImVec2 button_position = ImGui::GetItemRectMin();
     const float button_size_vertical = ImGui::GetItemRectSize().y;
 
+    ImGui::SetNextWindowSize(ImVec2(250.0f, 0.0f));
     ImGui::SetNextWindowPos(ImVec2(button_position.x, button_position.y + button_size_vertical));
     if (ImGui::BeginPopup("Editor Overlays Popup", ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoMove))
     {
         ImGui::SeparatorText("Editor Overlays");
 
-        for (auto& [flag, label] : overlay_flags_list)
-        {
-            const bool is_selected = (current_overlay_flags & flag) != 0;
-            ImGui::PushItemFlag(ImGuiItemFlags_AutoClosePopups, false);
-            const bool clicked = ImGui::MenuItem(label, nullptr, is_selected);
-            ImGui::PopItemFlag();
+        float light_icon_size = GlobalSettings::get_global_setting_value<float>(GlobalSettingOption::EditorOverlayFlags_LightIconSize);
 
-            if (clicked)
+        // Initialize Table
+        if (ImGui::BeginTable("EditorOverlaysTable", 2, ImGuiTableFlags_SizingStretchProp | ImGuiTableFlags_NoSavedSettings))
+        {
+            // Setup columns: Left holds selection, Right holds settings
+            ImGui::TableSetupColumn("Selection", ImGuiTableColumnFlags_WidthStretch, 0.5f);
+            ImGui::TableSetupColumn("Settings", ImGuiTableColumnFlags_WidthStretch, 0.5f);
+
+            for (auto& [flag, label] : overlay_flags_list)
             {
-                current_overlay_flags ^= flag;
+                ImGui::TableNextRow();
+                ImGui::TableSetColumnIndex(0);
+
+                const bool is_selected = (current_overlay_flags & flag) != 0;
+                ImGui::PushItemFlag(ImGuiItemFlags_AutoClosePopups, false);
+                const bool clicked = ImGui::MenuItem(label, nullptr, is_selected);
+                ImGui::PopItemFlag();
+
+                if (clicked)
+                {
+                    current_overlay_flags ^= flag;
+                }
+
+                ImGui::TableSetColumnIndex(1);
+
+                if (flag == OverlaysFlags::LightIcons)
+                {
+                    const bool is_disabled = !((current_overlay_flags & flag) != 0);
+                    if (is_disabled)
+                    {
+                        ImGui::BeginDisabled();
+                    }
+
+                    ImGui::PushItemWidth(100.0f);
+                    ImGui::SliderFloat("##LightIconSize", &light_icon_size, 0.05f, 0.3f, "%.2f");
+                    if (ImGui::IsItemHovered())
+                    {
+                        ImGuiB3D::ToolTipExtendedText("Control the size of light icon sprites drawn in the viewport.", TOOL_TIP_WIDTH);
+                    }
+                    ImGui::PopItemWidth();
+
+                    if (is_disabled)
+                    {
+                        ImGui::EndDisabled();
+                    }
+                }
             }
+
+            ImGui::EndTable();
         }
+
+        GlobalSettings::set_global_setting<float>(GlobalSettingOption::EditorOverlayFlags_LightIconSize, light_icon_size);
 
         ImGui::EndPopup();
     }
 
     uint32_t overlay_flags_numbered = static_cast<uint32_t>(current_overlay_flags);
-    if (GlobalSettings::get_global_setting_value<uint32_t>(GlobalSettingOption::DebugGeometryFlags) != overlay_flags_numbered)
+    if (GlobalSettings::get_global_setting_value<uint32_t>(GlobalSettingOption::EditorOverlayFlags) != overlay_flags_numbered)
     {
-        GlobalSettings::set_global_setting<uint32_t>(GlobalSettingOption::DebugGeometryFlags, overlay_flags_numbered);
+        GlobalSettings::set_global_setting<uint32_t>(GlobalSettingOption::EditorOverlayFlags, overlay_flags_numbered);
     }
 }

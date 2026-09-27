@@ -65,6 +65,7 @@ void Light::update(float dt)
 void Light::draw() const
 {
 	(*m_material_slot)->set_vec4("diffuseColor", glm::vec4(m_diffuse, 1.0f));
+	(*m_material_slot)->set_float("icon_size_multiplier", GlobalSettings::get_global_setting_value<float>(GlobalSettingOption::EditorOverlayFlags_LightIconSize));
 
 	m_sprite_texture->bind(0);
 	

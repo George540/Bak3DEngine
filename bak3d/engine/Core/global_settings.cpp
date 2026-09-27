@@ -27,13 +27,14 @@ THE SOFTWARE.
 std::map<GlobalSettingOption, GlobalSettingValueType> GlobalSettings::global_settings = {};
 
 // TODO: to be used for property labels in ImGui
-const char* GlobalSettings::to_string(GlobalSettingOption enum_setting)
+const char* GlobalSettings::to_string(const GlobalSettingOption enum_setting)
 {
     switch (enum_setting)
     {
         case GlobalSettingOption::Resources_ForceFail: return "Force Fail";
         case GlobalSettingOption::Vsync: return "VSync";
-        case GlobalSettingOption::DebugGeometryFlags: return "Debug Geometry Flags";
+        case GlobalSettingOption::EditorOverlayFlags: return "Editor Overlays";
+        case GlobalSettingOption::EditorOverlayFlags_LightIconSize: return "Size";
         case GlobalSettingOption::ViewMode: return "View Mode";
         case GlobalSettingOption::BackgroundColor: return "Background Color";
         case GlobalSettingOption::AA_MSAA_Enabled: return "MSAA Enabled";
@@ -61,7 +62,8 @@ void GlobalSettings::initialize()
     global_settings.clear();
     global_settings[GlobalSettingOption::Resources_ForceFail] = false;
     global_settings[GlobalSettingOption::Vsync] = false;
-    global_settings[GlobalSettingOption::DebugGeometryFlags] = static_cast<uint32_t>(OverlaysFlags::All);
+    global_settings[GlobalSettingOption::EditorOverlayFlags] = static_cast<uint32_t>(OverlaysFlags::All);
+    global_settings[GlobalSettingOption::EditorOverlayFlags_LightIconSize] = 0.1f;
     global_settings[GlobalSettingOption::ViewMode] = 0;
     global_settings[GlobalSettingOption::BackgroundColor] = glm::vec4(0.133f, 0.168f, 0.2f, 1.0f);
     global_settings[GlobalSettingOption::AA_MSAA_Enabled] = true;

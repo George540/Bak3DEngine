@@ -65,6 +65,7 @@ vec3 apply_billboarding(
         vec2 vertex_xy,
         float rotation,
         float scale,
+        float scale_multiplier,
         mat4 view)
 {
     // Extract camera alignment vectors from the view matrix
@@ -84,7 +85,7 @@ vec3 apply_billboarding(
 
     // If scale is 0.0, calculate a dynamic scale based on distance to camera
     float final_scale = scale;
-    if (scale == 0.0)
+    if (scale == 0.0 && scale_multiplier > 0.0f)
     {
         // Transform the object's world position into view space to get its depth (0-2)
         // that represents the camera forward vector, while view[3][2] is the translation offset.
@@ -94,7 +95,7 @@ vec3 apply_billboarding(
                         view[3][2]);
 
         // Use depth as the baseline scale factor.
-        final_scale = depth * 0.1; // @TODO: Modify constant screen size from editor slider
+        final_scale = depth * scale_multiplier;
     }
 
     return world_position + (camera_right * rotated_vertex.x + camera_up * rotated_vertex.y) * final_scale;

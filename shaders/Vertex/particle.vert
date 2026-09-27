@@ -33,6 +33,7 @@ void main()
         vertex.xy,
         instancePosition.w,
         instanceScale,
+        0.0f,
         camera_data.view
     );
 

@@ -2,6 +2,8 @@
 
 layout (location = 0) in vec4 vertex; // <vec2 position, vec2 texCoords>
 
+uniform float icon_size_multiplier = 1.0;
+
 out vec2 TexCoords;
 
 #include "Common_Global.glsl"
@@ -16,6 +18,7 @@ void main()
         vertex.xy,
         0.0, // no rotation for a light marker
         0.0,
+        icon_size_multiplier,
         camera_data.view
     );
 
