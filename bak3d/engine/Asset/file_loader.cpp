@@ -132,7 +132,7 @@ void FileLoader::write_save_export_to_log_file_immediate(const std::string& text
 	{
 		B3D_LOG_WARNING("Could not write to log file %s", B3D_LOG_FILE.data());
 	}
-	file << text;
+	file << text << '\n';
 	file.close();
 }
 
