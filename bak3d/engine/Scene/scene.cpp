@@ -203,8 +203,10 @@ void Scene::update(float dt)
 void Scene::initialize_default_scene_objects()
 {
     instantiate<Grid>(nullptr);
-    instantiate<Light>(nullptr, LightType::Point, glm::vec3(-2.5f, 2.5f, 2.5f));
-    instantiate<Mesh>(nullptr, glm::vec3(0.0f), "Cube", ResourceManager::get_material("default_material"), "Cube");
+    instantiate<Light>(nullptr, LightType::Directional, glm::vec3(-2.5f, 2.5f, 2.5f));
+    instantiate<Mesh>(nullptr, glm::vec3(0.0f, 1.0f, 0.0f), "Cube", ResourceManager::get_material("default_material"), "Cube");
+    const auto plane_object = instantiate<Mesh>(nullptr, glm::vec3(0.0f), "Plane", ResourceManager::get_material("default_material"), "Plane");
+    plane_object->transform.set_local_scale(glm::vec3(10.0f, 1.0f, 10.0f));
     
     B3D_LOG_INFO("Default Scene initialized.");
 }

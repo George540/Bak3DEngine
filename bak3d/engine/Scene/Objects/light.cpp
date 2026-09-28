@@ -44,7 +44,7 @@ Light::Light(const LightType type, const glm::vec3 position) :
 	m_type = type;
 	object_type = SceneObjectType::Light;
 
-	m_ssbo_index = 0;
+	transform.set_local_euler_rotation(glm::vec3(0.0f, -45.0f, -45.0f));
 
 	m_mesh_slot = make_mesh_slot(ResourceManager::get_mesh("Quad"));
 	set_texture_by_type(m_type);

@@ -61,7 +61,7 @@ void GlobalSettings::initialize()
     global_settings.clear();
     global_settings[GlobalSettingOption::Resources_ForceFail] = false;
     global_settings[GlobalSettingOption::Vsync] = false;
-    global_settings[GlobalSettingOption::EditorOverlayFlags] = static_cast<uint32_t>(OverlaysFlags::All);
+    global_settings[GlobalSettingOption::EditorOverlayFlags] = static_cast<uint32_t>(OverlaysFlags::LightIcons);
     global_settings[GlobalSettingOption::EditorOverlayFlags_LightIconSize] = 0.1f;
     global_settings[GlobalSettingOption::ViewMode] = 0;
     global_settings[GlobalSettingOption::BackgroundColor] = glm::vec4(0.133f, 0.168f, 0.2f, 1.0f);

@@ -59,10 +59,10 @@ protected:
 	glm::vec3 m_diffuse = glm::vec3(1.0f);
 	glm::vec3 m_specular = glm::vec3(0.3f);
 	float m_intensity = 1.0f;
-	LightType m_type = LightType::Point;
+	LightType m_type = LightType::Directional;
 
 	// DIRECTIONAL
-	glm::vec3 m_direction = glm::vec3(0.0f, 0.0f, -1.0f);;
+	glm::vec3 m_direction = glm::vec3(0.0f, -1.0f, -1.0f);
 
 	// POINT
 	float m_attenuation_radius = 32.0f;
