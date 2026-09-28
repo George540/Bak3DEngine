@@ -158,8 +158,8 @@ void Scene::initialize_default_scene_objects()
 
 void Scene::initialize_preview_scene_objects()
 {
-    instantiate<Grid>(nullptr);
-    instantiate<Light>(nullptr, LightType::Point, glm::vec3(-2.5f, 2.5f, 2.5f));
+    Light* light = instantiate<Light>(nullptr, LightType::Directional, glm::vec3(-2.5f, 2.5f, 2.5f));
+    light->set_direction(glm::normalize(-light->transform.get_local_position()));
 
     recapture_all_model_previews();
 
@@ -386,6 +386,15 @@ void Scene::capture_model_preview(const ModelRef& model)
     const auto& model_roots = get_all_objects_of_type(SceneObjectType::Model);
     SceneObject* preview_instance = model_roots.empty() ? nullptr : model_roots.back();
 
+    const MaterialRef preview_material = ResourceManager::get_material("preview_lit");
+    for (const Mesh* mesh : m_meshes)
+    {
+        mesh->set_material(preview_material);
+    }
+
+    m_root->force_update_self_and_children(); // refresh camera and child matrices
+    m_current_camera->update(0.0f);
+
     const GLuint thumbnail_id = Renderer::process_asset_captures();
     model->set_thumbnail_id(thumbnail_id);
     
@@ -399,6 +408,19 @@ void Scene::capture_model_preview(const ModelRef& model)
 
 void Scene::recapture_all_model_previews()
 {
+    // Add runtime forward shading material for previewing assets
+    if (!ResourceManager::Materials.contains("preview_lit"))
+    {
+        auto* material = new Material("", "preview_lit", ResourceManager::get_shader("lit"));
+        material->set_bool("material.use_diffuse_texture", false);
+        material->set_bool("material.use_specular_texture", false);
+        material->set_bool("material.use_normal_texture", false);
+        material->set_bool("material.use_gamma_correction", true);
+        material->set_float("material.gamma", 2.2f);
+        material->set_vec4("material.surface_parameters", glm::vec4(0.15f, 0.8f, 0.5f, 32.0f));
+        ResourceManager::add_material("preview_lit", material);
+    }
+
     const int original_viewport_width = EventManager::get_viewport_width();
     const int original_viewport_height = EventManager::get_viewport_height();
     EventManager::set_viewport_width(PREVIEW_THUMBNAIL_SIZE);

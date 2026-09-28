@@ -39,7 +39,7 @@ void SceneManager::initialize()
 {
     scene = new Scene();
     asset_preview_scene = new Scene(true);
-    asset_preview_scene = nullptr;
+    asset_preview_scene->recapture_all_model_previews();
 
     B3D_LOG_INFO("Scene Manager initialized with one Scene instance...");
 }
@@ -53,6 +53,7 @@ void SceneManager::update()
 void SceneManager::shutdown()
 {
     scene = nullptr;
+    delete asset_preview_scene;
     asset_preview_scene = nullptr;
 }
 

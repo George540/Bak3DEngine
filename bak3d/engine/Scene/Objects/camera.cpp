@@ -165,6 +165,7 @@ void Camera::update(float dt)
 	m_camera_data_ubo->bind_buffer_sub_data(glm::value_ptr(get_view_matrix()), MAT4_SIZE, MAT4_SIZE);
 	m_camera_data_ubo->bind_buffer_sub_data(glm::value_ptr(glm::vec4(transform.get_local_position(), 1.0f)), VEC4_SIZE, 2 * MAT4_SIZE);
 	m_camera_data_ubo->unbind();
+	m_camera_data_ubo->bind_to_binding_point(0);
 
 	SceneObject::update(dt);
 }

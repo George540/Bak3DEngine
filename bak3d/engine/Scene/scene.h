@@ -126,6 +126,8 @@ public:
 	std::vector<ParticleSystem*>& get_all_particle_systems() { return m_particle_systems; }
 	std::vector<AdvancedParticleSystem*>& get_all_advanced_particle_systems() { return m_advanced_particle_systems; }
 
+	void recapture_all_model_previews();
+	
 	void update(float dt);
 
 private:
@@ -139,7 +141,6 @@ private:
 	void unregister_object(SceneObject* object);
 
 	auto capture_model_preview(const ModelRef& model) -> void;
-	void recapture_all_model_previews();
 
 	void delete_selected_object();
 	

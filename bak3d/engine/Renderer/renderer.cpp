@@ -213,37 +213,42 @@ void Renderer::draw_quad()
 
 GLuint Renderer::process_asset_captures()
 {
-	if (!SceneManager::get_asset_preview_scene() || !r_preview_fbo)
+	Scene* preview_scene = SceneManager::get_asset_preview_scene();
+	if (!preview_scene || !r_preview_fbo || !preview_scene->get_current_camera())
 	{
 		return 0;
 	}
 
-	if (const Camera* camera = SceneManager::get_asset_preview_scene()->get_current_camera())
+	LightRenderer::update_and_upload_data(preview_scene->get_all_lights(), preview_scene->get_current_camera()->get_frustum());
+
+	r_preview_fbo->bind();
+	glClearColor(0.15f, 0.15f, 0.18f, 1.0f);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glEnable(GL_DEPTH_TEST);
+	glDepthFunc(GL_LESS);
+	glEnable(GL_CULL_FACE);
+
+	for (const Mesh* mesh : preview_scene->get_all_meshes())
 	{
-		LightRenderer::update_and_upload_data(SceneManager::get_asset_preview_scene()->get_all_lights(), camera->get_frustum());
-
-		r_preview_fbo->bind();
-
-		glClearColor(0.15f, 0.15f, 0.18f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		glEnable(GL_DEPTH_TEST);
-		glDepthFunc(GL_LESS);
-		glEnable(GL_CULL_FACE);
-
-		for (const Mesh* mesh : SceneManager::get_asset_preview_scene()->get_all_meshes())
-		{
-			mesh->draw();
-		}
-
-		glDisable(GL_CULL_FACE);
-		glDisable(GL_DEPTH_TEST);
-
-		r_preview_fbo->unbind();
-
-		return r_preview_fbo->get_color_texture(0);
+		mesh->draw();
 	}
 
-	return 0;
+	glDisable(GL_CULL_FACE);
+	glDisable(GL_DEPTH_TEST);
+
+	// Copy into a per-model texture
+	GLuint thumbnail_id = 0;
+	glGenTextures(1, &thumbnail_id);
+	glBindTexture(GL_TEXTURE_2D, thumbnail_id);
+	glCopyTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 0, 0, PREVIEW_THUMBNAIL_SIZE, PREVIEW_THUMBNAIL_SIZE, 0);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR); // no mipmaps (must not use default filter)
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glBindTexture(GL_TEXTURE_2D, 0);
+
+	r_preview_fbo->unbind();
+	return thumbnail_id;
 }
 
 void Renderer::initialize_screen_quad()
