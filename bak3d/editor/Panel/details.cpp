@@ -41,12 +41,10 @@ using namespace std;
 
 namespace
 {
-    constexpr ImVec2 IMAGE_BUTTON_PROPERTY_SIZE = ImVec2(40.0f, 40.0f);
-    constexpr ImVec2 IMAGE_BUTTON_PROPERTY_SIZE_BORDERED = ImVec2(50.0f, 50.0f);
+    constexpr ImVec2 IMAGE_BUTTON_PROPERTY_SIZE = ImVec2(50.0f, 50.0f);
     constexpr ImVec2 POPUP_SIZE = ImVec2(200, 300);
 
     unordered_map<aiTextureType, string> m_pending_texture_selections;
-    string asset_picker_item_id = "##sprite_picker";
 
     vector<string> m_light_type_items = { };
 
@@ -61,19 +59,21 @@ namespace
         }
     }
 
-    void draw_property_button_selection_item(string* selected_name, const char* label, const char* tooltip_desc)
+    // Generic picker button for any ResourceMap<T>. Returns true when the selection changed.
+    template<typename T>
+    bool draw_property_button_selection_item(string* selected_name, const char* label, const char* tooltip_desc,
+                                             const ResourceMap<T>& resource_map, const char* popup_title,
+                                             const function<bool(const Asset*)>& filter = nullptr)
     {
-        // Make popup ID as unique as possible to avoid duplicates
-        asset_picker_item_id = "##" + *selected_name + label;
-        const TextureRef current_tex = selected_name->empty()
-            ? ResourceManager::get_texture("particle.png")
-            : ResourceManager::get_texture(*selected_name);
+        const string popup_id = string("##picker_") + label;
+        const string before_pick = *selected_name;
 
-        const ImTextureID preview_id = (current_tex && current_tex.is_valid())
-            ? current_tex->get_texture_id()
-            : 0;
+        ImTextureID preview_id = 0;
+        if (!selected_name->empty() && resource_map.contains(*selected_name))
+        {
+            preview_id = ImGuiB3D::GetAssetPreviewTextureId(resource_map.get(*selected_name).ref()->asset);
+        }
 
-        // Button that opens the picker
         if (ImGuiB3D::PropertyImageButton(label, tooltip_desc, preview_id, IMAGE_BUTTON_PROPERTY_SIZE))
         {
             const ImVec2 mouse_pos = ImGui::GetMousePos();
@@ -81,8 +81,6 @@ namespace
             const ImVec2 work_pos  = viewport->WorkPos;
             const ImVec2 work_size = viewport->WorkSize;
 
-            // Clamp based on viewport's work size and position.
-            // Avoid popup being places outside the viewport's context.
             ImVec2 final_pos = mouse_pos;
             if (final_pos.x + POPUP_SIZE.x > work_pos.x + work_size.x)
             {
@@ -92,93 +90,20 @@ namespace
             {
                 final_pos.y = work_pos.y + work_size.y - POPUP_SIZE.y;
             }
-
             final_pos.x = ImMax(final_pos.x, work_pos.x);
             final_pos.y = ImMax(final_pos.y, work_pos.y);
 
             ImGui::SetNextWindowPos(final_pos);
-            ImGui::OpenPopup(asset_picker_item_id.c_str());
+            ImGui::OpenPopup(popup_id.c_str());
         }
 
-        ImGuiB3D::AssetPickerPopup(
-            asset_picker_item_id.c_str(),
-            "Sprite Selection",
-            ResourceManager::Textures,
-            selected_name
-        );
-    }
+        ImGuiB3D::AssetPickerPopup(popup_id.c_str(), popup_title, resource_map, selected_name, filter);
 
-    void draw_texture_property_section(const MaterialRef& material, const string& texture_type_name, const aiTextureType texture_type, const string& parameter_name, float& surface_parameter)
-    {
-        string texture_pascal = texture_type_name;
-        texture_pascal[0] = toupper(static_cast<unsigned char>(texture_pascal[0]));
+        ImGui::SameLine();
 
-        // Toggle
-        const string use_key = "material.use_" + texture_type_name + "_texture";
-        bool use_texture = material->has_uniform(use_key)
-                           ? material->get_bool(use_key)
-                           : false;
-        ImGuiB3D::PropertyToggle(("Use " + texture_pascal + " Texture").c_str(), &use_texture);
-        material->set_bool(use_key, use_texture);
+        ImGui::Text("%s", selected_name->c_str());
 
-        // Slider
-        ImGui::BeginDisabled(use_texture);
-        if (!parameter_name.empty())
-        {
-            const string slider_label = texture_pascal + " Slider";
-            ImGuiB3D::PropertySliderFloat(slider_label.c_str(), &surface_parameter,
-                                          0.0f, 1.0f, "%.3f");
-        }
-        ImGui::EndDisabled();
-
-        // Texture Picker
-        const string label_name = texture_pascal + " Texture";
-        const bool has_texture  = material->has_texture_of_type(texture_type);
-
-        string& pending = m_pending_texture_selections[texture_type];
-        if (has_texture)
-        {
-            pending = material->get_texture_by_type(texture_type);
-        }
-
-        const string before_pick = pending;
-
-        if (has_texture)
-        {
-            draw_property_button_selection_item(&pending, label_name.c_str(), nullptr);
-
-            ImGui::SameLine();
-            const string remove_id = "X##remove_" + texture_type_name;
-            if (ImGui::Button(remove_id.c_str(), ImVec2(22, 22)))
-            {
-                material->remove_texture_by_type(texture_type);
-                pending.clear(); // reset pending so the next frame shows "None"
-            }
-        }
-        else
-        {
-            const string popup_id = "##asset_picker_none_" + texture_type_name;
-
-            if (ImGuiB3D::PropertyButton(label_name.c_str(), "None", nullptr,
-                                         IMAGE_BUTTON_PROPERTY_SIZE_BORDERED))
-            {
-                ImGui::OpenPopup(popup_id.c_str());
-            }
-
-            ImGuiB3D::AssetPickerPopup(
-                popup_id.c_str(),
-                (texture_pascal + " Selection").c_str(),
-                ResourceManager::Textures,
-                &pending);
-        }
-
-        // Write back if a new selection has been made
-        if (pending != before_pick && !pending.empty())
-        {
-            material->set_texture_by_type(texture_type, pending);
-        }
-
-        ImGui::Spacing();
+        return *selected_name != before_pick;
     }
 }
 
@@ -328,14 +253,32 @@ void Details::draw_renderable_object_section(RenderableObject* selected_renderab
         ImGuiB3D::PropertyToggle("Visible", &is_visible, "Whether object gets drawn every frame.");
         selected_renderable->set_visible(is_visible);
 
-        // @TODO: Make them selectable with an image button?
-        if (selected_renderable->get_material())
+        if (selected_renderable->get_object_type() == SceneObjectType::Mesh)
         {
-            ImGui::Text("Material: %s", selected_renderable->get_material()->get_object_name().c_str());
+            // Material
+            string material_name = selected_renderable->has_material() ? ResourceManager::Materials.find_name(selected_renderable->get_material().operator->()) : "";
+            if (draw_property_button_selection_item(&material_name, "Material", "Select the material used to render this object.", ResourceManager::Materials, "Material Selection"))
+            {
+                selected_renderable->set_material(ResourceManager::get_material(material_name));
+            }
+
+            // Mesh (MeshData only; hides Grid/Quad layouts)
+            string mesh_name = selected_renderable->has_mesh() ? ResourceManager::Meshes.find_name(selected_renderable->get_mesh().operator->()) : "";
+            if (draw_property_button_selection_item(&mesh_name, "Mesh", "Select the mesh geometry of this object.", ResourceManager::Meshes, "Mesh Selection", [](const Asset* asset) { return dynamic_cast<const MeshData*>(asset) != nullptr; }))
+            {
+                selected_renderable->set_mesh(ResourceManager::get_mesh(mesh_name));
+            }
         }
-        if (selected_renderable->get_mesh())
+        else
         {
-            ImGui::Text("Mesh: %s", selected_renderable->get_mesh()->get_object_name().c_str());
+            if (selected_renderable->get_material())
+            {
+                ImGui::Text("Material: %s", selected_renderable->get_material()->get_object_name().c_str());
+            }
+            if (selected_renderable->get_mesh())
+            {
+                ImGui::Text("Mesh: %s", selected_renderable->get_mesh()->get_object_name().c_str());
+            }
         }
 
         ImGui::TreePop();
@@ -649,7 +592,7 @@ void Details::draw_particle_emitter_section(ParticleEmitter& emitter)
             // Sprite
             string selected_sprite_name =  emitter.get_texture() ? emitter.get_texture()->get_file_name() : "particle_default.png";
 
-            draw_property_button_selection_item(&selected_sprite_name, "Sprite", "Select particle sprite for current emitter.");
+            draw_property_button_selection_item(&selected_sprite_name, "Sprite", "Select particle sprite for current emitter.", ResourceManager::Textures, "Sprite Selection");
 
             emitter.set_texture(ResourceManager::get_texture(selected_sprite_name));
 

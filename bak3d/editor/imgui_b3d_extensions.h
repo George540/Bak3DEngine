@@ -67,13 +67,15 @@ public:
 
     static bool MultiSpacing(int num_spaces);
 
+    static ImTextureID GetAssetPreviewTextureId(const Asset* asset);
     /*
      * Generic asset picker popup.
      *
      * popup_id       - unique ImGui ID string for this popup (e.g. "##sprite_picker")
      * separator_text - label shown above the search bar
      * asset_map      - any ResourceMap<T>; iterated to build the grid
-     * texture_name   - string address of texture to assing
+     * selected_name  - string address of selected asset name
+     * filter         - optional filter algorithm for filtering specific types of assets of the same type (ex: Filtering GridData from a pool of PrimitiveData)
      * tile_size      - icon size in pixels (default 56)
      *
      * Returns true the frame a selection is made.
@@ -90,7 +92,8 @@ public:
         const char*           popup_id,
         const char*           separator_text,
         const ResourceMap<T>& asset_map,
-        std::string*          texture_name,
+        std::string*          selected_name,
+        const std::function<bool(const Asset*)>& filter = nullptr,
         const float           tile_size = 50.0f)
     {
         static std::unordered_map<std::string, std::string> s_search_buffers;
@@ -98,8 +101,6 @@ public:
 
         const bool is_pop_up_open = ImGui::IsPopupOpen(popup_id);
 
-        // SetNextWindowSizeConstraints must be called before BeginPopup,
-        // in the same frame, at the same window level — this is correct.
         if (is_pop_up_open)
         {
             ImGui::SetNextWindowSizeConstraints(ImVec2(200, 300), ImVec2(400, 400));
@@ -107,7 +108,6 @@ public:
 
         if (ImGui::BeginPopup(popup_id, ImGuiWindowFlags_NoMove))
         {
-            // Header fixed in viewport space
             ImGui::SeparatorText(separator_text);
 
             char search_buf[64] = {};
@@ -115,48 +115,48 @@ public:
             std::memcpy(search_buf, search.c_str(), copy_len);
 
             ImGui::SetNextItemWidth(-1.0f);
-            if (ImGui::InputTextWithHint("##asset_picker_search", "Search...",
-                                         search_buf, IM_ARRAYSIZE(search_buf)))
+            if (ImGui::InputTextWithHint("##asset_picker_search", "Search...", search_buf, IM_ARRAYSIZE(search_buf)))
             {
                 search = search_buf;
             }
 
             ImGui::Spacing();
 
-            // Scrollable texture selection region
             const ImVec2 availableSpace = ImGui::GetContentRegionAvail();
             const std::string scrollable_region_id = std::string("##ScrollableRegion_") + popup_id;
             if (ImGui::BeginChild(scrollable_region_id.c_str(), availableSpace, ImGuiChildFlags_None, ImGuiWindowFlags_None))
             {
                 for (auto& [name, asset_ref] : asset_map.all())
                 {
+                    // Skip if asset is not in the search
                     if (!search.empty() && !StringContainsIgnoreCase(name, search))
+                    {
                         continue;
+                    }
 
-                    Asset* asset = asset_ref.ref()->asset;
+                    // Skip if asset is null
+                    const Asset* asset = asset_ref.ref()->asset;
                     if (!asset)
-                        continue;
-
-                    const auto texture_asset = dynamic_cast<Texture2D*>(asset);
-
-                    if (texture_asset->is_editor_texture())
                     {
                         continue;
                     }
 
-                    ImTextureID text_id = 0;
-                    if (texture_asset)
+                    // Skip if asset is an editor-related texture that is unusable
+                    if (const auto* texture = dynamic_cast<const Texture2D*>(asset); texture && texture->is_editor_texture())
                     {
-                        text_id = texture_asset->get_texture_id();
+                        continue;
                     }
-                    else
+
+                    // Skip if asset is not in the filter algorithm
+                    if (filter && !filter(asset))
                     {
-                        text_id = asset->get_object_id();
+                        continue;
                     }
-                    const ImVec2 icon_sz = ImVec2(tile_size, tile_size);
-                    if (ImGui::ImageButton(asset->get_file_name().c_str(), text_id, icon_sz, { 1, 1 }, { 0, 0 }))
+
+                    const ImVec2 icon_size = ImVec2(tile_size, tile_size);
+                    if (ImGui::ImageButton(name.c_str(), GetAssetPreviewTextureId(asset), icon_size, { 0, 1 }, { 1, 0 }))
                     {
-                        *texture_name = asset->get_file_name();
+                        *selected_name = name; // resource map key, not file name
                         ImGui::CloseCurrentPopup();
                     }
 
@@ -164,19 +164,19 @@ public:
                     {
                         AssetTooltip(asset);
                     }
-                
+
                     ImGui::SameLine();
 
-                    const std::string trunc  = TruncateLabel(name, ImGui::GetContentRegionAvail().x);
+                    const std::string trunc = TruncateLabel(name, ImGui::GetContentRegionAvail().x);
                     ImGui::TextUnformatted(trunc.c_str());
                 }
 
                 ImGui::EndChild();
             }
-            
+
             ImGui::EndPopup();
         }
-        
+
         return is_pop_up_open;
     }
 };

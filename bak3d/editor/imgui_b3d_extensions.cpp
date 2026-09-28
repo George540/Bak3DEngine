@@ -426,6 +426,19 @@ bool ImGuiB3D::MultiSpacing(int num_spaces)
     return true;
 }
 
+ImTextureID ImGuiB3D::GetAssetPreviewTextureId(const Asset* asset)
+{
+    if (!asset)
+    {
+        return 0;
+    }
+    if (const auto* texture = dynamic_cast<const Texture2D*>(asset))
+    {
+        return texture->get_texture_id();
+    }
+    return asset->get_thumbnail_id(); // 0 if no preview was captured
+}
+
 bool ImGuiB3D::SeparatorWithSpacing(const int num_spaces)
 {
     MultiSpacing(num_spaces);

@@ -74,6 +74,18 @@ public:
         return it->second;
     }
 
+    std::string find_name(const T* asset) const
+    {
+        for (const auto& [name, ref] : m_map)
+        {
+            if (ref.ref()->asset == asset)
+            {
+                return name;
+            }
+        }
+        return {};
+    }
+
     bool contains(const std::string& name) const
     {
         return m_map.contains(name);
