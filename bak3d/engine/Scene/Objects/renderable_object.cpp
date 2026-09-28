@@ -31,6 +31,7 @@ THE SOFTWARE.
 
 #include "Asset/mesh_data.h"
 #include "Asset/resource_manager.h"
+#include "Renderer/light_renderer.h"
 #include "Scene/scene.h"
 #include "Scene/scene_manager.h"
 
@@ -119,6 +120,7 @@ void InstancedRenderableObject::draw() const
 
 	(*m_material_slot)->bind_textures_cache();
 	(*m_material_slot)->set_mat4("model", transform.get_global_model_matrix()); // batch root offset only
+	(*m_material_slot)->set_int("active_light_count", LightRenderer::get_visible_light_count());
 	apply_material();
 
 	m_instanced_vao->bind();

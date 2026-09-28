@@ -106,7 +106,7 @@ public:
 		}
 	}
 
-	void instantiate_model(const ModelRef& model, SceneObject* parent = nullptr, glm::vec3 position = glm::vec3(0.0f));
+	ModelNodeObject* instantiate_model(const ModelRef& model, SceneObject* parent = nullptr, glm::vec3 position = glm::vec3(0.0f));
 
 	SceneObject* get_root() const { return m_root.get(); }
 	void set_current_camera(Camera* camera) { m_current_camera = camera; }
@@ -126,7 +126,10 @@ public:
 	std::vector<ParticleSystem*>& get_all_particle_systems() { return m_particle_systems; }
 	std::vector<AdvancedParticleSystem*>& get_all_advanced_particle_systems() { return m_advanced_particle_systems; }
 
-	void recapture_all_model_previews();
+	void capture_all_asset_previews();
+	void capture_model_preview(const ModelRef& model);
+	void capture_material_preview(const MaterialRef& material);
+	void capture_mesh_preview(const MeshRef& mesh);
 	
 	void update(float dt);
 
@@ -140,7 +143,9 @@ private:
 	void register_object(SceneObject* object);
 	void unregister_object(SceneObject* object);
 
-	auto capture_model_preview(const ModelRef& model) -> void;
+	GLuint render_preview_thumbnail() const;
+	void frame_camera_on_meshes() const;
+	void finish_preview_capture(Asset* asset, SceneObject* preview_object);
 
 	void delete_selected_object();
 	

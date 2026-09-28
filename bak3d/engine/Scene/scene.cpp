@@ -33,7 +33,6 @@ THE SOFTWARE.
 #include "editor.h"
 #include "Asset/model.h"
 #include "Asset/resource_manager.h"
-#include "Core/global_settings.h"
 #include "Input/event_manager.h"
 #include "Objects/camera.h"
 #include "Objects/grid.h"
@@ -41,6 +40,58 @@ THE SOFTWARE.
 #include "Renderer/renderer.h"
 
 using namespace std;
+
+namespace
+{
+    bool is_previewable_shader(const ShaderRef& shader)
+    {
+        if (!shader.is_valid() || !shader->is_shader_compiled()) return false;
+        const string& name = shader->get_object_name();
+        return name == "gbuffer" || name == "lit";
+    }
+
+    // Draws deferred (gbuffer) materials through the forward "lit" shader, keeping textures and uniforms
+    struct PreviewShaderOverride
+    {
+        vector<pair<Material*, ShaderRef>> saved;
+
+        explicit PreviewShaderOverride(const vector<Mesh*>& meshes)
+        {
+            const ShaderRef lit = ResourceManager::get_shader("lit");
+            if (!lit.is_valid() || !lit->is_shader_compiled())
+            {
+                return;
+            }
+
+            for (const Mesh* mesh : meshes)
+            {
+                if (!mesh->has_material())
+                {
+                    continue;
+                }
+
+                Material* material = mesh->get_material().operator->();
+                
+                if (ranges::any_of(saved, [material](const auto& e){ return e.first == material; }))
+                {
+                    continue;
+                }
+
+                const ShaderRef original = material->get_shader();
+                if (original.is_valid() && original->get_object_name() == "gbuffer")
+                {
+                    saved.emplace_back(material, original);
+                    material->set_shader(lit);
+                }
+            }
+        }
+
+        ~PreviewShaderOverride()
+        {
+            for (auto& [material, shader] : saved) material->set_shader(shader);
+        }
+    };
+}
 
 Scene::Scene(const bool is_preview_scene)
 {
@@ -63,11 +114,11 @@ Scene::~Scene()
 
 }
 
-void Scene::instantiate_model(const ModelRef& model, SceneObject* parent, glm::vec3 position)
+ModelNodeObject* Scene::instantiate_model(const ModelRef& model, SceneObject* parent, glm::vec3 position)
 {
     if (!model || !model->get_root_node())
     {
-        return;
+        return nullptr;
     }
 
     const ModelNode* root_node = model->get_root_node();
@@ -84,6 +135,8 @@ void Scene::instantiate_model(const ModelRef& model, SceneObject* parent, glm::v
     {
         instantiate_model_mesh(model, model_root, child_node.get(), root_node->local_transform);
     }
+
+    return model_root;
 }
 
 void Scene::instantiate_model_mesh(const ModelRef& model, SceneObject* model_root, const ModelNode* model_node, const glm::mat4& accumulated_transform)
@@ -161,12 +214,10 @@ void Scene::initialize_preview_scene_objects()
     Light* light = instantiate<Light>(nullptr, LightType::Directional, glm::vec3(-2.5f, 2.5f, 2.5f));
     light->set_direction(glm::normalize(-light->transform.get_local_position()));
 
-    recapture_all_model_previews();
-
     B3D_LOG_INFO("Preview scene initialized.");
 }
 
-std::string Scene::get_unique_object_name(const std::string& name) const
+string Scene::get_unique_object_name(const string& name) const
 {
      bool name_exists = false;
 
@@ -197,21 +248,21 @@ std::string Scene::get_unique_object_name(const std::string& name) const
     // The requested name already exists. Treat the entire requested name as the base:
     // - Light -> Light_1
     // - Light_5 -> Light_5_1
-    const std::string prefix = name + "_";
+    const string prefix = name + "_";
     int highest_suffix = 0;
     for (const auto& objects : m_scene_objects_indexed | views::values)
     {
         for (const SceneObject* object : objects)
         {
             assert(object);
-            const std::string& other_name = object->get_object_name();
+            const string& other_name = object->get_object_name();
 
             if (!other_name.starts_with(prefix))
             {
                 continue;
             }
 
-            const std::string suffix = other_name.substr(prefix.size());
+            const string suffix = other_name.substr(prefix.size());
 
             // Only care about a pure numeric suffix
             if (suffix.empty())
@@ -219,17 +270,17 @@ std::string Scene::get_unique_object_name(const std::string& name) const
                 continue;
             }
 
-            if (!ranges::all_of(suffix, [](const char c){ return std::isdigit(static_cast<unsigned char>(c));}))
+            if (!ranges::all_of(suffix, [](const char c){ return isdigit(static_cast<unsigned char>(c));}))
             {
                 continue;
             }
 
-            const int suffix_number = std::stoi(suffix);
-            highest_suffix = std::max(highest_suffix, suffix_number);
+            const int suffix_number = stoi(suffix);
+            highest_suffix = max(highest_suffix, suffix_number);
         }
     }
 
-    return name + "_" + std::to_string(highest_suffix + 1);
+    return name + "_" + to_string(highest_suffix + 1);
 }
 
 void Scene::register_object(SceneObject* object)
@@ -237,9 +288,9 @@ void Scene::register_object(SceneObject* object)
     assert(object);
 
     const SceneObjectType type = object->object_type;
-    const std::string original_name = object->get_object_name();
+    const string original_name = object->get_object_name();
 
-    const std::string unique_name = get_unique_object_name(original_name);
+    const string unique_name = get_unique_object_name(original_name);
     if (unique_name != original_name)
     {
         B3D_LOG_INFO( "Scene: object name '%s' already exists, renamed to '%s'.", original_name.c_str(), unique_name.c_str());
@@ -375,66 +426,123 @@ void Scene::unregister_object(SceneObject* object)
     }
 }
 
+GLuint Scene::render_preview_thumbnail() const
+{
+    m_root->force_update_self_and_children(); // preview scene is never ticked
+    frame_camera_on_meshes();
+    m_current_camera->force_update_self_and_children();
+    m_current_camera->update(0.0f); // upload UBO and rebinds binding 0
+
+    const PreviewShaderOverride shader_override(m_meshes);
+    return Renderer::process_asset_captures();
+}
+
+void Scene::frame_camera_on_meshes() const
+{
+    glm::vec3 min_p(FLT_MAX), max_p(-FLT_MAX);
+
+    // Use simple AABB measurements from the min/max vertex world positions to frame the asset inside the preview image correctly.
+    // Small or big asset, it will be framed inside the thumbnail correctly.
+    for (const Mesh* mesh : m_meshes)
+    {
+        if (!mesh->has_mesh())
+        {
+            continue;
+        }
+        const auto* data = dynamic_cast<const MeshData*>(mesh->get_mesh().operator->());
+        if (!data)
+        {
+            continue;
+        }
+
+        const glm::mat4 model = mesh->transform.get_global_model_matrix();
+        for (const Vertex& v : data->get_vertices())
+        {
+            const glm::vec3 p = glm::vec3(model * glm::vec4(v.position, 1.0f));
+            min_p = glm::min(min_p, p);
+            max_p = glm::max(max_p, p);
+        }
+    }
+
+    if (min_p.x > max_p.x) { min_p = glm::vec3(-0.5f); max_p = glm::vec3(0.5f); }
+
+    const glm::vec3 center = (min_p + max_p) * 0.5f;
+    const float radius = glm::max(glm::length(max_p - min_p) * 0.5f, 0.001f);
+    const float distance = radius / glm::sin(glm::radians(22.5f)) * 1.15f; // camera fov is 45 deg
+
+    const glm::vec3 offset_direction = glm::normalize(glm::vec3(0.6f, 0.5f, 1.0f)); // same side as the preview light
+    const glm::vec3 look_direction = -offset_direction;
+
+    const float pitch = glm::degrees(glm::asin(look_direction.y));
+    const float yaw = glm::degrees(glm::atan(-look_direction.x, -look_direction.z));
+
+    m_current_camera->transform.set_local_position(center + offset_direction * distance);
+    m_current_camera->transform.set_local_euler_rotation(glm::vec3(pitch, yaw, 0.0f));
+}
+
+void Scene::finish_preview_capture(Asset* asset, SceneObject* preview_object)
+{
+    if (!preview_object)
+    {
+        return;
+    }
+
+    const GLuint thumbnail_id = render_preview_thumbnail();
+
+    if (const GLuint old_id = asset->get_thumbnail_id(); old_id != 0)
+    {
+        glDeleteTextures(1, &old_id);
+    }
+    asset->set_thumbnail_id(thumbnail_id);
+
+    destroy(preview_object);
+}
+
+void Scene::capture_all_asset_previews()
+{
+    // Temporarily set the viewport size to the thumbnail size to prepare the asset scene for capturing asset thumbnails
+    const int original_w = EventManager::get_viewport_width();
+    const int original_h = EventManager::get_viewport_height();
+    EventManager::set_viewport_width(PREVIEW_THUMBNAIL_SIZE);
+    EventManager::set_viewport_height(PREVIEW_THUMBNAIL_SIZE);
+
+    for (const auto& model : ResourceManager::Models.all() | views::values) capture_model_preview(model);
+    for (const auto& material : ResourceManager::Materials.all() | views::values) capture_material_preview(material);
+    for (const auto& mesh : ResourceManager::Meshes.all() | views::values) capture_mesh_preview(mesh);
+
+    EventManager::set_viewport_width(original_w);
+    EventManager::set_viewport_height(original_h);
+}
+
 void Scene::capture_model_preview(const ModelRef& model)
 {
     if (!model || !model->get_root_node())
     {
         return;
     }
-
-    instantiate_model(model, nullptr, glm::vec3(0.0f));
-    const auto& model_roots = get_all_objects_of_type(SceneObjectType::Model);
-    SceneObject* preview_instance = model_roots.empty() ? nullptr : model_roots.back();
-
-    const MaterialRef preview_material = ResourceManager::get_material("preview_lit");
-    for (const Mesh* mesh : m_meshes)
-    {
-        mesh->set_material(preview_material);
-    }
-
-    m_root->force_update_self_and_children(); // refresh camera and child matrices
-    m_current_camera->update(0.0f);
-
-    const GLuint thumbnail_id = Renderer::process_asset_captures();
-    model->set_thumbnail_id(thumbnail_id);
-    
-    if (preview_instance)
-    {
-        destroy(preview_instance);
-    }
-
-    B3D_LOG_INFO("Captured asset preview for model '%s'.", model->get_file_name().c_str());
+    SceneObject* instance = instantiate_model(model, nullptr, glm::vec3(0.0f));
+    finish_preview_capture(model.operator->(), instance);
 }
 
-void Scene::recapture_all_model_previews()
+void Scene::capture_material_preview(const MaterialRef& material)
 {
-    // Add runtime forward shading material for previewing assets
-    if (!ResourceManager::Materials.contains("preview_lit"))
+    if (!material || !is_previewable_shader(material->get_shader()))
     {
-        auto* material = new Material("", "preview_lit", ResourceManager::get_shader("lit"));
-        material->set_bool("material.use_diffuse_texture", false);
-        material->set_bool("material.use_specular_texture", false);
-        material->set_bool("material.use_normal_texture", false);
-        material->set_bool("material.use_gamma_correction", true);
-        material->set_float("material.gamma", 2.2f);
-        material->set_vec4("material.surface_parameters", glm::vec4(0.15f, 0.8f, 0.5f, 32.0f));
-        ResourceManager::add_material("preview_lit", material);
+        return;
     }
+    SceneObject* instance = instantiate<Mesh>(nullptr, glm::vec3(0.0f), "MaterialPreview", material, "Sphere");
+    finish_preview_capture(material.operator->(), instance);
+}
 
-    const int original_viewport_width = EventManager::get_viewport_width();
-    const int original_viewport_height = EventManager::get_viewport_height();
-    EventManager::set_viewport_width(PREVIEW_THUMBNAIL_SIZE);
-    EventManager::set_viewport_height(PREVIEW_THUMBNAIL_SIZE);
-
-    m_current_camera->update(0.0f);
-    
-    for (const auto& model : ResourceManager::Models.all() | views::values)
+void Scene::capture_mesh_preview(const MeshRef& mesh)
+{
+    // Only Mesh data can be previewed. Skip Grid/Quad layouts
+    if (!mesh || !dynamic_cast<MeshData*>(mesh.operator->()))
     {
-        capture_model_preview(model);
+        return;
     }
-
-    EventManager::set_viewport_width(original_viewport_width);
-    EventManager::set_viewport_height(original_viewport_height);
+    SceneObject* instance = instantiate<Mesh>(nullptr, mesh, mesh->get_object_name()); // default material
+    finish_preview_capture(mesh.operator->(), instance);
 }
 
 void Scene::delete_selected_object()

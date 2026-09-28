@@ -39,7 +39,7 @@ void SceneManager::initialize()
 {
     scene = new Scene();
     asset_preview_scene = new Scene(true);
-    asset_preview_scene->recapture_all_model_previews();
+    asset_preview_scene->capture_all_asset_previews();
 
     B3D_LOG_INFO("Scene Manager initialized with one Scene instance...");
 }

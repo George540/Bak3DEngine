@@ -237,30 +237,30 @@ void AssetPanel::draw_asset_tile(const string& name, Asset* asset)
     const ImVec2 image_size = { m_tile_size, m_tile_size };
 
     const auto texture_asset = dynamic_cast<Texture2D*>(asset);
-    ImTextureID text_id;
+    const GLuint thumbnail_id = asset->get_thumbnail_id();
+    ImTextureID texture_id;
     if (texture_asset)
     {
-        text_id = texture_asset->get_texture_id();
+        texture_id = texture_asset->get_texture_id();
     }
-    else if (const auto model_asset = dynamic_cast<Model*>(asset))
+    else if (thumbnail_id != 0)
     {
-        const GLuint preview_id = model_asset->get_thumbnail_id();
-        text_id = preview_id != 0 ? preview_id : asset->get_object_id();
+        texture_id = thumbnail_id;
     }
     else
     {
-        text_id = asset->get_object_id();
+        texture_id = asset->get_object_id();
     }
 
     ImGui::PushID(name.c_str());
 
-    string label_asset = "##" + name;
+    const string label_asset = "##" + name;
     ImGui::BeginChild(label_asset.c_str(), ImVec2(image_size.x * 2, image_size.y * 1.3f));
     {
         // Image button
         const bool clicked = ImGui::ImageButton(
             label_asset.c_str(),
-            text_id,
+            texture_id,
             image_size,
             { 0, 1 }, { 1, 0 }, // UV coords (flip second pair for OpenGL if needed)
             ImVec4(0, 0, 0, 0), // background colour
@@ -277,7 +277,7 @@ void AssetPanel::draw_asset_tile(const string& name, Asset* asset)
             ImGui::GetWindowDrawList()->AddRectFilled(rect_min, rect_max, overlay_color, 4.0f);
         }
 
-        if (const auto model_asset = dynamic_cast<Model*>(asset); clicked)
+        if (const auto model_asset = dynamic_cast<Model*>(asset); clicked && model_asset)
         {
             const glm::vec3 spawn_position = SceneManager::get_current_scene()->process_spawn_position();
             SceneObject* object_to_parent = SceneManager::get_current_scene()->get_selected_scene_object();
@@ -361,7 +361,9 @@ void AssetPanel::insert_to_tree(const ResourceMap<T>& map)
 
 void AssetPanel::build_asset_tree()
 {
-    const size_t current_assets_count = ResourceManager::Models.size() + ResourceManager::Textures.size();
+    const size_t current_assets_count = ResourceManager::Models.size()
+                                        + ResourceManager::Textures.size()
+                                        + ResourceManager::Materials.size();
     if (current_assets_count == m_last_asset_count)
     {
         return;
@@ -375,5 +377,6 @@ void AssetPanel::build_asset_tree()
     m_root.name = m_root.full_path.substr(root_folder_index + 1);
     insert_to_tree(ResourceManager::Models);
     insert_to_tree(ResourceManager::Textures);
+    insert_to_tree(ResourceManager::Materials);
     m_last_asset_count = current_assets_count;
 }

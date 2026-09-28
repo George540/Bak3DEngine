@@ -366,19 +366,32 @@ void ImGuiB3D::AssetTooltip(const Asset* asset)
         return;
     }
 
-    const auto* texture = dynamic_cast<const Texture2D*>(asset);
-    const ImTextureID tex_id = texture ? texture->get_texture_id() : asset->get_object_id();
+    const auto* texture_asset = dynamic_cast<const Texture2D*>(asset);
+    const GLuint thumbnail_id = asset->get_thumbnail_id();
+    ImTextureID texture_id;
+    if (texture_asset)
+    {
+        texture_id = texture_asset->get_texture_id();
+    }
+    else if (thumbnail_id != 0)
+    {
+        texture_id = thumbnail_id;
+    }
+    else
+    {
+        texture_id = asset->get_object_id();
+    }
 
     ImGui::BeginTooltip();
-    ImGui::Image(tex_id, { 128.0f, 128.0f }, { 1, 1 }, { 0, 0 });
+    ImGui::Image(texture_id, { 128.0f, 128.0f }, { 0, 1 }, { 1, 0 });
     ImGui::Separator();
     ImGui::Text("File:       %s", asset->get_file_name().c_str());
     ImGui::Text("Directory:  %s", asset->get_directory().c_str());
-    if (texture)
+    if (texture_asset)
     {
-        ImGui::Text("Resolution: %d x %d", texture->get_width(), texture->get_height());
-        ImGui::Text("Channels:   %d", texture->get_nb_color_channels());
-        ImGui::Text("Texture ID: %d", texture->get_texture_id());
+        ImGui::Text("Resolution: %d x %d", texture_asset->get_width(), texture_asset->get_height());
+        ImGui::Text("Channels:   %d", texture_asset->get_nb_color_channels());
+        ImGui::Text("Texture ID: %d", texture_asset->get_texture_id());
     }
     else if (const auto* model = dynamic_cast<const Model*>(asset))
     {

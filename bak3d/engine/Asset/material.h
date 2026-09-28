@@ -65,6 +65,7 @@ public:
 
     bool is_loaded() const { return m_shader.is_valid(); }
 
+    void set_shader(const ShaderRef& shader) { m_shader = shader; }
     ShaderRef get_shader() const { return m_shader; }
 
     void load_from_file(const std::string& path);
