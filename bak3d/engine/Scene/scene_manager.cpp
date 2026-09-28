@@ -31,11 +31,15 @@ namespace
 {
     // One instance for now. Could potentially make multiple viewport scenes or render capture scenes.
     Scene* scene = nullptr;
+
+    Scene* asset_preview_scene = nullptr;
 }
 
 void SceneManager::initialize()
 {
     scene = new Scene();
+    asset_preview_scene = new Scene(true);
+    asset_preview_scene = nullptr;
 
     B3D_LOG_INFO("Scene Manager initialized with one Scene instance...");
 }
@@ -49,9 +53,15 @@ void SceneManager::update()
 void SceneManager::shutdown()
 {
     scene = nullptr;
+    asset_preview_scene = nullptr;
 }
 
 Scene* SceneManager::get_current_scene()
 {
     return scene;
+}
+
+Scene* SceneManager::get_asset_preview_scene()
+{
+    return asset_preview_scene;
 }

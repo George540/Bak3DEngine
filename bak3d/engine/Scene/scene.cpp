@@ -38,12 +38,24 @@ THE SOFTWARE.
 #include "Objects/camera.h"
 #include "Objects/grid.h"
 #include "Objects/light.h"
+#include "Renderer/renderer.h"
 
 using namespace std;
 
-Scene::Scene()
+Scene::Scene(const bool is_preview_scene)
 {
-	initialize_default_scene_objects();
+    m_root = make_unique<SceneObject>(glm::vec3(0.0f), "SceneRoot");
+
+    m_current_camera = instantiate<Camera>(nullptr, glm::vec3(5.0f, 3.0f, 5.0f));
+
+    if (is_preview_scene)
+    {
+        initialize_preview_scene_objects();
+    }
+    else
+    {
+        initialize_default_scene_objects();
+    }
 }
 
 Scene::~Scene()
@@ -137,15 +149,21 @@ void Scene::update(float dt)
 
 void Scene::initialize_default_scene_objects()
 {
-    m_root = make_unique<SceneObject>(glm::vec3(0.0f), "SceneRoot");
-
-    m_current_camera = instantiate<Camera>(nullptr, glm::vec3(5.0f, 3.0f, 5.0f));
-
     instantiate<Grid>(nullptr);
     instantiate<Light>(nullptr, LightType::Point, glm::vec3(-2.5f, 2.5f, 2.5f));
     instantiate<Mesh>(nullptr, glm::vec3(0.0f), "Cube", ResourceManager::get_material("default_material"), "Cube");
     
-    B3D_LOG_INFO("Scene initialized.");
+    B3D_LOG_INFO("Default Scene initialized.");
+}
+
+void Scene::initialize_preview_scene_objects()
+{
+    instantiate<Grid>(nullptr);
+    instantiate<Light>(nullptr, LightType::Point, glm::vec3(-2.5f, 2.5f, 2.5f));
+
+    recapture_all_model_previews();
+
+    B3D_LOG_INFO("Preview scene initialized.");
 }
 
 std::string Scene::get_unique_object_name(const std::string& name) const
@@ -355,6 +373,46 @@ void Scene::unregister_object(SceneObject* object)
             assert(false && "Cannot unregister SceneObjectType::Max");
             break;
     }
+}
+
+void Scene::capture_model_preview(const ModelRef& model)
+{
+    if (!model || !model->get_root_node())
+    {
+        return;
+    }
+
+    instantiate_model(model, nullptr, glm::vec3(0.0f));
+    const auto& model_roots = get_all_objects_of_type(SceneObjectType::Model);
+    SceneObject* preview_instance = model_roots.empty() ? nullptr : model_roots.back();
+
+    const GLuint thumbnail_id = Renderer::process_asset_captures();
+    model->set_thumbnail_id(thumbnail_id);
+    
+    if (preview_instance)
+    {
+        destroy(preview_instance);
+    }
+
+    B3D_LOG_INFO("Captured asset preview for model '%s'.", model->get_file_name().c_str());
+}
+
+void Scene::recapture_all_model_previews()
+{
+    const int original_viewport_width = EventManager::get_viewport_width();
+    const int original_viewport_height = EventManager::get_viewport_height();
+    EventManager::set_viewport_width(PREVIEW_THUMBNAIL_SIZE);
+    EventManager::set_viewport_height(PREVIEW_THUMBNAIL_SIZE);
+
+    m_current_camera->update(0.0f);
+    
+    for (const auto& model : ResourceManager::Models.all() | views::values)
+    {
+        capture_model_preview(model);
+    }
+
+    EventManager::set_viewport_width(original_viewport_width);
+    EventManager::set_viewport_height(original_viewport_height);
 }
 
 void Scene::delete_selected_object()

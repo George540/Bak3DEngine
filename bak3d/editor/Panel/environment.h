@@ -39,7 +39,6 @@ private:
     static void draw_general_settings();
     static void draw_post_processor_settings();
 
-    static void draw_rasterization_settings();
     static void draw_post_processing_settings();
 
     static void draw_color_grading_settings();

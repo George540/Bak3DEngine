@@ -37,7 +37,6 @@ const char* GlobalSettings::to_string(const GlobalSettingOption enum_setting)
         case GlobalSettingOption::EditorOverlayFlags_LightIconSize: return "Size";
         case GlobalSettingOption::ViewMode: return "View Mode";
         case GlobalSettingOption::BackgroundColor: return "Background Color";
-        case GlobalSettingOption::AA_MSAA_Enabled: return "MSAA Enabled";
         case GlobalSettingOption::AA_MSAA_Samples: return "MSAA Samples";
         case GlobalSettingOption::PostProcessing_Enabled: return "Enabled";
         case GlobalSettingOption::PostProcess_ColorGrading_Invert: return "Invert";
@@ -66,7 +65,6 @@ void GlobalSettings::initialize()
     global_settings[GlobalSettingOption::EditorOverlayFlags_LightIconSize] = 0.1f;
     global_settings[GlobalSettingOption::ViewMode] = 0;
     global_settings[GlobalSettingOption::BackgroundColor] = glm::vec4(0.133f, 0.168f, 0.2f, 1.0f);
-    global_settings[GlobalSettingOption::AA_MSAA_Enabled] = true;
     global_settings[GlobalSettingOption::AA_MSAA_Samples] = 4; // turns to 4x4 when passed to GLFW
     global_settings[GlobalSettingOption::PostProcessing_Enabled] = false;
     global_settings[GlobalSettingOption::PostProcess_ColorGrading_Invert] = false;

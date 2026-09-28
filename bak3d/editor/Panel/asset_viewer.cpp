@@ -237,7 +237,20 @@ void AssetPanel::draw_asset_tile(const string& name, Asset* asset)
     const ImVec2 image_size = { m_tile_size, m_tile_size };
 
     const auto texture_asset = dynamic_cast<Texture2D*>(asset);
-    const ImTextureID text_id = texture_asset ? texture_asset->get_texture_id() : asset->get_object_id();
+    ImTextureID text_id;
+    if (texture_asset)
+    {
+        text_id = texture_asset->get_texture_id();
+    }
+    else if (const auto model_asset = dynamic_cast<Model*>(asset))
+    {
+        const GLuint preview_id = model_asset->get_thumbnail_id();
+        text_id = preview_id != 0 ? preview_id : asset->get_object_id();
+    }
+    else
+    {
+        text_id = asset->get_object_id();
+    }
 
     ImGui::PushID(name.c_str());
 

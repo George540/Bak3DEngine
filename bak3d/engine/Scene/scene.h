@@ -43,7 +43,7 @@ using namespace std;
 class Scene
 {
 public:
-	Scene();
+	Scene(bool is_preview_scene = false);
 	~Scene();
 
 	template<typename T, typename... Args>
@@ -109,6 +109,7 @@ public:
 	void instantiate_model(const ModelRef& model, SceneObject* parent = nullptr, glm::vec3 position = glm::vec3(0.0f));
 
 	SceneObject* get_root() const { return m_root.get(); }
+	void set_current_camera(Camera* camera) { m_current_camera = camera; }
 	Camera* get_current_camera() const { return m_current_camera; }
 	std::vector<SceneObject*> get_all_objects_of_type(SceneObjectType type);
 	SceneObject* get_object_in_scene(SceneObjectType type, int index = 0);
@@ -129,11 +130,16 @@ public:
 
 private:
 	void initialize_default_scene_objects();
+	void initialize_preview_scene_objects();
+
 	void instantiate_model_mesh(const ModelRef& model, SceneObject* model_root, const ModelNode* model_node, const glm::mat4& accumulated_transform);
 	
 	std::string get_unique_object_name(const std::string& name) const;
 	void register_object(SceneObject* object);
 	void unregister_object(SceneObject* object);
+
+	auto capture_model_preview(const ModelRef& model) -> void;
+	void recapture_all_model_previews();
 
 	void delete_selected_object();
 	
@@ -149,4 +155,6 @@ private:
 	std::vector<Mesh*> m_meshes;
 	std::vector<ParticleSystem*> m_particle_systems;
 	std::vector<AdvancedParticleSystem*> m_advanced_particle_systems;
+
+	bool m_is_asset_preview_scene = false;
 };

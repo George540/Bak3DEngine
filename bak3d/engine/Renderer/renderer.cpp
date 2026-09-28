@@ -50,6 +50,7 @@ using namespace std;
 GLFWwindow* Renderer::r_window = nullptr;
 unique_ptr<MultisampleFrameBuffer> Renderer::r_msaa_fbo;
 unique_ptr<FrameBuffer> Renderer::r_main_fbo;
+unique_ptr<FrameBuffer> Renderer::r_preview_fbo;
 unique_ptr<FrameBuffer> Renderer::r_dbo;
 unique_ptr<UniformBuffer> Renderer::r_debug_view_ubo;
 unique_ptr<GBufferFrameBuffer> Renderer::r_gbuffer_fbo;
@@ -210,6 +211,41 @@ void Renderer::draw_quad()
 	}
 }
 
+GLuint Renderer::process_asset_captures()
+{
+	if (!SceneManager::get_asset_preview_scene() || !r_preview_fbo)
+	{
+		return 0;
+	}
+
+	if (const Camera* camera = SceneManager::get_asset_preview_scene()->get_current_camera())
+	{
+		LightRenderer::update_and_upload_data(SceneManager::get_asset_preview_scene()->get_all_lights(), camera->get_frustum());
+
+		r_preview_fbo->bind();
+
+		glClearColor(0.15f, 0.15f, 0.18f, 1.0f);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		glEnable(GL_DEPTH_TEST);
+		glDepthFunc(GL_LESS);
+		glEnable(GL_CULL_FACE);
+
+		for (const Mesh* mesh : SceneManager::get_asset_preview_scene()->get_all_meshes())
+		{
+			mesh->draw();
+		}
+
+		glDisable(GL_CULL_FACE);
+		glDisable(GL_DEPTH_TEST);
+
+		r_preview_fbo->unbind();
+
+		return r_preview_fbo->get_color_texture(0);
+	}
+
+	return 0;
+}
+
 void Renderer::initialize_screen_quad()
 {
 	m_quad = new Quad();
@@ -225,6 +261,7 @@ void Renderer::shutdown()
 	r_debug_view_ubo.reset();
 	r_gbuffer_fbo.reset();
 	r_wboit_fbo.reset();
+	r_preview_fbo.reset();
 }
 
 PagesData Renderer::get_pages_data()
@@ -264,6 +301,16 @@ void Renderer::initialize_buffers()
 		GL_NONE,
 		true,
 		"Framebuffer_Base");
+
+	// Asset Preview Frame Buffer
+	r_preview_fbo = make_unique<FrameBuffer>(
+		0,
+		nullptr,
+		PREVIEW_THUMBNAIL_SIZE,
+		PREVIEW_THUMBNAIL_SIZE,
+		GL_NONE,
+		true,
+		"Framebuffer_Preview");
 
 	// Debug View Frame Buffer: translate non-color attachments such as depth and AO into colored attachments)
 	r_dbo = make_unique<FrameBuffer>(

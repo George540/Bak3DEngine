@@ -142,59 +142,7 @@ void Environment::draw_post_processor_settings()
     ImGui::SetNextItemOpen(true, ImGuiCond_Once);
     if (ImGui::TreeNode("Effects"))
     {
-        draw_rasterization_settings();
         draw_post_processing_settings();
-
-        ImGui::TreePop();
-    }
-}
-
-void Environment::draw_rasterization_settings()
-{
-    ImGui::SetNextItemOpen(true, ImGuiCond_Once);
-    if (ImGui::TreeNode("Rasterization"))
-    {
-        bool msaa_enabled = GlobalSettings::get_global_setting_value<bool>(GlobalSettingOption::AA_MSAA_Enabled);
-        ImGuiB3D::PropertyToggle("MSAA", &msaa_enabled, "Toggle Multisample Anti-Aliasing");
-        GlobalSettings::set_global_setting<bool>(GlobalSettingOption::AA_MSAA_Enabled, msaa_enabled);
-
-        ImGui::BeginDisabled(!msaa_enabled);
-        {
-            int msaa_sample = GlobalSettings::get_global_setting_value<int>(GlobalSettingOption::AA_MSAA_Samples);
-            const string preview = to_string(msaa_sample) + "x" + to_string(msaa_sample);
-            if (ImGuiB3D::PropertyBeginDropdown("MSAA Samples", preview.c_str(), "Controls MSAA quality."))
-            {
-                for (int n = 0; n < m_msaa_samples.size(); n++)
-                {
-                    ImGui::PushID(n);
-
-                    // Bitwise shift to power of two:
-                    // Index 0 -> 2 (2^1)
-                    // Index 1 -> 4 (2^2)
-                    // Index 2 -> 8 (2^3)...
-                    const int sample_value = 1 << (n + 1);
-                    const bool is_selected = (msaa_sample == sample_value);
-
-                    if (ImGui::Selectable(m_msaa_samples[n].c_str(), is_selected))
-                    {
-                        msaa_sample = sample_value;
-                        GlobalSettings::set_global_setting<int>(GlobalSettingOption::AA_MSAA_Samples, msaa_sample);
-                    }
-
-                    if (is_selected)
-                    {
-                        ImGui::SetItemDefaultFocus();
-                    }
-
-                    ImGui::PopID();
-                }
-
-                ImGui::EndCombo();
-            }
-        }
-        ImGui::EndDisabled();
-
-        ImGuiB3D::SeparatorWithSpacing(1);
 
         ImGui::TreePop();
     }

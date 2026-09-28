@@ -37,4 +37,5 @@ public:
     static void shutdown();
 
     static Scene* get_current_scene();
+    static Scene* get_asset_preview_scene();
 };

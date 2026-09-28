@@ -32,6 +32,7 @@ THE SOFTWARE.
 #include "model.h"
 
 #include <set>
+#include <assimp/scene.h>
 
 #include "file_loader.h"
 #include "mesh_data.h"
@@ -68,10 +69,6 @@ Model::Model(const string& path, const std::string& file_name) :
 
 Model::~Model()
 {
-	// Free texture data
-	m_textures_cache.clear();
-	B3D_LOG_INFO("Texture data of model %s has been cleared", m_file_name.c_str());
-
 	m_current_material_slot = nullptr;
 	
 	m_mesh_data.clear();
@@ -233,45 +230,10 @@ MeshRef Model::process_mesh(aiMesh* mesh, const aiScene* scene, const int mesh_i
 		}
 	}
 
-	// If model is to be loaded with all its textures and materials individually, set this to true.
-	// We want textures and materials to be loaded independent of the model at the moment.
-	if (false)
-	{
-		// Process materials
-		auto material = scene->mMaterials[mesh->mMaterialIndex];
-
-		// 1. diffuse maps
-		load_material_textures(material, aiTextureType_DIFFUSE);
-		// 2. specular maps
-		load_material_textures(material, aiTextureType_SPECULAR);
-		// 3. normal maps
-		load_material_textures(material, aiTextureType_NORMALS);
-	}
-
 	// Return a mesh object created from the extracted mesh data
 	const string mesh_key = m_object_name + "_mesh_" + to_string(mesh_index);
 	ResourceManager::add_mesh(mesh_key, new MeshData(move(vertices), move(indices), mesh->mName.C_Str()));
 	return ResourceManager::get_mesh(mesh_key);
-}
-
-void Model::load_material_textures(aiMaterial* mat, aiTextureType type)
-{
-	for (unsigned int i = 0; i < mat->GetTextureCount(type); ++i)
-	{
-		aiString filename;
-		mat->GetTexture(type, i, &filename);
-
-		if (!m_textures_cache.contains(type)) // only one texture for each texture type at a time
-		{
-			string path = m_directory + '/' + filename.C_Str();
-			string texture_file_name = string(filename.C_Str());
-			Texture2D* texture = new Texture2D(path, texture_file_name);
-			auto texture_name = texture_file_name.substr(0, texture_file_name.find('.'));
-			auto texture_key = format("{}.{}",m_object_name, texture_name);
-			ResourceManager::add_texture(texture_key, texture);
-			m_textures_cache[type] = texture;
-		}
-	}
 }
 
 void Model::set_current_material(const std::string& material_name) const

@@ -46,6 +46,8 @@ private:
 	static std::unique_ptr<WBOITFrameBuffer> r_wboit_fbo;
 
 	static std::unique_ptr<UniformBuffer> r_debug_view_ubo;
+
+	static std::unique_ptr<FrameBuffer> r_preview_fbo;
 public:
 	static void initialize();
 	static void shutdown();
@@ -57,9 +59,12 @@ public:
 	static void initialize_screen_quad();
 	static void draw_quad();
 
+	static GLuint process_asset_captures();
+
 	static GLFWwindow* get_window() { return r_window; }
 	static MultisampleFrameBuffer* get_msaa_frame_buffer() { return r_msaa_fbo.get(); }
 	static FrameBuffer* get_main_frame_buffer() { return r_main_fbo.get(); }
+	static FrameBuffer* get_preview_buffer() { return r_preview_fbo.get(); }
 	static FrameBuffer* get_debug_view_buffer() { return r_dbo.get(); }
 	static GBufferFrameBuffer* get_gbuffer() { return r_gbuffer_fbo.get(); }
 	static WBOITFrameBuffer* get_wboit_frame_buffer() { return r_wboit_fbo.get(); }

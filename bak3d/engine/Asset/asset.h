@@ -48,14 +48,18 @@ public:
     std::string get_path() const { return m_path; }
     std::string get_directory() const { return m_directory; }
     std::string get_file_name() const { return m_file_name; }
+    GLuint get_thumbnail_id() const { return m_thumbnail_id; }
 
     void set_path(const std::string& path) { m_path = path; }
     void set_directory(const std::string& directory) { m_directory = directory; }
     void set_file_name(const std::string& file_name) { m_file_name = file_name; }
+    void set_thumbnail_id(const GLuint thumbnail_id) { m_thumbnail_id = thumbnail_id; }
 protected:
     std::string m_path;
     std::string m_directory;
     std::string m_file_name;
+
+    GLuint m_thumbnail_id = 0;
 };
 
 inline Asset::~Asset() = default;
