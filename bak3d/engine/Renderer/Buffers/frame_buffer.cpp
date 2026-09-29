@@ -466,3 +466,31 @@ std::string GBufferFrameBuffer::get_color_attachment_label(const size_t index) c
     default: return "_Material";
     }
 }
+
+ShadowMapFrameBuffer::ShadowMapFrameBuffer(GLuint width, GLuint height, const char* debug_name)
+    : FrameBuffer(0, nullptr, width, height, GL_NONE, true, debug_name ? debug_name : "ShadowMap")
+{
+    destroy_framebuffer();
+    create_framebuffer();
+
+    B3D_LOG_INFO("Shadow Map Frame Buffer Object enabled (%ux%u)...", width, height);
+}
+
+void ShadowMapFrameBuffer::create_attachments()
+{
+    glGenTextures(1, &m_depth_texture);
+    glBindTexture(GL_TEXTURE_2D, m_depth_texture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32, m_width, m_height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
+
+    // Nearest filtering for custom PCF
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+    // Ensure that any coordinates outside the range do not get automatically shadowed
+    constexpr float border[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+    glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR , border);
+
+    glFramebufferTexture2D(m_target, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, m_depth_texture, 0);
+}

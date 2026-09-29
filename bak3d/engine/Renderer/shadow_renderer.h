@@ -1,0 +1,88 @@
+﻿/* ===========================================================================
+The MIT License (MIT)
+
+Copyright (c) 2022-2026 George Mavroeidis - GeoGraphics
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+=========================================================================== */
+
+#pragma once
+#include "Buffers/data_buffer.h"
+#include "Buffers/frame_buffer.h"
+#include "Scene/Objects/light.h"
+
+// Mirror of ShadowBlock in Common_Global.glsl */
+struct ShadowGPUData
+{
+    glm::mat4 light_space_matrix = glm::mat4(1.0f);
+    glm::vec4 bias_params = glm::vec4(0.0f);       // x = const bias, y = slope bias, z = normal offset (all shadow texels), w = PCF radius (texels)
+    glm::vec4 projection_params = glm::vec4(0.0f); // x = near, y = far, z = frustum scale (ortho half-extent | tan(half fov)), w = 1 perspective / 0 ortho
+    glm::vec4 map_params = glm::vec4(0.0f);        // x = resolution, y = enabled
+};
+static constexpr GLsizei SHADOW_DATA_SIZE = sizeof(ShadowGPUData);
+
+// Tunable settings collected in a single payload
+struct ShadowSettings
+{
+    GLuint resolution = 2048; // read once at initialize()
+
+    float depth_bias_texels = 1.0f;
+    float slope_bias_texels = 2.0f;
+    float normal_offset_texels = 1.5f;
+    int pcf_radius = 1; // 1 = 3x3, 2 = 5x5
+    bool cull_front_faces = true; // render back faces into the map (acne + peter panning); single-sided planes won't cast
+
+    float near_plane = 0.1f;
+
+    // Directional (orthographic box)
+    glm::vec3 directional_focus = glm::vec3(0.0f);
+    float directional_extent = 25.0f; // half-size of the box in world units
+    float directional_depth_range = 100.0f;
+
+    // Spot (perspective)
+    float spot_max_range = 100.0f;
+    float spot_fov_margin_degrees = 2.0f;
+};
+
+/*
+ * Renders a single shadow map (first active light) and uploads matrices/params to the GPU.
+ */
+class ShadowRenderer
+{
+public:
+    static constexpr GLuint SHADOW_DATA_UBO_BINDING = 3;
+    static constexpr GLuint SHADOW_MAP_TEXTURE_UNIT = 8; // must match layout(binding = 8) in Common_Global.glsl
+
+    static void initialize();
+    static void shutdown();
+    static void render();
+
+    static const Light* get_shadow_caster() { return m_shadow_caster; }
+    static ShadowSettings& get_settings() { return m_settings; }
+
+private:
+    static ShadowGPUData build_shadow_data(const Light& light);
+    static void update_and_upload_data(const ShadowGPUData& data);
+    static void render_depth_pass(const ShaderRef& shader);
+
+    static std::unique_ptr<ShadowMapFrameBuffer> m_shadow_fbo;
+    static std::unique_ptr<UniformBuffer> m_shadow_ubo;
+    static const Light* m_shadow_caster;
+    static ShadowSettings m_settings;
+};

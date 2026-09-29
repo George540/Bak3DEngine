@@ -27,6 +27,7 @@ THE SOFTWARE.
 class RendererPasses
 {
 public:
+    static void render_pass_shadow_map();            // depth-only pass from the shadow caster's point of view
     static void render_pass_gbuffer();               // opaque deferred-tagged materials
     static void render_pass_light_culling();         // frustum-cull lights, upload light GPU data
     static void render_pass_deferred_lighting();     // full-screen deferred resolve

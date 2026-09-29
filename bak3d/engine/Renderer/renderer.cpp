@@ -39,6 +39,7 @@ THE SOFTWARE.
 #include "light_renderer.h"
 #include "post_processor.h"
 #include "renderer_pass.h"
+#include "shadow_renderer.h"
 #include "Asset/resource_manager.h"
 #include "Scene/scene.h"
 #include "Scene/scene_manager.h"
@@ -118,6 +119,7 @@ void Renderer::initialize()
 	query_gpu_limitations();
 
 	LightRenderer::initialize();
+	ShadowRenderer::initialize();
 
 	B3D_LOG_INFO("Ending Renderer Initialization....");
 }
@@ -134,6 +136,11 @@ void Renderer::draw_frame()
 	const auto view_mode = static_cast<DebugViewMode>(GlobalSettings::get_global_setting_value<int>(GlobalSettingOption::ViewMode));
 	const bool debug_view_active = view_mode != DebugViewMode::Lit;
 	const bool post_process_enabled = GlobalSettings::get_global_setting_value<bool>(GlobalSettingOption::PostProcessing_Enabled);
+
+	// ------------------------------------------------------------
+	// Shadow Depth Pass: Prepare shadow maps for lights
+	// ------------------------------------------------------------
+	RendererPasses::render_pass_shadow_map();
 
 	// ------------------------------------------------------------
 	// GBuffer Pass: Deferred Opaque, single sampled
@@ -258,6 +265,7 @@ void Renderer::initialize_screen_quad()
 
 void Renderer::shutdown()
 {
+	ShadowRenderer::shutdown();
 	LightRenderer::shutdown();
 	r_window = nullptr;
 	r_dbo.reset();

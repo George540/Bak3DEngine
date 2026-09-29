@@ -28,6 +28,7 @@ THE SOFTWARE.
 #include "light_renderer.h"
 #include "post_processor.h"
 #include "renderer.h"
+#include "shadow_renderer.h"
 #include "Asset/resource_manager.h"
 #include "Core/global_settings.h"
 #include "Scene/scene_manager.h"
@@ -40,6 +41,13 @@ namespace
             && mesh->get_material()->get_shader()
             && mesh->get_material()->get_shader()->get_object_name() == "gbuffer";
     }
+}
+
+void RendererPasses::render_pass_shadow_map()
+{
+    DebugScopeGroup scope("Shadow Map Pass");
+
+    ShadowRenderer::render();
 }
 
 void RendererPasses::render_pass_gbuffer()

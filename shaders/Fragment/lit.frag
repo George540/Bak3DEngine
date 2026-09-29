@@ -81,7 +81,9 @@ vec3 calc_directional_light(LightData light, vec3 normal, vec3 viewDir)
     vec3 diffuse = calc_diffuse(light.diffuse.rgb, light_direction, normal);
     vec3 specular = calc_specular(light.specular.rgb, light_direction, normal, viewDir);
 
-    return (ambient + diffuse + specular) * light.diffuse.a;
+    float shadow = calculate_shadow(light, fs_in.FragPos, normal, light_direction);
+
+    return (ambient + (diffuse + specular) * shadow) * light.diffuse.a;
 }
 
 vec3 calc_point_light(LightData light, vec3 normal, vec3 viewDir)
@@ -122,6 +124,10 @@ vec3 calc_spot_light(LightData light, vec3 normal, vec3 viewDir)
     ambient  *= spot_intensity;
     diffuse  *= spot_intensity;
     specular *= spot_intensity;
+
+    float shadow = calculate_shadow(light, fs_in.FragPos, normal, light_direction);
+    diffuse  *= shadow;
+    specular *= shadow;
 
     // Distance attenuation pass
     float attenuation = process_attenuation(light, fs_in.FragPos);;

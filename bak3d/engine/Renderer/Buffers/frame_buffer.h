@@ -88,7 +88,7 @@ protected:
     GLuint m_width;
     GLuint m_height;
     std::vector<GLuint> m_color_textures;
-    GLuint m_rbo;
+    GLuint m_rbo = 0;
     GLuint m_depth_texture = -1;
     bool m_use_depth_texture = false;
     bool m_owns_depth_texture = true;
@@ -152,4 +152,16 @@ protected:
     void create_attachments() override;
     std::vector<GLenum> get_draw_buffers() const override;
     std::string get_color_attachment_label(size_t index) const override;
+};
+
+/*
+ * Depth-only frame buffer for shadow mapping. Pixels beyond depth range are unshadowed.
+ */
+class ShadowMapFrameBuffer : public FrameBuffer
+{
+public:
+    explicit ShadowMapFrameBuffer(GLuint width, GLuint height, const char* debug_name = nullptr);
+protected:
+    void create_attachments() override;
+    std::vector<GLenum> get_draw_buffers() const override { return {}; }
 };

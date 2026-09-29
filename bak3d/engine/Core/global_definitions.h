@@ -201,8 +201,9 @@ struct alignas(16) LightGPUData
     glm::vec4 diffuse;   // xyz = diffuse,   w = intensity
     glm::vec4 specular;  // xyz = specular,  w = PADDING
     
-    int32_t type;     // 4 bytes
-    float padding[3]; // 12 bytes PADDING
+    int32_t type;         // 4 bytes
+    int32_t shadow_index; // 4 bytes
+    float padding[2];     // 8 bytes PADDING
 };
 static constexpr GLsizei LIGHT_GPU_DATA_SIZE = sizeof(LightGPUData);
 

@@ -235,6 +235,7 @@ LightGPUData Light::get_light_gpu_data_payload() const
 	data.diffuse = glm::vec4(m_diffuse, m_intensity);
 	data.specular = glm::vec4(m_specular, 0.0f);
 	data.type = static_cast<int32_t>(m_type);
+	data.shadow_index = 0; // cast shadows by default
 	return data;
 }
 

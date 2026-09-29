@@ -1,5 +1,6 @@
 ﻿#include "light_renderer.h"
 
+#include "shadow_renderer.h"
 #include "Core/logger.h"
 
 using namespace std;
@@ -30,6 +31,8 @@ void LightRenderer::update_and_upload_data(const std::vector<Light*>& active_lig
 {
     m_staging_lights.clear();
 
+    const Light* shadow_caster = ShadowRenderer::get_shadow_caster();
+
     for (const auto& light : active_lights)
     {
         if (!light->is_active)
@@ -46,18 +49,21 @@ void LightRenderer::update_and_upload_data(const std::vector<Light*>& active_lig
             }
         }
 
+        // Set shadow index for specific shadow caster
+        LightGPUData payload = light->get_light_gpu_data_payload();
+        payload.shadow_index = (light == shadow_caster) ? 0 : -1;
         m_staging_lights.push_back(light->get_light_gpu_data_payload());
-
-        m_visible_light_count = static_cast<int>(m_staging_lights.size());
-        if (m_staging_lights.empty())
-        {
-            return;
-        }
-
-        // Grows/reallocates automatically when the requested size differs from the buffer's current size
-        const auto required_size = static_cast<GLsizeiptr>(m_staging_lights.size()) * LIGHT_GPU_DATA_SIZE;
-        m_lights_ssbo->bind();
-        m_lights_ssbo->bind_buffer_data(m_staging_lights.data(), required_size);
-        m_lights_ssbo->bind_to_binding_point(LIGHTS_SSBO_BINDING);
     }
+
+    m_visible_light_count = static_cast<int>(m_staging_lights.size());
+    if (m_staging_lights.empty())
+    {
+        return;
+    }
+
+    // Grows/reallocates automatically when the requested size differs from the buffer's current size
+    const auto required_size = static_cast<GLsizeiptr>(m_staging_lights.size()) * LIGHT_GPU_DATA_SIZE;
+    m_lights_ssbo->bind();
+    m_lights_ssbo->bind_buffer_data(m_staging_lights.data(), required_size);
+    m_lights_ssbo->bind_to_binding_point(LIGHTS_SSBO_BINDING);
 }
