@@ -84,14 +84,17 @@ Download and extract the latest .zip folder on the *Releases* section onto your 
 Development will start Fall 2026
 | Status | Feature | Description |
 | :---: | :--- | :--- |
-|☐| **Shadows** | With a complex environment scene, implementing CSM shadows will make it even more lively. |
-|:gear:| **PBR Lighting** | A fundamental rendering concept I've been looking forward to implement. PBR Materials as well as HDR and IBL. |
+|:gear:| **Shadows** | With a complex environment scene, implementing CSM shadows will make it even more lively. |
+|☐| **PBR Lighting** | A fundamental rendering concept I've been looking forward to implement. PBR Materials as well as HDR and IBL. |
 |:ballot_box_with_check:| **Deferred Rendering** | Apply the possibility to integrate rendering features at scale and keep it industry standard. Opens up the possibility for multiple lights in scene. |
 |:ballot_box_with_check:| **Compute Pipeline** | Add compute shaders in the Renderer for opening the possibility for more rendering features. |
 |:ballot_box_with_check:| **Advanced GPU Particles** | Particle System is barely keeping up. A new and more capable approach is needed, like compute shaders, new buffer objects, culling, etc. |
 |:ballot_box_with_check:| **Multiple Objects in scene** | Support multiple objects in scene, even from the same type. |
 |:ballot_box_with_check:| **Scene Graph** | Add a scene graph for proper handling of multiple objects. |
+|:ballot_box_with_check:| **Editor Improvements** | New theme, viewport options, and other Scene Graph QoL options for user |
+|:ballot_box_with_check:| **Instanced Static Meshes** | Implement Instancing for all types of meshes, not just for the Particle Systems. |
 |:gear:| **GPU Culling (Frustrum, Occlusion, Instance, Distance)** | As the scene grows, we need to handle it at scale with culling unecessary or unseen objects. |
+|☐| **Geometry and Tessellation Shaders** | Add new types of shaders in the Shader pipeline. |
 |:ballot_box_with_check:| **Bonus: FPV movement** | make camera move around the scene without just being restricted in orbit. |
 
 ### [v1.5 - The Advanced Engine World](https://github.com/George540/Bak3DEngine/milestone/3)
@@ -102,13 +105,12 @@ Development will start 2027 TBD
 |☐| **Terrain** | Simple terrain concept for loading a height map into a plane mesh, used for lighting purposes. |
 |☐| **Rigidbodies** | Add physics for different shapes and rigidbodies using compute shaders. |
 |☐| **Cloudscapes with Volumetric Raymarching** | If time and motivation, add a simple rigidbody structure for fun physics. |
-|☐| **Full Post Processing** | Implement the full post process tack (Blur, DoF, Tonemapping & hdr, Reflections, Full Color Grading, Motion Blue, Lens Flare, Film Grain, GTAO, AA (MSAA, SMAA, DLSS, FSR, XeSS, TSR) |
+|☐| **Full Post Processing** | Implement the full post process tack (Blur, DoF, Tonemapping & hdr, Reflections, Full Color Grading, Motion Blur, Lens Flare, Film Grain, GTAO, AA (MSAA, SMAA, DLSS, FSR, XeSS, TSR) |
 |☐| **Post Process Volumes** | Implement global and local volumes with different shapes |
-|☐| **Skeletal Animation and Physics** | Implement Skeletal Animation, physics, state machines and graph editors. |
 |☐| **Level Editor** | Full ECS, play-in-viewport, multi-level editor with prefabs, expanding the current Scene Graph structure |
 
 ### [v1.6 - Project Tempest](https://github.com/George540/Bak3DEngine/milestone/3)
-Development will start 2028 TBD (Big Project and just an idea. Taking the engine to the next level)
+Development will start 2028 TBD (Big Project and just an idea. Taking the engine to the next level that will be more high-end and artist friendly.)
 | Status | Feature | Description |
 | :---: | :--- | :--- |
 |☐| **Editor QoL** | Asset editor visualizers, shader editors, multi-entity editing, etc |
@@ -118,8 +120,9 @@ Development will start 2028 TBD (Big Project and just an idea. Taking the engine
 |☐| **SDL** | Implement SDL as the new input and window library. |
 |☐| **Bindless Rendering** | Make all rendering bindless for all APIs. |
 |☐| **Streaming** | Make textures virtual with texture streaming. |
-|☐| **Geometry and Tessellation Shaders** | Add new types of shaders in the Shader pipeline. |
+|☐| **Skeletal Animation and Physics** | Implement Skeletal Animation, physics, state machines and graph editors. |
 |☐| **Node Graphs** | Make and use Node graphs for animation, compositing, physics and more. |
+|☐| **Uber Shaders** | If ending up using node graphs for shaders, uber shaders or principle shaders can be a great option. |
 
 I am open for requests as well as open to any support to help implement these features, although I am willing to try to implement most of these myself whenever I can. Just let me know!
 
