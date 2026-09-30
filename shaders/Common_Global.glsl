@@ -32,7 +32,7 @@ struct ShadowData
 
 layout (std430, binding = 14) readonly buffer ShadowBuffer
 {
-    ShadowEntry entries[];
+    ShadowData entries[];
 } shadow_data;
 
 layout (binding = 8) uniform sampler2DArray shadow_map;

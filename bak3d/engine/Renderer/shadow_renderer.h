@@ -79,6 +79,8 @@ public:
     static int get_shadow_index(const Light* light);
     static ShadowSettings& get_settings() { return m_settings; }
 
+    static void select_casters(const std::vector<const Light*>& visible_lights, const glm::vec3& camera_position);
+
 private:
     static ShadowGPUData build_shadow_data(const Light& light);
     static void ensure_layer_capacity(size_t needed);

@@ -136,6 +136,50 @@ int ShadowRenderer::get_shadow_index(const Light* light)
     return it == m_light_casters.end() ? -1 : static_cast<int>(it - m_light_casters.begin());
 }
 
+void ShadowRenderer::select_casters(const vector<const Light*>& visible_lights, const glm::vec3& camera_position)
+{
+    m_light_casters.clear();
+    m_shadow_data.clear();
+
+    const ShaderRef shader = ResourceManager::get_shader("shadow_depth");
+    if (!shader || !shader->is_shader_compiled())
+    {
+        return;
+    }
+
+    struct Candidate { const Light* light; float score; };
+    vector<Candidate> candidates;
+    for (const Light* light : visible_lights)
+    {
+        if (light->get_type() == LightType::Directional)
+        {
+            candidates.push_back({ light, FLT_MAX });
+        }
+        else if (light->get_type() == LightType::Spot)
+        {
+            const float distance = glm::distance(camera_position, light->transform.get_global_position());
+            candidates.push_back( {.light = light, .score = light->get_intensity() * light->get_effective_radius() / (1.0f + distance) } );
+        }
+    }
+
+    // Prioritize only when the hardware/user layer limit is exceeded
+    if (candidates.size() > m_max_layers)
+    {
+        ranges::partial_sort(candidates, candidates.begin() + m_max_layers, [](const Candidate& a, const Candidate& b) { return a.score > b.score; });
+        candidates.resize(m_max_layers);
+    }
+
+    ensure_layer_capacity(candidates.size());
+
+    m_light_casters.reserve(candidates.size());
+    m_shadow_data.reserve(candidates.size());
+    for (const Candidate& candidate : candidates)
+    {
+        m_light_casters.push_back(candidate.light);
+        m_shadow_data.push_back(build_shadow_data(*candidate.light));
+    }
+}
+
 ShadowGPUData ShadowRenderer::build_shadow_data(const Light& light)
 {
     const ShadowSettings& settings = m_settings;

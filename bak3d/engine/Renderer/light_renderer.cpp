@@ -48,6 +48,12 @@ void LightRenderer::update_and_upload_data(const std::vector<Light*>& active_lig
         visible_lights.push_back(light);
     }
 
+    // Pick shadow casters among the survivors (skipped for the asset preview scene)
+    if (allow_shadows)
+    {
+        ShadowRenderer::select_casters(visible_lights, camera_position);
+    }
+
     // Build payloads, tagging casters with their shadow layer
     for (const Light* light : visible_lights)
     {
