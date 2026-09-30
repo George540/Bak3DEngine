@@ -144,7 +144,7 @@ void SceneGraph::draw_add_object_popup()
 
         SceneObject* object_to_parent = SceneManager::get_current_scene()->get_selected_scene_object();
 
-        if (ImGui::BeginMenu("Lights"))
+        if (ImGui::BeginMenu("Light"))
         {
             if (ImGui::MenuItem("Directional Light"))
             {
@@ -191,7 +191,7 @@ void SceneGraph::draw_add_object_popup()
         {
             if (ImGui::MenuItem("Static Mesh"))
             {
-                //SceneManager::get_current_scene()->instantiate<Mesh>(object_to_parent, spawn_position);
+                SceneManager::get_current_scene()->instantiate<Mesh>(object_to_parent, spawn_position, "Cube", ResourceManager::get_material("default_material"), "Cube");
             }
             if (ImGui::MenuItem("Instanced Static Mesh"))
             {

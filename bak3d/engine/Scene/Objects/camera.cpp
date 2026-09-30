@@ -108,7 +108,7 @@ void Camera::update(float dt)
 
 		glm::vec3 rotation = transform.get_local_euler_rotation();
 		rotation.y -= mouse_x * EventManager::get_mouse_sensitivity(); // Yaw
-		rotation.x -= mouse_y * EventManager::get_mouse_sensitivity(); // Pitch
+		rotation.x += mouse_y * EventManager::get_mouse_sensitivity(); // Pitch
 		rotation.x = glm::clamp(rotation.x, -85.0f, 85.0f); // Prevent camera from flipping upside down
 		transform.set_local_euler_rotation(rotation);
 

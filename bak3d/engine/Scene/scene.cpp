@@ -97,7 +97,7 @@ Scene::Scene(const bool is_preview_scene)
 {
     m_root = make_unique<SceneObject>(glm::vec3(0.0f), "SceneRoot");
 
-    m_current_camera = instantiate<Camera>(nullptr, glm::vec3(5.0f, 3.0f, 5.0f));
+    m_current_camera = instantiate<Camera>(nullptr, glm::vec3(7.0f, 5.0f, 7.0f));
 
     if (is_preview_scene)
     {
@@ -206,7 +206,7 @@ void Scene::initialize_default_scene_objects()
     instantiate<Light>(nullptr, LightType::Directional, glm::vec3(-2.5f, 2.5f, 2.5f));
     instantiate<Mesh>(nullptr, glm::vec3(0.0f, 1.0f, 0.0f), "Cube", ResourceManager::get_material("default_material"), "Cube");
     const auto plane_object = instantiate<Mesh>(nullptr, glm::vec3(0.0f), "Plane", ResourceManager::get_material("default_material"), "Plane");
-    plane_object->transform.set_local_scale(glm::vec3(10.0f, 1.0f, 10.0f));
+    plane_object->transform.set_local_scale(glm::vec3(15.0f, 1.0f, 15.0f));
     
     B3D_LOG_INFO("Default Scene initialized.");
 }
