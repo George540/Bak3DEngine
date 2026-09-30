@@ -151,6 +151,10 @@ void ShadowRenderer::select_casters(const vector<const Light*>& visible_lights, 
     vector<Candidate> candidates;
     for (const Light* light : visible_lights)
     {
+        if (!light->get_cast_shadows())
+        {
+            continue;
+        }
         if (light->get_type() == LightType::Directional)
         {
             candidates.push_back({ light, FLT_MAX });

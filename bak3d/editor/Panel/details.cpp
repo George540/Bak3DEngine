@@ -322,6 +322,12 @@ void Details::draw_light_section(Light* light)
         ImGui::EndCombo();
     }
 
+    bool cast_shadows = light->get_cast_shadows();
+    if (ImGuiB3D::PropertyToggle("Cast Shadows", &cast_shadows, "Whether to cast shadows in the scene"))
+    {
+        light->set_cast_shadows(cast_shadows);
+    }
+
     ImGui::SetNextItemOpen(true, ImGuiCond_Once);
     if (ImGui::TreeNode("Coloration"))
     {

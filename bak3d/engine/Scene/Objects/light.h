@@ -74,6 +74,8 @@ protected:
 	float m_outer_cut_off = glm::cos(glm::radians(m_outer_angle)); // glm::cos(glm::radians(outer_degrees))
 	float m_cone_size = 1.0f;
 
+	bool m_cast_shadows = true;
+
 	size_t m_ssbo_index = 0;
 
 	TextureRef m_sprite_texture;
@@ -87,6 +89,10 @@ public:
 	// Type
 	LightType get_type() const { return m_type; }
 	void set_type(const LightType type);
+
+	// Shadows
+	bool get_cast_shadows() const { return m_cast_shadows; }
+	void set_cast_shadows(const bool cast_shadows) { m_cast_shadows = cast_shadows; };
 
 	// Colors
 	glm::vec3 get_ambient() const { return m_ambient; }
