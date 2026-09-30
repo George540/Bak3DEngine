@@ -214,7 +214,7 @@ void Scene::initialize_default_scene_objects()
 void Scene::initialize_preview_scene_objects()
 {
     Light* light = instantiate<Light>(nullptr, LightType::Directional, glm::vec3(-2.5f, 2.5f, 2.5f));
-    light->set_direction(glm::normalize(-light->transform.get_local_position()));
+    light->transform.set_local_euler_rotation(glm::vec3(-45.0f));
 
     B3D_LOG_INFO("Preview scene initialized.");
 }

@@ -180,6 +180,24 @@ void ShadowRenderer::select_casters(const vector<const Light*>& visible_lights, 
     }
 }
 
+void ShadowRenderer::reset_settings()
+{
+    constexpr ShadowSettings defaults{};
+    m_settings = defaults;
+    apply_resolution(defaults.resolution);
+}
+
+void ShadowRenderer::apply_resolution(GLuint resolution)
+{
+    m_settings.resolution = resolution;
+    if (resolution == m_shadow_fbo->get_width())
+    {
+        return;
+    }
+    // Keep the layer count so no caster is lost
+    m_shadow_fbo = make_unique<ShadowMapFrameBuffer>(resolution, m_shadow_fbo->get_layer_count(), "ShadowMap");
+}
+
 ShadowGPUData ShadowRenderer::build_shadow_data(const Light& light)
 {
     const ShadowSettings& settings = m_settings;

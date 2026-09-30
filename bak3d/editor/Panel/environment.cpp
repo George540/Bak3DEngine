@@ -30,6 +30,7 @@ THE SOFTWARE.
 #include "Input/event_manager.h"
 #include "Input/renderdoc_manager.h"
 #include "Renderer/renderer.h"
+#include "Renderer/shadow_renderer.h"
 #include "Scene/Objects/light.h"
 
 using namespace std;
@@ -76,6 +77,10 @@ void Environment::update()
     ImGuiB3D::SeparatorWithSpacing(1);
 
     draw_general_settings();
+
+    ImGuiB3D::SeparatorWithSpacing(1);
+
+    draw_shadow_settings();
 
     ImGuiB3D::SeparatorWithSpacing(1);
 
@@ -132,6 +137,52 @@ void Environment::draw_general_settings()
         glm::vec4 bg_color_vec4 = GlobalSettings::get_global_setting_value<glm::vec4>(GlobalSettingOption::BackgroundColor);
         ImGuiB3D::ColorPicker4("Background Color", &bg_color_vec4, "Change background color using glClearColor(...)");
         GlobalSettings::set_global_setting<glm::vec4>(GlobalSettingOption::BackgroundColor, bg_color_vec4);
+
+        ImGui::TreePop();
+    }
+}
+
+void Environment::draw_shadow_settings()
+{
+    const bool modified = ShadowRenderer::is_modified();
+    ImGui::SetNextItemOpen(true, ImGuiCond_Once);
+
+    if (ImGui::TreeNode(modified ? "Shadows (modified)###ShadowsNode" : "Shadows###ShadowsNode"))
+    {
+        ShadowSettings& shadow_settings = ShadowRenderer::get_settings();
+
+        ImGui::BeginDisabled(!modified);
+        if (ImGuiB3D::PropertyButton("Reset", "Reset Shadows", "Restore all shadow settings to their defaults."))
+        {
+            ShadowRenderer::reset_settings();
+        }
+        ImGui::EndDisabled();
+
+        int resolution_index = 2;
+        for (int i = 0; i < 4; ++i)
+        {
+            if (resolution_values[i] == shadow_settings.resolution) { resolution_index = i; }
+        }
+        if (ImGuiB3D::PropertyDropdown("Resolution", resolution_labels, &resolution_index, "Shadow map size per light. Rebuilds the shadow map when changed."))
+        {
+            ShadowRenderer::apply_resolution(resolution_values[resolution_index]);
+        }
+
+        ImGuiB3D::PropertySliderFloat("Depth Bias", &shadow_settings.depth_bias_texels, 0.0f, 8.0f, "%.2f", "Constant bias in shadow texels. Fixes acne.");
+        ImGuiB3D::PropertySliderFloat("Slope Bias", &shadow_settings.slope_bias_texels, 0.0f, 8.0f, "%.2f", "Extra bias on surfaces at grazing angles to the light.");
+        ImGuiB3D::PropertySliderFloat("Normal Offset", &shadow_settings.normal_offset_texels, 0.0f, 8.0f, "%.2f", "Pushes the lookup along the normal. Fixes acne without Peter Panning.");
+        ImGuiB3D::PropertySliderInt("PCF Radius", &shadow_settings.pcf_radius, 0, 3, "Filter kernel: 0 = hard, 1 = 3x3, 2 = 5x5. Cost is (2r+1)^2 taps.");
+        ImGuiB3D::PropertyToggle("Cull Front Faces", &shadow_settings.cull_front_faces, "Render back faces into the map. Single-sided planes won't cast.");
+        ImGuiB3D::PropertySliderFloat("Near Plane", &shadow_settings.near_plane, 0.01f, 5.0f, "%.2f", "Near plane of the light projection.");
+
+        ImGui::SeparatorText("Directional");
+        ImGuiB3D::PropertyDragFloat3("Focus", &shadow_settings.directional_focus, 0.1f, 0.0f, 0.0f, "%.2f", "World point the shadow box is centered on.");
+        ImGuiB3D::PropertySliderFloat("Extent", &shadow_settings.directional_extent, 1.0f, 100.0f, "%.1f", "Half-size of the orthographic box. Larger = wider coverage, blurrier shadows.");
+        ImGuiB3D::PropertySliderFloat("Depth Range", &shadow_settings.directional_depth_range, 10.0f, 500.0f, "%.1f", "Depth of the box along the light axis.");
+
+        ImGui::SeparatorText("Spot");
+        ImGuiB3D::PropertySliderFloat("Max Range", &shadow_settings.spot_max_range, 10.0f, 500.0f, "%.1f", "Far plane cap for spot shadows.");
+        ImGuiB3D::PropertySliderFloat("FOV Margin", &shadow_settings.spot_fov_margin_degrees, 0.0f, 10.0f, "%.1f", "Extra degrees added to the cone so edges aren't clipped.");
 
         ImGui::TreePop();
     }

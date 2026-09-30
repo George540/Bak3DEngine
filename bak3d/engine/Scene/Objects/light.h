@@ -120,4 +120,5 @@ public:
 private:
 	void set_texture_by_type(LightType type);
 	void recompute_cone_cutoffs();
+	void refresh_direction_from_transform();
 };

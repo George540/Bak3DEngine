@@ -23,9 +23,15 @@ THE SOFTWARE.
 =========================================================================== */
 
 #pragma once
+
 #include "Buffers/data_buffer.h"
 #include "Buffers/frame_buffer.h"
 #include "Scene/Objects/light.h"
+
+const std::vector<const char*> resolution_labels = { "512", "1024", "2048", "4096" };
+constexpr GLuint resolution_values[] = { 512, 1024, 2048, 4096 };
+constexpr GLuint SHADOW_DATA_SSBO_BINDING = 14;
+constexpr GLuint SHADOW_MAP_TEXTURE_UNIT = 8; // must match layout(binding = 8) in Common_Global.glsl
 
 struct ShadowGPUData
 {
@@ -40,7 +46,7 @@ static_assert(SHADOW_GPU_DATA_SIZE == 112, "Must match ShadowEntry std430 layout
 // Tunable settings collected in a single payload
 struct ShadowSettings
 {
-    GLuint resolution = 2048; // read once at initialize()
+    GLuint resolution = 2048;
 
     float depth_bias_texels = 1.0f;
     float slope_bias_texels = 2.0f;
@@ -61,6 +67,8 @@ struct ShadowSettings
     // Spot (perspective)
     float spot_max_range = 100.0f;
     float spot_fov_margin_degrees = 2.0f;
+
+    bool operator==(const ShadowSettings&) const = default;
 };
 
 /*
@@ -69,17 +77,19 @@ struct ShadowSettings
 class ShadowRenderer
 {
 public:
-    static constexpr GLuint SHADOW_DATA_SSBO_BINDING = 14;
-    static constexpr GLuint SHADOW_MAP_TEXTURE_UNIT = 8; // must match layout(binding = 8) in Common_Global.glsl
-
     static void initialize();
     static void shutdown();
     static void render();
 
     static int get_shadow_index(const Light* light);
     static ShadowSettings& get_settings() { return m_settings; }
+    static void set_settings(const ShadowSettings& s) { m_settings = s; }
 
     static void select_casters(const std::vector<const Light*>& visible_lights, const glm::vec3& camera_position);
+
+    static bool is_modified() { return m_settings != ShadowSettings{}; }
+    static void reset_settings();
+    static void apply_resolution(GLuint resolution);
 
 private:
     static ShadowGPUData build_shadow_data(const Light& light);

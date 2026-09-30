@@ -44,7 +44,9 @@ Light::Light(const LightType type, const glm::vec3 position) :
 	m_type = type;
 	object_type = SceneObjectType::Light;
 
-	transform.set_local_euler_rotation(glm::vec3(0.0f, -45.0f, -45.0f));
+	transform.set_local_euler_rotation(glm::vec3(-45.0f));
+	update_self_and_children();
+	refresh_direction_from_transform();
 
 	m_mesh_slot = make_mesh_slot(ResourceManager::get_mesh("Quad"));
 	set_texture_by_type(m_type);
@@ -55,11 +57,7 @@ Light::Light(const LightType type, const glm::vec3 position) :
 void Light::update(float dt)
 {
 	RenderableObject::update(dt);
-
-	if (m_type == LightType::Directional || m_type == LightType::Spot || m_type == LightType::Area)
-	{
-		set_direction(transform.get_forward());
-	}
+	refresh_direction_from_transform();
 }
 
 void Light::draw() const
@@ -137,14 +135,32 @@ void Light::set_intensity(const float intensity)
 
 void Light::set_direction(const glm::vec3 direction)
 {
-	const glm::vec3 normalized_direction = glm::normalize(direction);
-	if (glm::all(glm::epsilonEqual(m_direction, normalized_direction, EPSILON_CUSTOM)))
+	if (glm::dot(direction, direction) < 1e-12f)
 	{
 		return;
 	}
 
-	m_direction = normalized_direction;
+	const glm::vec3 world_direction = glm::normalize(direction);
+	glm::vec3 local_dir = world_direction;
+	if (parent)
+	{
+		local_dir = glm::normalize(glm::mat3(glm::inverse(parent->transform.get_global_model_matrix())) * world_direction);
+	}
 
+	glm::vec3 euler = transform.get_local_euler_rotation();
+	euler.x = glm::degrees(glm::asin(glm::clamp(local_dir.y, -1.0f, 1.0f)));
+	if (glm::abs(local_dir.y) < 0.9999f)
+	{
+		euler.y = glm::degrees(glm::atan(-local_dir.x, -local_dir.z));
+	}
+
+	if (glm::all(glm::epsilonEqual(euler, transform.get_local_euler_rotation(), EPSILON_CUSTOM)))
+	{
+		return;
+	}
+
+	transform.set_local_euler_rotation(euler);
+	m_direction = world_direction;
 	m_is_dirty = true;
 }
 
@@ -255,4 +271,13 @@ void Light::recompute_cone_cutoffs()
 {
 	m_inner_cut_off = glm::cos(glm::radians(m_inner_angle + m_cone_size));
 	m_outer_cut_off = glm::cos(glm::radians(m_outer_angle + m_cone_size));
+}
+
+void Light::refresh_direction_from_transform()
+{
+	const glm::vec3 forward = transform.get_forward();
+	if (glm::dot(forward, forward) > 1e-12f)
+	{
+		m_direction = glm::normalize(forward);
+	}
 }
