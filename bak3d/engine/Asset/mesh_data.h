@@ -83,7 +83,13 @@ public:
     const std::vector<Vertex>& get_vertices() const { return m_vertices; }
     const std::vector<GLuint>& get_indices() const { return m_indices; }
 
+    const glm::vec3& get_bounds_center() const { return m_bounds_center; }
+    float get_bounds_radius() const { return m_bounds_radius; }
+
 private:
+    glm::vec3 m_bounds_center = glm::vec3(0.0f);
+    float m_bounds_radius = 0.0f;
+
     std::vector<Vertex> m_vertices;
     std::vector<GLuint> m_indices;
 };

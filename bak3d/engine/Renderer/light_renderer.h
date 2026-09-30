@@ -39,7 +39,7 @@ class LightRenderer
 public:
     static void initialize();
     static void shutdown();
-    static void update_and_upload_data(const std::vector<Light*>& active_lights, const Frustum& frustum);
+    static void update_and_upload_data(const std::vector<Light*>& active_lights, const Frustum& frustum, const glm::vec3& camera_position, bool allow_shadows = true);
 
     static int get_visible_light_count() { return m_visible_light_count; }
 

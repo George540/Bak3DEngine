@@ -24,45 +24,116 @@ THE SOFTWARE.
 
 #include "shadow_renderer.h"
 
+#include "debug_scope.h"
 #include "Asset/resource_manager.h"
 #include "Scene/scene_manager.h"
 
 using namespace std;
 
 unique_ptr<ShadowMapFrameBuffer> ShadowRenderer::m_shadow_fbo;
-unique_ptr<UniformBuffer> ShadowRenderer::m_shadow_ubo;
-const Light* ShadowRenderer::m_shadow_caster = nullptr;
+unique_ptr<ShaderStorageBuffer> ShadowRenderer::m_shadow_ssbo;
+vector<const Light*> ShadowRenderer::m_light_casters;
+vector<ShadowGPUData> ShadowRenderer::m_shadow_data;
+GLuint ShadowRenderer::m_max_layers = 1;
 ShadowSettings ShadowRenderer::m_settings;
 
 void ShadowRenderer::initialize()
 {
-    m_shadow_fbo = make_unique<ShadowMapFrameBuffer>(m_settings.resolution, m_settings.resolution, "ShadowMap");
-    m_shadow_ubo = make_unique<UniformBuffer>(SHADOW_DATA_SIZE, nullptr, SHADOW_DATA_UBO_BINDING, GL_DYNAMIC_DRAW);
-    update_and_upload_data(ShadowGPUData{}); // zeroed = disabled
+    GLint hardware_layers = 1;
+    glGetIntegerv(GL_MAX_ARRAY_TEXTURE_LAYERS, &hardware_layers);
+    m_max_layers = static_cast<GLuint>(hardware_layers);
+    if (m_settings.max_casters > 0)
+    {
+        m_max_layers = glm::min(m_max_layers, m_settings.max_casters);
+    }
+
+    const GLuint layers = glm::clamp(m_settings.initial_layers, 1u, m_max_layers);
+    m_shadow_fbo = make_unique<ShadowMapFrameBuffer>(m_settings.resolution, layers, "ShadowMap");
+    m_shadow_ssbo = make_unique<ShaderStorageBuffer>(0, nullptr, SHADOW_DATA_SSBO_BINDING, GL_DYNAMIC_DRAW);
 }
 
 void ShadowRenderer::shutdown()
 {
-    m_shadow_caster = nullptr;
+    m_light_casters.clear();
+    m_shadow_data.clear();
     m_shadow_fbo.reset();
-    m_shadow_ubo.reset();
+    m_shadow_ssbo.reset();
 }
 
 void ShadowRenderer::render()
 {
-    m_shadow_caster = SceneManager::get_current_scene()->get_all_lights()[0]; // Temporary. Will have to consider all lights in the scene.
-    auto test = m_shadow_caster;
+    update_and_upload_data();
 
-    const ShaderRef shader = ResourceManager::get_shader("shadow_depth");
-    if (!m_shadow_caster || !shader || !shader->is_shader_compiled())
+    if (m_light_casters.empty())
     {
-        m_shadow_caster = nullptr;
-        update_and_upload_data(ShadowGPUData{});
         return;
     }
 
-    update_and_upload_data(build_shadow_data(*m_shadow_caster));
-    render_depth_pass(shader);
+    const ShaderRef shader = ResourceManager::get_shader("shadow_depth");
+
+    glActiveTexture(GL_TEXTURE0 + SHADOW_MAP_TEXTURE_UNIT);
+    glBindTexture(GL_TEXTURE_2D_ARRAY, 0);
+    glActiveTexture(GL_TEXTURE0);
+
+    glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LESS);
+    glDepthMask(GL_TRUE);
+    glEnable(GL_CULL_FACE);
+    glCullFace(m_settings.cull_front_faces ? GL_FRONT : GL_BACK);
+
+    shader->use();
+    for (size_t layer = 0; layer < m_light_casters.size(); ++layer)
+    {
+        DebugScopeGroup scope("Shadow Layer");
+
+        m_shadow_fbo->bind_layer(static_cast<GLuint>(layer));
+        glClear(GL_DEPTH_BUFFER_BIT);
+
+        const glm::mat4& light_space = m_shadow_data[layer].light_space_matrix;
+        shader->set_mat4("light_space_matrix", light_space);
+        const Frustum light_frustum = Frustum::get_frustum_structure(light_space);
+
+        for (const Mesh* mesh : SceneManager::get_current_scene()->get_all_meshes())
+        {
+            if (!mesh->is_visible() || !mesh->has_mesh())
+            {
+                continue;
+            }
+            const auto* data = dynamic_cast<const MeshData*>(mesh->get_mesh().operator->());
+            if (!data)
+            {
+                continue;
+            }
+
+            // Per-light culling with the mesh's world-space bounding sphere
+            const glm::mat4 model = mesh->transform.get_global_model_matrix();
+            const glm::vec3 scale = mesh->transform.get_global_scale();
+            const glm::vec3 center = glm::vec3(model * glm::vec4(data->get_bounds_center(), 1.0f));
+            const float radius = data->get_bounds_radius() * glm::max(scale.x, glm::max(scale.y, scale.z));
+            if (!light_frustum.intersects_sphere(center, radius))
+            {
+                continue;
+            }
+
+            shader->set_mat4("model", model);
+            data->draw();
+        }
+    }
+    shader->unuse();
+
+    glCullFace(GL_BACK);
+    m_shadow_fbo->unbind();
+
+    // Leave the array bound for the forward and deferred passes
+    glActiveTexture(GL_TEXTURE0 + SHADOW_MAP_TEXTURE_UNIT);
+    glBindTexture(GL_TEXTURE_2D_ARRAY, m_shadow_fbo->get_depth_texture());
+    glActiveTexture(GL_TEXTURE0);
+}
+
+int ShadowRenderer::get_shadow_index(const Light* light)
+{
+    const auto it = ranges::find(m_light_casters, light);
+    return it == m_light_casters.end() ? -1 : static_cast<int>(it - m_light_casters.begin());
 }
 
 ShadowGPUData ShadowRenderer::build_shadow_data(const Light& light)
@@ -105,11 +176,28 @@ ShadowGPUData ShadowRenderer::build_shadow_data(const Light& light)
     return data;
 }
 
-void ShadowRenderer::update_and_upload_data(const ShadowGPUData& data)
+void ShadowRenderer::ensure_layer_capacity(size_t needed)
 {
-    m_shadow_ubo->bind();
-    m_shadow_ubo->bind_buffer_sub_data(&data, SHADOW_DATA_SIZE, 0);
-    m_shadow_ubo->unbind();
+    const GLuint current = m_shadow_fbo->get_layer_count();
+    if (needed <= current)
+    {
+        return;
+    }
+    const GLuint next = glm::min(glm::max(static_cast<GLuint>(needed), current * 2), m_max_layers);
+    m_shadow_fbo->resize_layers(next);
+}
+
+void ShadowRenderer::update_and_upload_data()
+{
+    if (m_shadow_data.empty())
+    {
+        return;
+    }
+
+    const auto size = static_cast<GLsizeiptr>(m_shadow_data.size()) * SHADOW_GPU_DATA_SIZE;
+    m_shadow_ssbo->bind();
+    m_shadow_ssbo->bind_buffer_data(m_shadow_data.data(), size);
+    m_shadow_ssbo->bind_to_binding_point(SHADOW_DATA_SSBO_BINDING);
 }
 
 void ShadowRenderer::render_depth_pass(const ShaderRef& shader)

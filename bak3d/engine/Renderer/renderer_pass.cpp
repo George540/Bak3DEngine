@@ -69,7 +69,7 @@ void RendererPasses::render_pass_light_culling()
 
     if (const Camera* camera = SceneManager::get_current_scene()->get_current_camera())
     {
-        LightRenderer::update_and_upload_data(SceneManager::get_current_scene()->get_all_lights(), camera->get_frustum());
+        LightRenderer::update_and_upload_data(SceneManager::get_current_scene()->get_all_lights(), camera->get_frustum(), camera->get_camera_position());
     }
 }
 

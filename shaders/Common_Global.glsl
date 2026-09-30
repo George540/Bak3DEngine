@@ -22,6 +22,21 @@ layout (std140, binding = 0) uniform Camera
 
 uniform mat4 model;
 
+struct ShadowData
+{
+    mat4 light_space_matrix;
+    vec4 bias_params;       // x = const bias, y = slope bias, z = normal offset (shadow texels), w = PCF radius
+    vec4 projection_params; // x = near,       y = far,        z = frustum scale,                 w = 1 perspective / 0 ortho
+    vec4 map_params;        // x = resolution, rest are padding
+};
+
+layout (std430, binding = 14) readonly buffer ShadowBuffer
+{
+    ShadowEntry entries[];
+} shadow_data;
+
+layout (binding = 8) uniform sampler2DArray shadow_map;
+
 struct LightData
 {
     vec4 position;  // .rgb = position,  .a = cut_off
@@ -47,16 +62,6 @@ layout (std140, binding = 2) uniform PageData
     int debug_mode;      // 0 = color, 1 = depth, TBD: 2 = AO, 3 = normals, etc
     float padding[3];
 } page_data;
-
-layout (std140, binding = 3) uniform ShadowData
-{
-    mat4 light_space_matrix;
-    vec4 bias_params;        // x = const bias, y = slope bias, z = normal offset (shadow texels), w = PCF radius
-    vec4 projection_params;  // x = near, y = far, z = frustum scale, w = 0 ortho, 1 perspective
-    vec4 map_params;         // x = resolution, y = enabled
-} shadow_data;
-
-layout (binding = 8) uniform sampler2D shadow_map;
 
 // Nathan Reed, "Hash Function for GPU Rendering", 2021, https://www.reedbeta.com/blog/hash-functions-for-gpu-rendering/
 uint pcg_hash(uint input_value)
@@ -202,12 +207,12 @@ float calculate_translucency(vec3 view_direction, vec3 light_direction, float sc
     return mix(isotropic_scatter, directional_scatter, 0.8);
 }
 
-float shadow_linear_depth(float depth)
+float shadow_linear_depth(vec4 projection_params, float depth)
 {
-    float near = shadow_data.projection_params.x;
-    float far = shadow_data.projection_params.y;
+    float near = projection_params.x;
+    float far = projection_params.y;
 
-    if (shadow_data.projection_params.w > 0.5) // perspective
+    if (projection_params.w > 0.5) // perspective
     {
         float ndc = depth * 2.0 - 1.0;
         return (2.0 * near * far) / (far + near - ndc * (far - near));
@@ -219,27 +224,28 @@ float shadow_linear_depth(float depth)
 // Returns 1.0 = fully lit, 0.0 = fully shadowed. light_direction points from the fragment to the light.
 float calculate_shadow(LightData light, vec3 frag_position, vec3 normal, vec3 light_direction)
 {
-    if (light.shadow_index < 0 || shadow_data.map_params.y < 0.5) // Are shadows enabled?
+    if (light.shadow_index < 0) // Are shadows enabled?
     {
         return 1.0;
     }
 
-    bool is_perspective = shadow_data.projection_params.w > 0.5;
-    float map_size = shadow_data.map_params.x;
-    float pcf_radius = shadow_data.bias_params.w;
+    ShadowData shadow_entry = shadow_data.entries[light.shadow_index];
+    bool is_perspective = shadow_entry.projection_params.w > 0.5;
+    float map_size = shadow_entry.map_params.x;
+    float pcf_radius = shadow_entry.bias_params.w;
     float n_dot_l = clamp(dot(normal, light_direction), 0.0, 1.0);
 
     // World-space size of one shadow texel at this fragment.
     // Constant for orthographic, grows with distance for perspective view.
-    vec4 probe = shadow_data.light_space_matrix * vec4(frag_position, 1.0);
+    vec4 probe = shadow_entry.light_space_matrix * vec4(frag_position, 1.0);
     float light_distance = is_perspective ? probe.w : 1.0;
-    float texel_world_size = 2.0 * shadow_data.projection_params.z * light_distance / map_size;
+    float texel_world_size = 2.0 * shadow_entry.projection_params.z * light_distance / map_size;
 
     // Normal offset: push the lookup position off the surface, more at grazing angles
     float sin_theta = sqrt(1.0 - n_dot_l * n_dot_l);
-    vec3 offset_position = frag_position + normal * (shadow_data.bias_params.z * texel_world_size * sin_theta);
+    vec3 offset_position = frag_position + normal * (shadow_entry.bias_params.z * texel_world_size * sin_theta);
 
-    vec4 light_clip = shadow_data.light_space_matrix * vec4(offset_position, 1.0);
+    vec4 light_clip = shadow_entry.light_space_matrix * vec4(offset_position, 1.0);
     if (light_clip.w <= 0.0)
     {
         return 1.0; // behind a perspective light
@@ -253,19 +259,20 @@ float calculate_shadow(LightData light, vec3 frag_position, vec3 normal, vec3 li
     }
 
     // Bias and PCF handling
-    float bias = (shadow_data.bias_params.x + shadow_data.bias_params.y * (1.0 - n_dot_l) * (1.0 + pcf_radius)) * texel_world_size;
-    float current_depth = shadow_linear_depth(coords.z) - bias;
+    float bias = (shadow_entry.bias_params.x + shadow_entry.bias_params.y * (1.0 - n_dot_l) * (1.0 + pcf_radius)) * texel_world_size;
+    float current_depth = shadow_linear_depth(shadow_entry.projection_params, coords.z) - bias;
 
     // PCF
     int radius = int(pcf_radius);
     vec2 texel = vec2(1.0 / map_size);
+    float layer = float(light.shadow_index);
     float lit = 0.0;
     for (int x = -radius; x <= radius; ++x)
     {
         for (int y = -radius; y <= radius; ++y)
         {
-            float stored_depth = texture(shadow_map, coords.xy + vec2(x, y) * texel).r;
-            lit += current_depth <= shadow_linear_depth(stored_depth) ? 1.0 : 0.0;
+            float stored_depth = texture(shadow_map, vec3(coords.xy + vec2(x, y) * texel, layer)).r;
+            lit += current_depth <= shadow_linear_depth(shadow_entry.projection_params, stored_depth) ? 1.0 : 0.0;
         }
     }
     return lit / float((2 * radius + 1) * (2 * radius + 1));

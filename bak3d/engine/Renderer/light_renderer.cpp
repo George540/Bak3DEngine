@@ -27,32 +27,33 @@ void LightRenderer::shutdown()
     m_staging_lights.clear();
 }
 
-void LightRenderer::update_and_upload_data(const std::vector<Light*>& active_lights, const Frustum& frustum)
+void LightRenderer::update_and_upload_data(const std::vector<Light*>& active_lights, const Frustum& frustum, const glm::vec3& camera_position, bool allow_shadows)
 {
     m_staging_lights.clear();
 
-    const Light* shadow_caster = ShadowRenderer::get_shadow_caster();
-
-    for (const auto& light : active_lights)
+    // Cull
+    vector<const Light*> visible_lights;
+    visible_lights.reserve(active_lights.size());
+    for (const Light* light : active_lights)
     {
         if (!light->is_active)
         {
             continue;
         }
-
-        if (light->get_type() != LightType::Directional)
+        if (light->get_type() != LightType::Directional
+            && !frustum.intersects_sphere(light->transform.get_global_position(), light->get_effective_radius()))
         {
-            const glm::vec3 position = light->transform.get_global_position();
-            if (!frustum.intersects_sphere(position, light->get_effective_radius()))
-            {
-                continue;
-            }
+            continue;
         }
+        visible_lights.push_back(light);
+    }
 
-        // Set shadow index for specific shadow caster
+    // Build payloads, tagging casters with their shadow layer
+    for (const Light* light : visible_lights)
+    {
         LightGPUData payload = light->get_light_gpu_data_payload();
-        payload.shadow_index = (light == shadow_caster) ? 0 : -1;
-        m_staging_lights.push_back(light->get_light_gpu_data_payload());
+        payload.shadow_index = allow_shadows ? ShadowRenderer::get_shadow_index(light) : -1;
+        m_staging_lights.push_back(payload);
     }
 
     m_visible_light_count = static_cast<int>(m_staging_lights.size());
@@ -61,7 +62,6 @@ void LightRenderer::update_and_upload_data(const std::vector<Light*>& active_lig
         return;
     }
 
-    // Grows/reallocates automatically when the requested size differs from the buffer's current size
     const auto required_size = static_cast<GLsizeiptr>(m_staging_lights.size()) * LIGHT_GPU_DATA_SIZE;
     m_lights_ssbo->bind();
     m_lights_ssbo->bind_buffer_data(m_staging_lights.data(), required_size);

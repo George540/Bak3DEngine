@@ -467,30 +467,52 @@ std::string GBufferFrameBuffer::get_color_attachment_label(const size_t index) c
     }
 }
 
-ShadowMapFrameBuffer::ShadowMapFrameBuffer(GLuint width, GLuint height, const char* debug_name)
-    : FrameBuffer(0, nullptr, width, height, GL_NONE, true, debug_name ? debug_name : "ShadowMap")
+ShadowMapFrameBuffer::ShadowMapFrameBuffer(const GLuint resolution, GLuint layer_count, const char* debug_name)
+    : FrameBuffer(0, nullptr, resolution, resolution, GL_NONE, true, debug_name ? debug_name : "ShadowMap"),
+    m_layer_count(layer_count)
 {
     destroy_framebuffer();
     create_framebuffer();
 
-    B3D_LOG_INFO("Shadow Map Frame Buffer Object enabled (%ux%u)...", width, height);
+    B3D_LOG_INFO("Shadow Map Frame Buffer Object enabled (%ux%u)...", resolution, resolution);
+}
+
+void ShadowMapFrameBuffer::bind_layer(const GLuint layer) const
+{
+    glBindFramebuffer(m_target, m_ID);
+    glFramebufferTextureLayer(m_target, GL_DEPTH_ATTACHMENT, m_depth_texture, 0, layer);
+    glViewport(0, 0, m_width, m_height);
+}
+
+void ShadowMapFrameBuffer::resize_layers(const GLuint new_layer_count)
+{
+    if (new_layer_count == m_layer_count)
+    {
+        return;
+    }
+    m_layer_count = new_layer_count;
+    destroy_framebuffer();
+    create_framebuffer();
+
+    B3D_LOG_INFO("Shadow map array resized to %u layers.", new_layer_count);
 }
 
 void ShadowMapFrameBuffer::create_attachments()
 {
     glGenTextures(1, &m_depth_texture);
-    glBindTexture(GL_TEXTURE_2D, m_depth_texture);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32, m_width, m_height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
+    glBindTexture(GL_TEXTURE_2D_ARRAY, m_depth_texture);
+    glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, GL_DEPTH_COMPONENT32F, m_width, m_height, m_layer_count, 0, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
 
     // Nearest filtering for custom PCF
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_NEAREST); // PCF is manual
+    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
     // Ensure that any coordinates outside the range do not get automatically shadowed
     constexpr float border[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-    glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR , border);
+    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+    glTexParameterfv(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_BORDER_COLOR, border);
 
-    glFramebufferTexture2D(m_target, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, m_depth_texture, 0);
+    // Layered attachment keeps the FBO "complete"; bind_layer() narrows it to one layer per pass
+    glFramebufferTexture(m_target, GL_DEPTH_ATTACHMENT, m_depth_texture, 0);
 }

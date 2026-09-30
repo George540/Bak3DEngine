@@ -160,8 +160,15 @@ protected:
 class ShadowMapFrameBuffer : public FrameBuffer
 {
 public:
-    explicit ShadowMapFrameBuffer(GLuint width, GLuint height, const char* debug_name = nullptr);
+    explicit ShadowMapFrameBuffer(GLuint resolution, GLuint layer_count, const char* debug_name = nullptr);
+
+    void bind_layer(GLuint layer) const;
+    void resize_layers(GLuint new_layer_count); // recreates the array texture
+    
+    GLuint get_layer_count() const { return m_layer_count; }
 protected:
     void create_attachments() override;
     std::vector<GLenum> get_draw_buffers() const override { return {}; }
+private:
+    GLuint m_layer_count;
 };

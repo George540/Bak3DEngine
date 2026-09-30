@@ -27,7 +27,6 @@ THE SOFTWARE.
 #include "Buffers/frame_buffer.h"
 #include "Scene/Objects/light.h"
 
-// Mirror of ShadowBlock in Common_Global.glsl */
 struct ShadowGPUData
 {
     glm::mat4 light_space_matrix = glm::mat4(1.0f);
@@ -35,7 +34,8 @@ struct ShadowGPUData
     glm::vec4 projection_params = glm::vec4(0.0f); // x = near, y = far, z = frustum scale (ortho half-extent | tan(half fov)), w = 1 perspective / 0 ortho
     glm::vec4 map_params = glm::vec4(0.0f);        // x = resolution, y = enabled
 };
-static constexpr GLsizei SHADOW_DATA_SIZE = sizeof(ShadowGPUData);
+static constexpr GLsizei SHADOW_GPU_DATA_SIZE = sizeof(ShadowGPUData);
+static_assert(SHADOW_GPU_DATA_SIZE == 112, "Must match ShadowEntry std430 layout");
 
 // Tunable settings collected in a single payload
 struct ShadowSettings
@@ -49,6 +49,9 @@ struct ShadowSettings
     bool cull_front_faces = true; // render back faces into the map (acne + peter panning); single-sided planes won't cast
 
     float near_plane = 0.1f;
+
+    GLuint initial_layers = 4; // Starting array capacity, which grows by doubling to keep reallocation rare
+    GLuint max_casters = 0; // 0 = limited only by GL_MAX_ARRAY_TEXTURE_LAYERS (which is 2048)
 
     // Directional (orthographic box)
     glm::vec3 directional_focus = glm::vec3(0.0f);
@@ -66,23 +69,26 @@ struct ShadowSettings
 class ShadowRenderer
 {
 public:
-    static constexpr GLuint SHADOW_DATA_UBO_BINDING = 3;
+    static constexpr GLuint SHADOW_DATA_SSBO_BINDING = 14;
     static constexpr GLuint SHADOW_MAP_TEXTURE_UNIT = 8; // must match layout(binding = 8) in Common_Global.glsl
 
     static void initialize();
     static void shutdown();
     static void render();
 
-    static const Light* get_shadow_caster() { return m_shadow_caster; }
+    static int get_shadow_index(const Light* light);
     static ShadowSettings& get_settings() { return m_settings; }
 
 private:
     static ShadowGPUData build_shadow_data(const Light& light);
-    static void update_and_upload_data(const ShadowGPUData& data);
+    static void ensure_layer_capacity(size_t needed);
+    static void update_and_upload_data();
     static void render_depth_pass(const ShaderRef& shader);
 
     static std::unique_ptr<ShadowMapFrameBuffer> m_shadow_fbo;
-    static std::unique_ptr<UniformBuffer> m_shadow_ubo;
-    static const Light* m_shadow_caster;
+    static std::unique_ptr<ShaderStorageBuffer> m_shadow_ssbo;
+    static std::vector<const Light*> m_light_casters;
+    static std::vector<ShadowGPUData> m_shadow_data;
+    static GLuint m_max_layers;
     static ShadowSettings m_settings;
 };

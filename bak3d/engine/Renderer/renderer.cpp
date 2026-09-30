@@ -140,6 +140,7 @@ void Renderer::draw_frame()
 	// ------------------------------------------------------------
 	// Shadow Depth Pass: Prepare shadow maps for lights
 	// ------------------------------------------------------------
+	RendererPasses::render_pass_light_culling();
 	RendererPasses::render_pass_shadow_map();
 
 	// ------------------------------------------------------------
@@ -153,7 +154,6 @@ void Renderer::draw_frame()
 	glEnable(GL_CULL_FACE);
 	glCullFace(GL_BACK);
 	RendererPasses::render_pass_gbuffer();
-	RendererPasses::render_pass_light_culling();
 
 	// ------------------------------------------------------------
 	// Deferred Rendering: Resolve into main
@@ -226,7 +226,8 @@ GLuint Renderer::process_asset_captures()
 		return 0;
 	}
 
-	LightRenderer::update_and_upload_data(preview_scene->get_all_lights(), preview_scene->get_current_camera()->get_frustum());
+	const Camera* preview_camera = preview_scene->get_current_camera();
+	LightRenderer::update_and_upload_data(preview_scene->get_all_lights(), preview_camera->get_frustum(), preview_camera->get_camera_position(), false);
 
 	r_preview_fbo->bind();
 	glClearColor(0.15f, 0.15f, 0.18f, 1.0f);
