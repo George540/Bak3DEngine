@@ -41,21 +41,51 @@ namespace
     string m_search_name_string;
     string m_selected_texture;
 
-    // Panel Settings
     float m_tile_size = 90.0f;
-    float m_tile_padding = 8.0f;
     bool m_show_labels = true;
     bool m_show_tooltips = true;
 
-    void draw_truncated_tile_label(const string& asset_name)
+    constexpr float TILE_INNER_PADDING = 6.0f;   // space between button edge and image/label
+    constexpr float TILE_LABEL_GAP = 4.0f;       // image to label
+    constexpr ImVec2 TILE_CELL_PADDING = ImVec2(3.0f, 3.0f); // gap between tiles
+
+    float tile_width()
     {
-        const string label = ImGuiB3D::TruncateLabel(asset_name, m_tile_size);
-        const float text_width = ImGui::CalcTextSize(label.c_str()).x;
-        if (const float indent = (m_tile_size - text_width) * 0.5f; indent > 0.0f)
+        return m_tile_size + TILE_INNER_PADDING * 2.0f;
+    }
+
+    float tile_height()
+    {
+        float height = m_tile_size + TILE_INNER_PADDING * 2.0f;
+        if (m_show_labels)
         {
-            ImGui::SetCursorPosX(ImGui::GetCursorPosX() + indent);
+            height += TILE_LABEL_GAP + ImGui::GetTextLineHeight();
         }
-        ImGui::TextUnformatted(label.c_str());
+        return height;
+    }
+
+    // Button background + image + truncated label drawn inside the button's rect
+    bool draw_tile_button(const string& id, const ImTextureID texture_id, const string& label)
+    {
+        const ImVec2 size(tile_width(), tile_height());
+        const bool clicked = ImGui::Button(id.c_str(), size);
+
+        const ImVec2 rect_min = ImGui::GetItemRectMin();
+        ImDrawList* draw_list = ImGui::GetWindowDrawList();
+
+        const ImVec2 image_min(rect_min.x + TILE_INNER_PADDING, rect_min.y + TILE_INNER_PADDING);
+        const ImVec2 image_max(image_min.x + m_tile_size, image_min.y + m_tile_size);
+        draw_list->AddImage(texture_id, image_min, image_max, ImVec2(0, 1), ImVec2(1, 0));
+
+        if (m_show_labels)
+        {
+            const string text = ImGuiB3D::TruncateLabel(label, m_tile_size);
+            const float text_width = ImGui::CalcTextSize(text.c_str()).x;
+            const ImVec2 text_pos(rect_min.x + (size.x - text_width) * 0.5f, image_max.y + TILE_LABEL_GAP);
+            draw_list->AddText(text_pos, ImGui::GetColorU32(ImGuiCol_Text), text.c_str());
+        }
+
+        return clicked;
     }
 }
 
@@ -93,6 +123,12 @@ void AssetPanel::end_frame()
 
 void AssetPanel::draw_toolbar()
 {
+    ImGui::SetNextItemWidth(120.0f);
+    ImGui::SliderFloat("##tile_size", &m_tile_size, 30.0f, 160.0f, "%.0f px");
+    ImGuiB3D::ToolTipExtendedText("Controls the size of the asset and folder tiles in the grid, in pixels.");
+
+    ImGui::SameLine();
+
     if (ImGui::Button("Clear", ImVec2(50, 20)))
     {
         m_search_name_string = "";
@@ -160,11 +196,13 @@ void AssetPanel::draw_folder_subtree(AssetTreeNode& node)
 
 void AssetPanel::draw_asset_grid(AssetTreeNode& node)
 {
-    const float cell_size = m_tile_size + m_tile_padding;
-    const int columns = max(1, static_cast<int>(ImGui::GetContentRegionAvail().x / cell_size));
+    const float cell_size = tile_width() + TILE_CELL_PADDING.x * 2.0f;
+    const float available_width = ImGui::GetContentRegionAvail().x - ImGui::GetStyle().ScrollbarSize;
+    const int columns = max(1, static_cast<int>(available_width / cell_size));
 
     ImGui::BeginChild("##asset_grid", ImVec2(0, 0.0f), false, ImGuiWindowFlags_HorizontalScrollbar);
-    if (ImGui::BeginTable("##asset_table", columns, 0))
+    ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, TILE_CELL_PADDING);
+    if (ImGui::BeginTable("##asset_table", columns, ImGuiTableFlags_SizingFixedFit))
     {
         for (auto& [name, child] : node.sub_folders)
         {
@@ -187,6 +225,7 @@ void AssetPanel::draw_asset_grid(AssetTreeNode& node)
         }
         ImGui::EndTable();
     }
+    ImGui::PopStyleVar();
     ImGui::EndChild();
 }
 
@@ -194,36 +233,14 @@ void AssetPanel::draw_folder_tile(AssetTreeNode* folder)
 {
     ImGui::PushID(folder);
 
-    const ImVec2 image_size = { m_tile_size, m_tile_size };
-    const string label_asset = "##folder_" + folder->full_path;
+    const TextureRef folder_icon = !folder->sub_folders.empty() || !folder->assets.empty() ? ResourceManager::get_texture("folder_icon.png") : ResourceManager::get_texture("folder_icon_empty.png");
+    const ImTextureID texture_id = folder_icon ? folder_icon->get_texture_id() : 0;
 
-    ImGui::BeginChild(label_asset.c_str(), ImVec2(image_size.x * 2, image_size.y * 1.3f));
+    if (draw_tile_button("##folder_button", texture_id, folder->name))
     {
-        const TextureRef folder_icon = !folder->sub_folders.empty() || !folder->assets.empty() ? ResourceManager::get_texture("folder_icon.png") : ResourceManager::get_texture("folder_icon_empty.png");
-        const ImTextureID texture_id = folder_icon ? folder_icon->get_texture_id() : 0;
-
-        const bool is_folder_clicked = ImGui::ImageButton(
-            label_asset.c_str(),
-            texture_id,
-            image_size,
-            { 0, 1 }, { 1, 0 },
-            ImVec4(0, 0, 0, 0),
-            ImVec4(1, 1, 1, 1)
-        );
-
-        if (is_folder_clicked)
-        {
-            m_selected_folder = folder;
-        }
-
-        // Label
-        if (m_show_labels)
-        {
-            draw_truncated_tile_label(folder->name);
-        }
+        m_selected_folder = folder;
     }
-    ImGui::EndChild();
-    
+
     ImGui::PopID();
 }
 
@@ -254,46 +271,26 @@ void AssetPanel::draw_asset_tile(const string& name, Asset* asset)
 
     ImGui::PushID(name.c_str());
 
-    const string label_asset = "##" + name;
-    ImGui::BeginChild(label_asset.c_str(), ImVec2(image_size.x * 2, image_size.y * 1.3f));
+    const bool clicked = draw_tile_button("##asset_button", texture_id, name);
+
+    if (ImGui::IsItemActive() || ImGui::IsItemHovered())
     {
-        // Image button
-        const bool clicked = ImGui::ImageButton(
-            label_asset.c_str(),
-            texture_id,
-            image_size,
-            { 0, 1 }, { 1, 0 }, // UV coords (flip second pair for OpenGL if needed)
-            ImVec4(0, 0, 0, 0), // background colour
-            ImVec4(1, 1, 1, 1) // neutral tint
-        );
-
-        if (ImGui::IsItemActive() || ImGui::IsItemHovered())
-        {
-            const ImVec2 rect_min = ImGui::GetItemRectMin();
-            const ImVec2 rect_max = ImGui::GetItemRectMax();
-            const ImU32 overlay_color = ImGui::IsItemActive()
-                ? IM_COL32(100, 160, 255, 120)  // pressed: stronger
-                : IM_COL32(100, 160, 255, 60);  // hovered: subtle
-            ImGui::GetWindowDrawList()->AddRectFilled(rect_min, rect_max, overlay_color, 4.0f);
-        }
-
-        if (const auto model_asset = dynamic_cast<Model*>(asset); clicked && model_asset)
-        {
-            const glm::vec3 spawn_position = SceneManager::get_current_scene()->process_spawn_position();
-            SceneObject* object_to_parent = SceneManager::get_current_scene()->get_selected_scene_object();
-            SceneManager::get_current_scene()->instantiate_model(ResourceManager::get_model(model_asset->get_file_name()), object_to_parent, spawn_position);
-        }
-
-        if (m_show_labels)
-        {
-            draw_truncated_tile_label(name);
-        }
+        const ImU32 overlay_color = ImGui::IsItemActive()
+            ? IM_COL32(100, 160, 255, 120)
+            : IM_COL32(100, 160, 255, 60);
+        ImGui::GetWindowDrawList()->AddRectFilled(ImGui::GetItemRectMin(), ImGui::GetItemRectMax(), overlay_color, 4.0f);
     }
-    ImGui::EndChild();
 
     if (m_show_tooltips && ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNormal))
     {
         ImGuiB3D::AssetTooltip(asset);
+    }
+
+    if (const auto model_asset = dynamic_cast<Model*>(asset); clicked && model_asset)
+    {
+        const glm::vec3 spawn_position = SceneManager::get_current_scene()->process_spawn_position();
+        SceneObject* object_to_parent = SceneManager::get_current_scene()->get_selected_scene_object();
+        SceneManager::get_current_scene()->instantiate_model(ResourceManager::get_model(model_asset->get_file_name()), object_to_parent, spawn_position);
     }
 
     ImGui::PopID();
