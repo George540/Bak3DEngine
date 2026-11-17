@@ -41,23 +41,56 @@ namespace
     string m_search_name_string;
     string m_selected_texture;
 
-    float m_tile_size = 90.0f;
+    // Panel Settings
+    constexpr float DEFAULT_TILE_SIZE = 90.0f;
+    constexpr float DEFAULT_TILE_INNER_PADDING = 6.0f;
+    constexpr float DEFAULT_TILE_CELL_PADDING = 3.0f;
+    constexpr bool DEFAULT_AUTO_HIDE_LABELS = true;
+
+    float m_tile_size = DEFAULT_TILE_SIZE;
+    float m_tile_inner_padding = DEFAULT_TILE_INNER_PADDING;
+    float m_tile_cell_padding = DEFAULT_TILE_CELL_PADDING;
+    bool m_auto_hide_labels = DEFAULT_AUTO_HIDE_LABELS;
     bool m_show_labels = true;
     bool m_show_tooltips = true;
 
-    constexpr float TILE_INNER_PADDING = 6.0f;   // space between button edge and image/label
-    constexpr float TILE_LABEL_GAP = 4.0f;       // image to label
-    constexpr ImVec2 TILE_CELL_PADDING = ImVec2(3.0f, 3.0f); // gap between tiles
+    constexpr float TILE_LABEL_GAP = 4.0f; // image to label
+    constexpr float AUTO_HIDE_LABELS_THRESHOLD = 50.0f;
+
+    bool tile_settings_modified()
+    {
+        return m_tile_size != DEFAULT_TILE_SIZE
+            || m_tile_inner_padding != DEFAULT_TILE_INNER_PADDING
+            || m_tile_cell_padding != DEFAULT_TILE_CELL_PADDING
+            || m_auto_hide_labels != DEFAULT_AUTO_HIDE_LABELS;
+    }
+
+    void reset_tile_settings()
+    {
+        m_tile_size = DEFAULT_TILE_SIZE;
+        m_tile_inner_padding = DEFAULT_TILE_INNER_PADDING;
+        m_tile_cell_padding = DEFAULT_TILE_CELL_PADDING;
+        m_auto_hide_labels = DEFAULT_AUTO_HIDE_LABELS;
+    }
+
+    bool labels_visible()
+    {
+        if (!m_show_labels)
+        {
+            return false;
+        }
+        return !m_auto_hide_labels || m_tile_size >= AUTO_HIDE_LABELS_THRESHOLD;
+    }
 
     float tile_width()
     {
-        return m_tile_size + TILE_INNER_PADDING * 2.0f;
+        return m_tile_size + m_tile_inner_padding * 2.0f;
     }
 
     float tile_height()
     {
-        float height = m_tile_size + TILE_INNER_PADDING * 2.0f;
-        if (m_show_labels)
+        float height = m_tile_size + m_tile_inner_padding * 2.0f;
+        if (labels_visible())
         {
             height += TILE_LABEL_GAP + ImGui::GetTextLineHeight();
         }
@@ -73,11 +106,11 @@ namespace
         const ImVec2 rect_min = ImGui::GetItemRectMin();
         ImDrawList* draw_list = ImGui::GetWindowDrawList();
 
-        const ImVec2 image_min(rect_min.x + TILE_INNER_PADDING, rect_min.y + TILE_INNER_PADDING);
+        const ImVec2 image_min(rect_min.x + m_tile_inner_padding, rect_min.y + m_tile_inner_padding);
         const ImVec2 image_max(image_min.x + m_tile_size, image_min.y + m_tile_size);
         draw_list->AddImage(texture_id, image_min, image_max, ImVec2(0, 1), ImVec2(1, 0));
 
-        if (m_show_labels)
+        if (labels_visible())
         {
             const string text = ImGuiB3D::TruncateLabel(label, m_tile_size);
             const float text_width = ImGui::CalcTextSize(text.c_str()).x;
@@ -123,9 +156,7 @@ void AssetPanel::end_frame()
 
 void AssetPanel::draw_toolbar()
 {
-    ImGui::SetNextItemWidth(120.0f);
-    ImGui::SliderFloat("##tile_size", &m_tile_size, 30.0f, 160.0f, "%.0f px");
-    ImGuiB3D::ToolTipExtendedText("Controls the size of the asset and folder tiles in the grid, in pixels.");
+    draw_tile_settings_popup();
 
     ImGui::SameLine();
 
@@ -141,6 +172,66 @@ void AssetPanel::draw_toolbar()
     if (ImGui::InputTextWithHint("##asset_filter", "Filter assets by name...", search_buffer, IM_ARRAYSIZE(search_buffer)))
     {
         m_search_name_string = string(search_buffer);
+    }
+}
+
+void AssetPanel::draw_tile_settings_popup()
+{
+    if (ImGui::Button("Tile Settings"))
+    {
+        ImGui::OpenPopup("Tile Settings Popup");
+    }
+
+    const ImVec2 button_position = ImGui::GetItemRectMin();
+    const float button_height = ImGui::GetItemRectSize().y;
+    ImGui::SetNextWindowPos(ImVec2(button_position.x, button_position.y + button_height));
+    ImGui::SetNextWindowSize(ImVec2(300.0f, 0.0f));
+
+    if (ImGui::BeginPopup("Tile Settings Popup", ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoMove))
+    {
+        ImGui::SeparatorText("Tile Settings");
+
+        ImGui::BeginDisabled(!tile_settings_modified());
+        if (ImGui::Button("Reset to Defaults", ImVec2(-FLT_MIN, 0.0f)))
+        {
+            reset_tile_settings();
+        }
+        ImGui::EndDisabled();
+        ImGuiB3D::ToolTipExtendedText("Restores tile size, cell padding, inner padding and auto-hide labels to their default values.");
+
+        ImGui::Spacing();
+
+        if (ImGui::BeginTable("TileSettingsTable", 2, ImGuiTableFlags_SizingStretchProp | ImGuiTableFlags_NoSavedSettings))
+        {
+            ImGui::TableSetupColumn("Label", ImGuiTableColumnFlags_WidthStretch, 0.45f);
+            ImGui::TableSetupColumn("Value", ImGuiTableColumnFlags_WidthStretch, 0.55f);
+
+            const auto begin_row = [](const char* label, const char* tooltip)
+            {
+                ImGui::TableNextRow();
+                ImGui::TableSetColumnIndex(0);
+                ImGui::TextUnformatted(label);
+                ImGuiB3D::ToolTipExtendedText(tooltip);
+                ImGui::TableSetColumnIndex(1);
+                ImGui::SetNextItemWidth(-FLT_MIN);
+            };
+
+            begin_row("Tile Size", "Size of the grid tiles in pixels.");
+            ImGui::SliderFloat("##tile_size", &m_tile_size, 30.0f, 160.0f, "%.0f px");
+
+            begin_row("Cell Padding", "Gap between neighboring tiles in the grid in pixels.");
+            ImGui::SliderFloat("##tile_cell_padding", &m_tile_cell_padding, 0.0f, 16.0f, "%.0f px");
+
+            begin_row("Inner Padding", "Space between a tile's edge and its image and label in pixels.");
+            ImGui::SliderFloat("##tile_inner_padding", &m_tile_inner_padding, 0.0f, 16.0f, "%.0f px");
+
+            begin_row("Auto-Hide Labels", "Automatically hides tile labels when the tile size is below 50 pixels, where truncated names are no longer readable.");
+            ImGui::Checkbox("##auto_hide_labels", &m_auto_hide_labels);
+
+            ImGui::EndTable();
+        }
+
+        ImGui::EndPopup();
     }
 }
 
@@ -196,12 +287,12 @@ void AssetPanel::draw_folder_subtree(AssetTreeNode& node)
 
 void AssetPanel::draw_asset_grid(AssetTreeNode& node)
 {
-    const float cell_size = tile_width() + TILE_CELL_PADDING.x * 2.0f;
+    const float cell_size = tile_width() + m_tile_cell_padding * 2.0f;
     const float available_width = ImGui::GetContentRegionAvail().x - ImGui::GetStyle().ScrollbarSize;
     const int columns = max(1, static_cast<int>(available_width / cell_size));
 
     ImGui::BeginChild("##asset_grid", ImVec2(0, 0.0f), false, ImGuiWindowFlags_HorizontalScrollbar);
-    ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, TILE_CELL_PADDING);
+    ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, ImVec2(m_tile_cell_padding, m_tile_cell_padding));
     if (ImGui::BeginTable("##asset_table", columns, ImGuiTableFlags_SizingFixedFit))
     {
         for (auto& [name, child] : node.sub_folders)

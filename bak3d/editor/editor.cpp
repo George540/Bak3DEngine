@@ -101,7 +101,7 @@ void Bak3DEditor::initialize()
 
     set_editor_global_style();
 
-    B3D_LOG_INFO("ImGui and editor initialized.");
+    B3D_LOG_INFO("ImGui and editor initialized with ImGui version: %s", ImGui::GetVersion());
 }
 
 void Bak3DEditor::update()

@@ -53,6 +53,7 @@ public:
 private:
     void draw_toolbar() override;
 
+    void draw_tile_settings_popup();
     void draw_folder_tree();
     void draw_folder_subtree(AssetTreeNode& node);
     void draw_asset_grid(AssetTreeNode& node);
