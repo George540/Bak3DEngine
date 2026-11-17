@@ -110,10 +110,10 @@ Viewport::Viewport() : EditorPanel("Viewport")
 
     overlay_flags_list =
     {
-        {.flag = OverlaysFlags::WorldGrid, .label = "Grid" },
-        {.flag = OverlaysFlags::LightIcons, .label = "Light Icons" },
-        {.flag = OverlaysFlags::LightGeometry, .label = "Light Geometry" },
-        {.flag = OverlaysFlags::ObjectPreview, .label = "Object Preview" },
+        {.flag = OverlaysFlags::WorldGrid, .label = "Grid", .description = "Show the 10x10 XZ world grid in origin." },
+        {.flag = OverlaysFlags::LightIcons, .label = "Light Icons", .description = "Show editor-only icons at light positions." },
+        {.flag = OverlaysFlags::LightGeometry, .label = "Light Geometry", .description = "Show editor-only debug shapes for lights in the scene." },
+        {.flag = OverlaysFlags::ObjectPreview, .label = "Object Preview", .description = "Show a debug preview for objects that have a debug preview (ex: camera, lights)." },
     };
 }
 
@@ -423,7 +423,7 @@ void Viewport::draw_editor_overlays_popup()
             ImGui::TableSetupColumn("Selection", ImGuiTableColumnFlags_WidthStretch, 0.5f);
             ImGui::TableSetupColumn("Settings", ImGuiTableColumnFlags_WidthStretch, 0.5f);
 
-            for (auto& [flag, label] : overlay_flags_list)
+            for (auto& [flag, label, description] : overlay_flags_list)
             {
                 ImGui::TableNextRow(ImGuiTableRowFlags_None, IMGUI_VIEWPORT_POPUP_ENTRY_HEIGHT);
                 ImGui::TableSetColumnIndex(0);
@@ -432,6 +432,11 @@ void Viewport::draw_editor_overlays_popup()
                 ImGui::PushItemFlag(ImGuiItemFlags_AutoClosePopups, false);
                 const bool clicked = ImGui::MenuItem(label, nullptr, is_selected);
                 ImGui::PopItemFlag();
+
+                if (description)
+                {
+                    ImGuiB3D::ToolTipExtendedText(description, TOOL_TIP_WIDTH);
+                }
 
                 if (clicked)
                 {

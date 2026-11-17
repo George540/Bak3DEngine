@@ -126,6 +126,7 @@ struct OverlayFlagsDefinition
 {
     OverlaysFlags flag;
     const char* label;
+    const char* description;
 };
 
 using GlobalSettingValueType = std::variant<
