@@ -74,7 +74,7 @@ namespace
             preview_id = ImGuiB3D::GetAssetPreviewTextureId(resource_map.get(*selected_name).ref()->asset);
         }
 
-        if (ImGuiB3D::PropertyImageButton(label, tooltip_desc, preview_id, IMAGE_BUTTON_PROPERTY_SIZE))
+        if (ImGuiB3D::PropertyImageButton(label, tooltip_desc, preview_id, IMAGE_BUTTON_PROPERTY_SIZE, ImVec2(0,1), ImVec2(1,0)))
         {
             const ImVec2 mouse_pos = ImGui::GetMousePos();
             const ImGuiViewport* viewport = ImGui::GetMainViewport();
