@@ -43,6 +43,9 @@ using namespace std;
 
 namespace
 {
+    constexpr float FRAMING_MARGIN = 1.15f; // padding around the asset
+    constexpr float HALF_FOV_RADIANS = glm::radians(DEFAULT_CAMERA_FOV * 0.5f);
+
     bool is_previewable_shader(const ShaderRef& shader)
     {
         if (!shader.is_valid() || !shader->is_shader_compiled()) return false;
@@ -531,9 +534,10 @@ void Scene::frame_camera_on_meshes() const
 
     const glm::vec3 center = (min_p + max_p) * 0.5f;
     const float radius = glm::max(glm::length(max_p - min_p) * 0.5f, 0.001f);
-    const float distance = radius / glm::sin(glm::radians(22.5f)) * 1.15f; // camera fov is 45 deg
 
-    const glm::vec3 offset_direction = glm::normalize(glm::vec3(0.6f, 0.5f, 1.0f)); // same side as the preview light
+    const float distance = radius / glm::sin(HALF_FOV_RADIANS) * FRAMING_MARGIN;
+
+    const glm::vec3 offset_direction = glm::normalize(glm::vec3(0.6f, 0.5f, 1.0f));
     const glm::vec3 look_direction = -offset_direction;
 
     const float pitch = glm::degrees(glm::asin(look_direction.y));

@@ -90,7 +90,7 @@ private:
 	void upload_camera_data() const;
 
 	double m_cam_speed = 20.0f;
-	float m_fov = 45.0f; // camera zoom
+	float m_fov = DEFAULT_CAMERA_FOV; // camera zoom
 
 	Frustum m_frustum = Frustum();
 

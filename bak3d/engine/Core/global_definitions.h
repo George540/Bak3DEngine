@@ -48,6 +48,7 @@ constexpr static std::string_view B3D_LOG_FILE = "B3D_Logs.log";
 constexpr static int MAX_LOG_ENTRIES = 128;
 constexpr static float POST_PROCESS_COLORING_SLIDER_CLAMP = 10.0f;
 constexpr static int PREVIEW_THUMBNAIL_SIZE = 256;
+static constexpr float DEFAULT_CAMERA_FOV = 30.0f;
 
 /*
  * Uniform Data struct for debug views and other page-related data.
@@ -60,7 +61,7 @@ struct PagesData
     float _padding[3]; 
 };
 static constexpr GLsizei PAGES_DATA_SIZE = sizeof(PagesData);
-// @TODO: Make a sizeof constexpr for every custom stuct that is used as a size
+// @TODO: Make a sizeof constexpr for every custom struct that is used as a size
 
 enum class DebugViewMode : int32_t
 {
