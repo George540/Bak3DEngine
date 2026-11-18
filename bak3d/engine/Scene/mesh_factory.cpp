@@ -396,3 +396,12 @@ MeshGeometryPrimitive MeshFactory::build_line_cone_geometry()
 
     return { .vertices = move(vertices), .indices = move(indices) };
 }
+
+MeshGeometryPrimitive MeshFactory::build_line_frustum_geometry()
+{
+    // Vertices construct a frustum that looks like this <| (5 points total).
+    vector<glm::vec3> vertices = { {0,0,0}, {-1,-1,-1}, {1,-1,-1}, {1,1,-1}, {-1,1,-1} };
+    // Set up a rectangle and then connect them all to the main point in the camera's position
+    vector<GLuint> indices = { 1,2, 2,3, 3,4, 4,1, 0,1, 0,2, 0,3, 0,4 };
+    return { .vertices = std::move(vertices), .indices = std::move(indices) };
+}

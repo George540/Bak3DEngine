@@ -36,7 +36,7 @@ namespace
     {
         for (auto& child : scene_object->children)
         {
-            if (!child || child->get_object_type() == SceneObjectType::Debug)
+            if (!child || child->m_is_editor_only || child->get_object_type() == SceneObjectType::Debug)
             {
                 continue;
             }

@@ -33,6 +33,7 @@ THE SOFTWARE.
 Axis::Axis(MaterialRef material) :
 	RenderableObject(material, glm::vec3(0.0f, 0.0f, 0.0f), "Axis")
 {
+	m_is_editor_only = true;
 	object_type = SceneObjectType::Debug;
 	transform.set_local_scale(glm::vec3(3.0f));
 	update_self_and_children();

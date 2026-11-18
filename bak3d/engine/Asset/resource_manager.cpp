@@ -259,7 +259,10 @@ void ResourceManager::initialize_predefined_meshes()
 
     const auto line_cone_debug_geometry = MeshFactory::build_line_cone_geometry();
     add_mesh("ConeDebug", new LineData(line_cone_debug_geometry.vertices, line_cone_debug_geometry.indices, "ConeDebug"));
-    
+
+    const auto line_frustum_debug_geometry = MeshFactory::build_line_frustum_geometry();
+    add_mesh("FrustumDebug", new LineData(line_frustum_debug_geometry.vertices, line_frustum_debug_geometry.indices, "FrustumDebug"));
+
     Renderer::initialize_screen_quad();
 }
 

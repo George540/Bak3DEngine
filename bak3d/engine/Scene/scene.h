@@ -65,6 +65,19 @@ public:
 	Scene(bool is_preview_scene = false);
 	~Scene();
 
+	// Only in editor-related contexts. No need for destroy since they live as long as their owning scene.
+	template<typename T, typename... Args>
+	T* instantiate_editor(Args&&... args) // editor-only entities (editor camera, gizmos, grid, ...)
+	{
+			static_assert(std::is_base_of_v<SceneObject, T>, "SceneObject-derived type required.");
+			auto owned = std::make_unique<T>(std::forward<Args>(args)...);
+			T* raw = owned.get();
+			raw->m_is_editor_only = true;
+			m_editor_root->add_child(std::move(owned));
+			register_object(raw);
+			return raw;
+	}
+
 	template<typename T, typename... Args>
 	T* instantiate(SceneObject* parent, Args&&... args)
 	{
@@ -127,6 +140,7 @@ public:
 
 	ModelNodeObject* instantiate_model(const ModelRef& model, SceneObject* parent = nullptr, glm::vec3 position = glm::vec3(0.0f));
 
+	SceneObject* get_editor_root() const { return m_editor_root.get(); }
 	SceneObject* get_root() const { return m_root.get(); }
 	void set_current_camera(Camera* camera) { m_current_camera = camera; }
 	Camera* get_current_camera() const { return m_current_camera; }
@@ -172,7 +186,8 @@ private:
 	
 	Camera* m_current_camera = nullptr;
 	SceneObject* m_selected_scene_object = nullptr;
-	
+
+	std::unique_ptr<SceneObject> m_editor_root;
 	std::unique_ptr<SceneObject> m_root;
 	std::map<SceneObjectType, std::vector<SceneObject*>> m_scene_objects_indexed; // <object name, scene object ptr>
 

@@ -45,6 +45,12 @@ namespace
         const ShaderRef& shader = material->get_shader();
         return shader && shader->get_object_name() == "gbuffer";
     }
+
+    bool is_editor_view()
+    {
+        const Camera* camera = SceneManager::get_current_scene()->get_current_camera();
+        return camera && camera->m_is_editor_only;
+    }
 }
 
 void RendererPasses::render_pass_shadow_map()
@@ -130,6 +136,11 @@ void RendererPasses::render_pass_forward_opaque()
 
 void RendererPasses::render_pass_debug_geometry()
 {
+    if (!is_editor_view())
+    {
+        return;
+    }
+    
     DebugScopeGroup scope("Debug Geometry Pass");
 
     glDepthFunc(GL_LEQUAL);
@@ -348,6 +359,29 @@ void RendererPasses::render_pass_post_processing()
 void RendererPasses::render_pass_editor_overlays()
 {
     DebugScopeGroup scope("Editor Overlays pass");
+
+    if (!is_editor_view())
+    {
+        return;
+    }
+
+    const uint32_t flags = GlobalSettings::get_global_setting_value<uint32_t>(GlobalSettingOption::EditorOverlayFlags);
+    const SceneObject* selected = SceneManager::get_current_scene()->get_selected_scene_object();
+
+    const auto* selected_light = dynamic_cast<const Light*>(selected);
+    const auto* selected_camera = dynamic_cast<const Camera*>(selected);
+    const bool draw_light = (flags & static_cast<uint32_t>(OverlaysFlags::LightGeometry)) && selected_light && selected_light->is_active;
+    const bool draw_camera = (flags & static_cast<uint32_t>(OverlaysFlags::CameraGeometry)) && selected_camera && !selected_camera->m_is_editor_only && selected_camera->is_active;
+
+    if (draw_light || draw_camera)
+    {
+        glEnable(GL_DEPTH_TEST);
+        glDepthFunc(GL_LESS);
+        glDepthMask(GL_FALSE);
+        if (draw_light) selected_light->draw_debug_geometry();
+        if (draw_camera) selected_camera->draw_debug_geometry();
+        glDepthMask(GL_TRUE);
+    }
 
     // Depth-Tested Light Gizmos
     if (GlobalSettings::get_global_setting_value<uint32_t>(GlobalSettingOption::EditorOverlayFlags) & static_cast<uint32_t>(OverlaysFlags::LightGeometry))

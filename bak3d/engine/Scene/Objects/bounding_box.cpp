@@ -31,6 +31,7 @@ THE SOFTWARE.
 
 BoundingBox::BoundingBox() : RenderableObject(ResourceManager::get_material("grid"), glm::vec3(0.0f), "Bounding Box")
 {
+    m_is_editor_only = true;
     object_type = SceneObjectType::Debug;
 }
 

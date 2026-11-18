@@ -65,7 +65,7 @@ void GlobalSettings::initialize()
     global_settings.clear();
     global_settings[GlobalSettingOption::Resources_ForceFail] = false;
     global_settings[GlobalSettingOption::Vsync] = false;
-    global_settings[GlobalSettingOption::EditorOverlayFlags] = static_cast<uint32_t>(OverlaysFlags::LightIcons | OverlaysFlags::LightGeometry | OverlaysFlags::ObjectPreview);
+    global_settings[GlobalSettingOption::EditorOverlayFlags] = static_cast<uint32_t>(OverlaysFlags::LightIcons | OverlaysFlags::LightGeometry | OverlaysFlags::ObjectPreview | OverlaysFlags::CameraGeometry);
     global_settings[GlobalSettingOption::EditorOverlayFlags_LightIconSize] = 0.1f;
     global_settings[GlobalSettingOption::ViewMode] = 0;
     global_settings[GlobalSettingOption::Skybox_Enabled] = true;

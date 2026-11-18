@@ -71,28 +71,48 @@ struct Frustum
 class Camera : public SceneObject
 {
 public:
-	Camera(glm::vec3 position);
+	static constexpr float DEFAULT_FOV = 30.0f;
+	static constexpr float DEFAULT_NEAR_PLANE = 0.1f;
+	static constexpr float DEFAULT_FAR_PLANE = 100.0f;
+	static constexpr float DEFAULT_ASPECT_RATIO = 16.0f / 9.0f;
+	static constexpr float MIN_FOV = 1.0f;
+	static constexpr float MAX_FOV = 170.0f;
+
+	Camera(glm::vec3 position, bool is_editor_camera = false);
 	~Camera() override = default;
 
 	void update(float dt) override;
+	void draw_debug_geometry() const; // frustum, mirrors
 
 	[[nodiscard]] glm::mat4 get_view_matrix() const;
 	[[nodiscard]] glm::mat4 get_projection_matrix() const;
 	[[nodiscard]] glm::mat4 get_view_projection_matrix() const;
 	[[nodiscard]] glm::vec3 get_camera_position() const { return transform.get_local_position(); }
 	[[nodiscard]] UniformBuffer* get_camera_data_buffer() const { return m_camera_data_ubo.get(); }
-
 	[[nodiscard]] glm::vec3 get_forward_vector() const;
 	[[nodiscard]] glm::vec3 get_right_vector() const;
 	[[nodiscard]] Frustum get_frustum() const { return m_frustum; }
 
+	[[nodiscard]] float get_fov() const { return m_fov; }
+	[[nodiscard]] float get_near_plane() const { return m_near_plane; }
+	[[nodiscard]] float get_far_plane() const { return m_far_plane; }
+	[[nodiscard]] float get_aspect_ratio() const;
+	void set_fov(const float fov) { m_fov = glm::clamp(fov, MIN_FOV, MAX_FOV); }
+	void set_near_plane(const float near_plane) { m_near_plane = glm::clamp(near_plane, 0.001f, m_far_plane - 0.001f); }
+	void set_far_plane(const float far_plane) { m_far_plane = glm::max(far_plane, m_near_plane + 0.001f); }
+	void set_aspect_ratio(const float aspect) { m_aspect_ratio = glm::max(aspect, 0.1f); }
+
 private:
+	void update_editor_controls(float dt);
 	void upload_camera_data() const;
 
 	double m_cam_speed = 20.0f;
-	float m_fov = DEFAULT_CAMERA_FOV; // camera zoom
+	float m_fov = DEFAULT_CAMERA_FOV;
+
+	float m_near_plane = DEFAULT_NEAR_PLANE;
+	float m_far_plane = DEFAULT_FAR_PLANE;
+	float m_aspect_ratio = DEFAULT_ASPECT_RATIO;
 
 	Frustum m_frustum = Frustum();
-
-	std::unique_ptr<UniformBuffer> m_camera_data_ubo;
+	std::unique_ptr<UniformBuffer> m_camera_data_ubo; // @TODO: Make camera UBO work properly between editor and game camera
 };

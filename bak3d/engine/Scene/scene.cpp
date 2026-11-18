@@ -99,8 +99,10 @@ namespace
 Scene::Scene(const bool is_preview_scene)
 {
     m_root = make_unique<SceneObject>(glm::vec3(0.0f), "SceneRoot");
+    m_editor_root = make_unique<SceneObject>(glm::vec3(0.0f), "EditorRoot", true);
 
-    m_current_camera = instantiate<Camera>(nullptr, glm::vec3(7.0f, 5.0f, 7.0f));
+    // Viewport camera
+    m_current_camera = instantiate_editor<Camera>(glm::vec3(7.0f, 5.0f, 7.0f), true);
 
     if (is_preview_scene)
     {
@@ -266,11 +268,15 @@ SceneStats& Scene::gather_scene_stats()
 
 void Scene::initialize_default_scene_objects()
 {
-    instantiate<Grid>(nullptr);
+    instantiate_editor<Grid>();
     instantiate<Light>(nullptr, LightType::Directional, glm::vec3(-2.5f, 2.5f, 2.5f));
     instantiate<Mesh>(nullptr, glm::vec3(0.0f, 1.0f, 0.0f), "Cube", ResourceManager::get_material("default_material"), "Cube");
     const auto plane_object = instantiate<Mesh>(nullptr, glm::vec3(0.0f), "Plane", ResourceManager::get_material("default_material"), "Plane");
     plane_object->transform.set_local_scale(glm::vec3(15.0f, 1.0f, 15.0f));
+
+    // Default Game camera in scene
+    Camera* game_camera = instantiate<Camera>(nullptr, glm::vec3(0.0f, 3.0f, 10.0f));
+    game_camera->transform.set_local_euler_rotation(glm::vec3(-15.0f, 0.0f, 0.0f));
     
     B3D_LOG_INFO("Default Scene initialized.");
 }
@@ -614,7 +620,7 @@ void Scene::capture_mesh_preview(const MeshRef& mesh)
 
 void Scene::delete_selected_object()
 {
-    if (EventManager::is_delete_key_down() && m_selected_scene_object)
+    if (EventManager::is_delete_key_down() && m_selected_scene_object && !m_selected_scene_object->m_is_editor_only)
     {
         destroy(m_selected_scene_object);
         m_selected_scene_object = nullptr;

@@ -37,6 +37,7 @@ THE SOFTWARE.
 Grid::Grid()
 	: RenderableObject(ResourceManager::get_material("grid"), glm::vec3(0.0f, 0.0f, 0.0f), "Grid")
 {
+	m_is_editor_only = true;
 	m_mesh_slot = make_mesh_slot(ResourceManager::get_mesh("Grid"));
 	object_type = SceneObjectType::Debug;
 	

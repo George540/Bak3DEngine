@@ -114,6 +114,7 @@ Viewport::Viewport() : EditorPanel("Viewport")
         {.flag = OverlaysFlags::LightIcons, .label = "Light Icons", .description = "Show editor-only icons at light positions." },
         {.flag = OverlaysFlags::LightGeometry, .label = "Light Geometry", .description = "Show editor-only debug shapes for lights in the scene." },
         {.flag = OverlaysFlags::ObjectPreview, .label = "Object Preview", .description = "Show a debug preview for objects that have a debug preview (ex: camera, lights)." },
+        {.flag = OverlaysFlags::CameraGeometry, .label = "Camera Geometry", .description = "Show frustum for the selected game camera." },
     };
 }
 

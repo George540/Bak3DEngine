@@ -25,7 +25,6 @@ THE SOFTWARE.
 #pragma once
 
 #include "renderable_object.h"
-#include "Asset/mesh_data.h"
 
 /*
  * Basic grid class that draws the XZ plane grid with a certain size and slices.

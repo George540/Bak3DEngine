@@ -25,6 +25,7 @@ THE SOFTWARE.
 #pragma once
 
 #include "editor_panel.h"
+#include "Scene/Objects/camera.h"
 #include "Scene/Objects/light.h"
 #include "Scene/Objects/Particle/particle_emitter.h"
 #include "Scene/Objects/Particle/particle_system.h"
@@ -44,6 +45,7 @@ private:
     void draw_object();
     void draw_scene_object_section(SceneObject* selected_object);
     void draw_renderable_object_section(RenderableObject* selected_renderable);
+    void draw_camera_section(Camera* camera);
     void draw_light_section(Light* light);
     void draw_model_section();
     void draw_particle_system_section(ParticleSystem* particle_system);

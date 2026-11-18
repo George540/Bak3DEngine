@@ -100,7 +100,9 @@ enum class OverlaysFlags : uint32_t
     LightIcons = 1 << 1,
     LightGeometry = 1 << 2,
     ObjectPreview = 1 << 3,
-    All = WorldGrid | LightIcons | LightGeometry | ObjectPreview
+    CameraGeometry = 1 << 5,
+    // @TODO: Add camera icons flag
+    All = WorldGrid | LightIcons | LightGeometry | ObjectPreview | CameraGeometry
 };
 
 // Bitwise AND operator

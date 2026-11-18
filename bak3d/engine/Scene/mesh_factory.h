@@ -59,4 +59,6 @@ public:
     static MeshGeometryPrimitive build_line_geometry();
     static MeshGeometryPrimitive build_line_circle_geometry();
     static MeshGeometryPrimitive build_line_cone_geometry();
+
+    static MeshGeometryPrimitive build_line_frustum_geometry();
 };

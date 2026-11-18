@@ -53,9 +53,10 @@ public:
 
     mutable bool m_is_dirty = true;
     bool is_active = true;
+    bool m_is_editor_only = false; // Hidden in scene graph, excluded from game builds, never viewed through game cameras
 
     SceneObject() : SceneObject(glm::vec3(0.0f, 0.0f, 0.0f), "SceneObject") {}
-    SceneObject(const glm::vec3 position, const std::string& name) : Bak3DObject(std::move(name)) { transform.set_local_position(position); }
+    SceneObject(const glm::vec3 position, const std::string& name, const bool editor_only = false) : Bak3DObject(std::move(name)), m_is_editor_only(editor_only) { transform.set_local_position(position); }
     ~SceneObject() override = default;
 
     // If no arguments, default constructor is called instead for the called class.

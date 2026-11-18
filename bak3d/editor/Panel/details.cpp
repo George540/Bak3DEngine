@@ -143,6 +143,12 @@ void Details::draw_object()
     {
         draw_scene_object_section(selected_object);
 
+        if (selected_object->get_object_type() == SceneObjectType::Camera)
+        {
+            ImGuiB3D::SeparatorWithSpacing();
+            draw_camera_section(dynamic_cast<Camera*>(selected_object));
+        }
+
         if (const auto selected_renderable = dynamic_cast<RenderableObject*>(selected_object))
         {
             ImGuiB3D::SeparatorWithSpacing();
@@ -280,6 +286,36 @@ void Details::draw_renderable_object_section(RenderableObject* selected_renderab
                 ImGui::Text("Mesh: %s", selected_renderable->get_mesh()->get_object_name().c_str());
             }
         }
+
+        ImGui::TreePop();
+    }
+}
+
+void Details::draw_camera_section(Camera* camera)
+{
+    if (!camera)
+    {
+        return;
+    }
+
+    ImGui::SetNextItemOpen(true, ImGuiCond_Once);
+    if (ImGui::TreeNode("Camera"))
+    {
+        float fov = camera->get_fov();
+        if (ImGuiB3D::PropertySliderFloat("Field of View", &fov, Camera::MIN_FOV, Camera::MAX_FOV, "%.1f", "Vertical field of view in degrees."))
+            camera->set_fov(fov);
+
+        float near_plane = camera->get_near_plane();
+        if (ImGuiB3D::PropertySliderFloat("Near Plane", &near_plane, 0.01f, 10.0f, "%.2f", "Near clipping distance."))
+            camera->set_near_plane(near_plane);
+
+        float far_plane = camera->get_far_plane();
+        if (ImGuiB3D::PropertySliderFloat("Far Plane", &far_plane, 1.0f, 1000.0f, "%.1f", "Far clipping distance."))
+            camera->set_far_plane(far_plane);
+
+        float aspect = camera->get_aspect_ratio();
+        if (ImGuiB3D::PropertySliderFloat("Aspect Ratio", &aspect, 0.5f, 3.0f, "%.2f", "Width / height of the game camera's output."))
+            camera->set_aspect_ratio(aspect);
 
         ImGui::TreePop();
     }

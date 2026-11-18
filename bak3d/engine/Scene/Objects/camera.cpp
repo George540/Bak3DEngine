@@ -34,6 +34,8 @@ THE SOFTWARE.
 #include <glm/gtc/matrix_access.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+#include "Asset/mesh_data.h"
+#include "Asset/resource_manager.h"
 #include "Core/logger.h"
 #include "Input/event_manager.h"
 
@@ -41,26 +43,69 @@ using namespace std;
 
 constexpr static glm::vec3 CAMERA_UP = glm::vec3(0.0f, 1.0f, 0.0f);
 
-Camera::Camera(glm::vec3 position) : SceneObject(position, "Camera")
+namespace
+{
+	constexpr glm::vec4 CAMERA_DEBUG_COLOR = glm::vec4(0.78f, 0.55f, 1.0f, 1.0f);
+}
+
+Camera::Camera(glm::vec3 position, bool is_editor_camera)
+	: SceneObject(position, is_editor_camera ? "EditorCamera" : "Camera", is_editor_camera)
 {
 	object_type = SceneObjectType::Camera;
 	transform.set_local_euler_rotation(glm::vec3(-20.0f, 45.0f, 0.0f));
 
 	// @TODO: Replace with struct payload instead of manual size
 	// 2 mat4's * 1 vec4 = 9 vec4's
-	m_camera_data_ubo = make_unique<UniformBuffer>(VEC4_SIZE * 9 /*Temporary size*/, nullptr, 0, GL_DYNAMIC_DRAW);
+	if (is_editor_camera)
+	{
+		m_camera_data_ubo = make_unique<UniformBuffer>(VEC4_SIZE * 9, nullptr, 0, GL_DYNAMIC_DRAW);
+	}
 
-	B3D_LOG_INFO("Camera has been set up.");
+	B3D_LOG_INFO("%s has been set up.", get_object_name().c_str());
 };
 
 void Camera::update(float dt)
 {
-	// Prevent from having the camera move only when the cursor is within the windows
-	EventManager::enable_mouse_cursor();
-
 	m_frustum = Frustum(get_view_projection_matrix());
 
-	if (EventManager::is_camera_looking())
+	// Only editor cameras touch input or the global camera UBO
+	if (m_is_editor_only)
+	{
+		update_editor_controls(dt);
+		upload_camera_data();
+	}
+
+	SceneObject::update(dt);
+}
+
+void Camera::draw_debug_geometry() const
+{
+	const MaterialRef material = ResourceManager::get_material("grid");
+	const MeshRef mesh = ResourceManager::get_mesh("FrustumDebug");
+	if (!material || !mesh)
+	{
+		return;
+	}
+
+	material->set_vec4("color", CAMERA_DEBUG_COLOR);
+
+	const float tan_half_fov = glm::tan(glm::radians(m_fov * 0.5f));
+	const float aspect = get_aspect_ratio();
+	const glm::mat4 camera_to_world = glm::inverse(get_view_matrix());
+
+	for (const float distance : { m_near_plane, m_far_plane })
+	{
+		const float half_height = distance * tan_half_fov;
+		material->set_mat4("model", camera_to_world * glm::scale(glm::mat4(1.0f), glm::vec3(half_height * aspect, half_height, distance)));
+		material->apply();
+		mesh->draw();
+	}
+}
+
+void Camera::update_editor_controls(float dt)
+{
+	EventManager::enable_mouse_cursor(); // keep original behaviour
+
 	if (EventManager::is_camera_looking())
 	{
 		// Rotation
@@ -114,16 +159,11 @@ void Camera::update(float dt)
 		}
 	}
 
-	// FOV handling and clamping
 	if (const double scroll_delta = EventManager::get_camera_scroll_offset(); scroll_delta != 0.0)
 	{
 		m_fov -= static_cast<float>(scroll_delta) * 2.0f;
 		m_fov = glm::clamp(m_fov, 20.0f, 90.0f);
 	}
-
-	upload_camera_data();
-
-	SceneObject::update(dt);
 }
 
 glm::mat4 Camera::get_view_matrix() const
@@ -136,8 +176,7 @@ glm::mat4 Camera::get_view_matrix() const
 
 glm::mat4 Camera::get_projection_matrix() const
 {
-	const float aspect = static_cast<float>(EventManager::get_viewport_width()) / static_cast<float>(EventManager::get_viewport_height());
-	return glm::perspective(glm::radians(m_fov), aspect, 0.1f, 100.0f);
+	return glm::perspective(glm::radians(m_fov), get_aspect_ratio(), m_near_plane, m_far_plane);
 }
 
 glm::mat4 Camera::get_view_projection_matrix() const
@@ -157,8 +196,23 @@ glm::vec3 Camera::get_right_vector() const
 	return glm::normalize(glm::vec3(model[0]));
 }
 
+float Camera::get_aspect_ratio() const
+{
+	// Editor: viewport aspect, Game: m_aspect_ratio
+	if (m_is_editor_only)
+	{
+		return static_cast<float>(EventManager::get_viewport_width()) / static_cast<float>(EventManager::get_viewport_height());
+	}
+	return m_aspect_ratio;
+}
+
 void Camera::upload_camera_data() const
 {
+	if (!m_camera_data_ubo)
+	{
+		return;
+	}
+
 	m_camera_data_ubo->bind();
 	m_camera_data_ubo->bind_buffer_sub_data(glm::value_ptr(get_projection_matrix()), MAT4_SIZE, 0);
 	m_camera_data_ubo->bind_buffer_sub_data(glm::value_ptr(get_view_matrix()), MAT4_SIZE, MAT4_SIZE);
