@@ -102,7 +102,7 @@ Scene::Scene(const bool is_preview_scene)
     m_editor_root = make_unique<SceneObject>(glm::vec3(0.0f), "EditorRoot", true);
 
     // Viewport camera
-    m_current_camera = instantiate_editor<Camera>(glm::vec3(7.0f, 5.0f, 7.0f), true);
+    m_current_editor_camera = instantiate_editor<Camera>(glm::vec3(7.0f, 5.0f, 7.0f), true);
 
     if (is_preview_scene)
     {
@@ -185,9 +185,9 @@ SceneObject* Scene::get_object_in_scene(const SceneObjectType type, const int in
 glm::vec3 Scene::process_spawn_position() const
 {
     glm::vec3 spawn_position = glm::vec3(0.0f);
-    if (m_current_camera)
+    if (m_current_editor_camera)
     {
-        spawn_position = m_current_camera->get_camera_position() + m_current_camera->get_forward_vector() * 10.0f;
+        spawn_position = m_current_editor_camera->get_camera_position() + m_current_editor_camera->get_forward_vector() * 10.0f;
     }
     return spawn_position;
 }
@@ -216,8 +216,8 @@ SceneStats& Scene::gather_scene_stats()
         m_scene_stats.lights_active += light->is_active ? 1 : 0;
     }
 
-    const bool has_camera = m_current_camera != nullptr;
-    const Frustum& frustum = has_camera ? m_current_camera->get_frustum() : Frustum();
+    const bool has_camera = m_current_editor_camera != nullptr;
+    const Frustum& frustum = has_camera ? m_current_editor_camera->get_frustum() : Frustum();
 
     // Mesh stats
     m_scene_stats.meshes_total += static_cast<int>(m_meshes.size());
@@ -502,8 +502,9 @@ GLuint Scene::render_preview_thumbnail() const
 {
     m_root->force_update_self_and_children(); // preview scene is never ticked
     frame_camera_on_meshes();
-    m_current_camera->force_update_self_and_children();
-    m_current_camera->update(0.0f); // upload UBO and rebinds binding 0
+    m_current_editor_camera->force_update_self_and_children();
+    m_current_editor_camera->update(0.0f); // upload UBO and rebinds binding 0
+    m_current_editor_camera->bind_camera_data();
 
     const PreviewShaderOverride shader_override(m_meshes);
     return Renderer::process_asset_captures();
@@ -549,8 +550,8 @@ void Scene::frame_camera_on_meshes() const
     const float pitch = glm::degrees(glm::asin(look_direction.y));
     const float yaw = glm::degrees(glm::atan(-look_direction.x, -look_direction.z));
 
-    m_current_camera->transform.set_local_position(center + offset_direction * distance);
-    m_current_camera->transform.set_local_euler_rotation(glm::vec3(pitch, yaw, 0.0f));
+    m_current_editor_camera->transform.set_local_position(center + offset_direction * distance);
+    m_current_editor_camera->transform.set_local_euler_rotation(glm::vec3(pitch, yaw, 0.0f));
 }
 
 void Scene::finish_preview_capture(Asset* asset, SceneObject* preview_object)

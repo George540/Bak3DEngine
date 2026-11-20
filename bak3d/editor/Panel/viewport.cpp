@@ -231,16 +231,17 @@ void Viewport::draw_preview_overlay()
     GLuint preview_texture = 0;
     ImVec2 image_size;
 
-    if (selected->get_object_type() == SceneObjectType::Camera)
+    // @TODO: Consider if having a preview camera is even a good idea
+    /*if (selected->get_object_type() == SceneObjectType::Camera)
     {
-        if (selected == scene->get_current_camera()) // @TODO: Make sure that it only applies to game scene cameras and not editor cameras
+        if (selected == scene->get_current_editor_camera()) // @TODO: Make sure that it only applies to game scene cameras and not editor cameras
         {
             const FrameBuffer* main_fbo = Renderer::get_main_frame_buffer();
             preview_texture = main_fbo->get_color_texture();
             image_size = ImVec2(IMGUI_VIEWPORT_HIGHLIGHT_POPUP_HORIZONTAL, IMGUI_VIEWPORT_HIGHLIGHT_POPUP_HORIZONTAL / main_fbo->get_aspect_ratio());
         }
-    }
-    else if (selected->get_object_type() == SceneObjectType::Light)
+    }*/
+    if (selected->get_object_type() == SceneObjectType::Light)
     {
         preview_texture = ShadowRenderer::get_light_preview_texture(dynamic_cast<const Light*>(selected));
         image_size = ImVec2(IMGUI_VIEWPORT_HIGHLIGHT_POPUP_HORIZONTAL, IMGUI_VIEWPORT_HIGHLIGHT_POPUP_HORIZONTAL);

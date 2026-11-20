@@ -27,8 +27,8 @@ THE SOFTWARE.
 #include <glm/vec3.hpp>
 #include <glm/gtc/matrix_access.hpp>
 
+#include "renderable_object.h"
 #include "Renderer/Buffers/data_buffer.h"
-#include "Scene/scene_object.h"
 
 /*
  * Camera Frustum structure for culling object based on their bounding volumes or colliders
@@ -68,7 +68,7 @@ struct Frustum
  * Camera class that contains every information for moving the viewport in world space.
  * Contains other camera parameters.
  */
-class Camera : public SceneObject
+class Camera : public RenderableObject
 {
 public:
 	static constexpr float DEFAULT_FOV = 30.0f;
@@ -82,7 +82,10 @@ public:
 	~Camera() override = default;
 
 	void update(float dt) override;
+	void draw() const override;
 	void draw_debug_geometry() const; // frustum, mirrors
+
+	void bind_camera_data() const { if (m_camera_data_ubo) m_camera_data_ubo->bind_to_binding_point(m_camera_id); }
 
 	[[nodiscard]] glm::mat4 get_view_matrix() const;
 	[[nodiscard]] glm::mat4 get_projection_matrix() const;
@@ -112,6 +115,10 @@ private:
 	float m_near_plane = DEFAULT_NEAR_PLANE;
 	float m_far_plane = DEFAULT_FAR_PLANE;
 	float m_aspect_ratio = DEFAULT_ASPECT_RATIO;
+
+	TextureRef m_sprite_texture;
+
+	int m_camera_id = 0;
 
 	Frustum m_frustum = Frustum();
 	std::unique_ptr<UniformBuffer> m_camera_data_ubo; // @TODO: Make camera UBO work properly between editor and game camera

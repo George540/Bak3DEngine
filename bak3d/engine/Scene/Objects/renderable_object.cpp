@@ -36,8 +36,8 @@ THE SOFTWARE.
 
 using namespace std;
 
-RenderableObject::RenderableObject(const MaterialRef& material, const glm::vec3 position, const std::string& name)
-	: SceneObject(position, move(name))
+RenderableObject::RenderableObject(const MaterialRef& material, const glm::vec3 position, const std::string& name, const bool is_editor_only)
+	: SceneObject(position, move(name), is_editor_only)
 {
 	// Make sure that the default material is used as a fallback
 	m_material_slot = make_material_slot(material ? material : ResourceManager::get_material("default_material"));
@@ -53,7 +53,7 @@ void RenderableObject::update(float dt)
 
 void RenderableObject::draw() const
 {
-	Camera* scene_camera = SceneManager::get_current_scene()->get_current_camera();
+	Camera* scene_camera = SceneManager::get_current_scene()->get_current_editor_camera();
 	if (!m_material_slot || !*m_material_slot || !scene_camera || !m_is_visible || !has_mesh()) return;
 
 	(*m_material_slot)->bind_textures_cache();
@@ -106,7 +106,7 @@ InstancedRenderableObject::~InstancedRenderableObject()
 
 void InstancedRenderableObject::draw() const
 {
-	Camera* scene_camera = SceneManager::get_current_scene()->get_current_camera();
+	Camera* scene_camera = SceneManager::get_current_scene()->get_current_editor_camera();
 	if (!m_material_slot || !*m_material_slot || !scene_camera || !m_is_visible) return;
 
 	(*m_material_slot)->apply();

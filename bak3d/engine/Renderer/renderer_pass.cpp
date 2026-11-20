@@ -48,7 +48,7 @@ namespace
 
     bool is_editor_view()
     {
-        const Camera* camera = SceneManager::get_current_scene()->get_current_camera();
+        const Camera* camera = SceneManager::get_current_scene()->get_current_editor_camera();
         return camera && camera->m_is_editor_only;
     }
 }
@@ -77,7 +77,7 @@ void RendererPasses::render_pass_light_culling()
 {
     DebugScopeGroup scope("Light Culling");
 
-    if (const Camera* camera = SceneManager::get_current_scene()->get_current_camera())
+    if (const Camera* camera = SceneManager::get_current_scene()->get_current_editor_camera())
     {
         LightRenderer::update_and_upload_data(SceneManager::get_current_scene()->get_all_lights(), camera->get_frustum(), camera->get_camera_position());
     }
@@ -199,7 +199,7 @@ void RendererPasses::render_pass_transparency()
         return;
     }
 
-    // wboit_fbo shares r_main_fbo's depth-stencil TEXTURE object directly.
+    // wboit_fbo shares r_viewport_fbo's depth-stencil TEXTURE object directly.
     // No copy/resolve needed for opaque occlusion to already be visible here.
 
     // Accumulate: particles write into accum + revealage, depth-tested
@@ -410,6 +410,16 @@ void RendererPasses::render_pass_editor_overlays()
         for (const Light* light : SceneManager::get_current_scene()->get_all_lights())
         {
             light->draw();
+        }
+    }
+    if (GlobalSettings::get_global_setting_value<uint32_t>(GlobalSettingOption::EditorOverlayFlags) & static_cast<uint32_t>(OverlaysFlags::CameraIcons))
+    {
+        for (const Camera* camera : SceneManager::get_current_scene()->get_all_cameras())
+        {
+            if (!camera->m_is_editor_only)
+            {
+                camera->draw();
+            }
         }
     }
 

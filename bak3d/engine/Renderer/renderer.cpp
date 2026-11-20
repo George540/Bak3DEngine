@@ -50,7 +50,8 @@ using namespace std;
 // Renderer
 GLFWwindow* Renderer::r_window = nullptr;
 unique_ptr<MultisampleFrameBuffer> Renderer::r_msaa_fbo;
-unique_ptr<FrameBuffer> Renderer::r_main_fbo;
+unique_ptr<FrameBuffer> Renderer::r_viewport_fbo;
+unique_ptr<FrameBuffer> Renderer::r_game_view_fbo;
 unique_ptr<FrameBuffer> Renderer::r_preview_fbo;
 unique_ptr<FrameBuffer> Renderer::r_dbo;
 unique_ptr<UniformBuffer> Renderer::r_debug_view_ubo;
@@ -158,7 +159,7 @@ void Renderer::draw_frame()
 	// ------------------------------------------------------------
 	// Deferred Rendering: Resolve into main
 	// ------------------------------------------------------------
-	r_main_fbo->bind();
+	r_viewport_fbo->bind();
 	glClearColor(0.133f, 0.168f, 0.2f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT); // depth/stencil already holds GBuffer's values, don't touch them
 	glDisable(GL_DEPTH_TEST);
@@ -207,7 +208,7 @@ void Renderer::draw_frame()
 
 void Renderer::end_frame()
 {
-	r_main_fbo->unbind();
+	r_viewport_fbo->unbind();
 }
 
 void Renderer::draw_quad()
@@ -221,12 +222,12 @@ void Renderer::draw_quad()
 GLuint Renderer::process_asset_captures()
 {
 	Scene* preview_scene = SceneManager::get_asset_preview_scene();
-	if (!preview_scene || !r_preview_fbo || !preview_scene->get_current_camera())
+	if (!preview_scene || !r_preview_fbo || !preview_scene->get_current_editor_camera())
 	{
 		return 0;
 	}
 
-	const Camera* preview_camera = preview_scene->get_current_camera();
+	const Camera* preview_camera = preview_scene->get_current_editor_camera();
 	LightRenderer::update_and_upload_data(preview_scene->get_all_lights(), preview_camera->get_frustum(), preview_camera->get_camera_position(), false);
 
 	r_preview_fbo->bind();
@@ -270,7 +271,7 @@ void Renderer::shutdown()
 	LightRenderer::shutdown();
 	r_window = nullptr;
 	r_dbo.reset();
-	r_main_fbo.reset();
+	r_viewport_fbo.reset();
 	r_msaa_fbo.reset();
 	r_debug_view_ubo.reset();
 	r_gbuffer_fbo.reset();
@@ -294,12 +295,12 @@ void Renderer::on_framebuffer_size_callback(GLFWwindow* window, const int new_wi
 	{
 		return;
 	}
-	r_main_fbo->resize(new_width, new_height);
-	r_msaa_fbo->resize(new_width, new_height, r_main_fbo->get_depth_texture());
-	r_dbo->resize(new_width, new_height, r_main_fbo->get_depth_texture());
-	r_gbuffer_fbo->resize(new_width, new_height, r_main_fbo->get_depth_texture());
-	r_wboit_fbo->resize(new_width, new_height, r_main_fbo->get_depth_texture());
-	PostProcessor::resize(new_width, new_height, r_main_fbo->get_depth_texture());
+	r_viewport_fbo->resize(new_width, new_height);
+	r_msaa_fbo->resize(new_width, new_height, r_viewport_fbo->get_depth_texture());
+	r_dbo->resize(new_width, new_height, r_viewport_fbo->get_depth_texture());
+	r_gbuffer_fbo->resize(new_width, new_height, r_viewport_fbo->get_depth_texture());
+	r_wboit_fbo->resize(new_width, new_height, r_viewport_fbo->get_depth_texture());
+	PostProcessor::resize(new_width, new_height, r_viewport_fbo->get_depth_texture());
 }
 
 void Renderer::initialize_buffers()
@@ -307,7 +308,7 @@ void Renderer::initialize_buffers()
 	// ========== FRAME BUFFERS ==========
 
 	// Base Frame Buffer (also creates global depth attachment)
-	r_main_fbo = make_unique<FrameBuffer>(
+	r_viewport_fbo = make_unique<FrameBuffer>(
 		0,
 		nullptr,
 		EventManager::get_window_width(),
@@ -315,6 +316,16 @@ void Renderer::initialize_buffers()
 		GL_NONE,
 		true,
 		"Framebuffer_Base");
+
+	// Game View Frame Buffer (Very similar to Viewport FBO, minus overlays)
+	r_game_view_fbo = make_unique<FrameBuffer>(
+		0,
+		nullptr,
+		EventManager::get_window_width(),
+		EventManager::get_window_height(),
+		GL_NONE,
+		r_viewport_fbo->get_depth_texture(),
+		"GameView_Output");
 
 	// Asset Preview Frame Buffer
 	r_preview_fbo = make_unique<FrameBuffer>(
@@ -330,7 +341,7 @@ void Renderer::initialize_buffers()
 	r_dbo = make_unique<FrameBuffer>(
 		EventManager::get_window_width(),
 		EventManager::get_window_height(),
-		r_main_fbo->get_depth_texture(),
+		r_viewport_fbo->get_depth_texture(),
 		"DebugView_Output");
 
 	// MSAA Frame Buffer: Anti-Aliasing buffer on the rasterization level (before post-processing)
@@ -344,14 +355,14 @@ void Renderer::initialize_buffers()
 	r_wboit_fbo = make_unique<WBOITFrameBuffer>(
 		EventManager::get_window_width(),
 		EventManager::get_window_height(),
-		r_main_fbo->get_depth_texture(),
+		r_viewport_fbo->get_depth_texture(),
 		"WBOIT_Transparency"
 		);
 
 	r_gbuffer_fbo = make_unique<GBufferFrameBuffer>(
 		EventManager::get_window_width(),
 		EventManager::get_window_height(),
-		r_main_fbo->get_depth_texture(),
+		r_viewport_fbo->get_depth_texture(),
 		"GBuffer");
 
 	// ========== GLOBAL UNIFORM BUFFERS (owned by the Renderer) ==========

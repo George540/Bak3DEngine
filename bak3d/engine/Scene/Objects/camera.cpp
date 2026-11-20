@@ -38,6 +38,7 @@ THE SOFTWARE.
 #include "Asset/resource_manager.h"
 #include "Core/logger.h"
 #include "Input/event_manager.h"
+#include "Scene/scene_manager.h"
 
 using namespace std;
 
@@ -46,36 +47,53 @@ constexpr static glm::vec3 CAMERA_UP = glm::vec3(0.0f, 1.0f, 0.0f);
 namespace
 {
 	constexpr glm::vec4 CAMERA_DEBUG_COLOR = glm::vec4(0.78f, 0.55f, 1.0f, 1.0f);
+	int m_camera_num = 0;
 }
 
 Camera::Camera(glm::vec3 position, bool is_editor_camera)
-	: SceneObject(position, is_editor_camera ? "EditorCamera" : "Camera", is_editor_camera)
+	: RenderableObject(ResourceManager::get_material("light_icon"), position, is_editor_camera ? "EditorCamera" : "Camera", is_editor_camera)
 {
 	object_type = SceneObjectType::Camera;
 	transform.set_local_euler_rotation(glm::vec3(-20.0f, 45.0f, 0.0f));
 
+	m_mesh_slot = make_mesh_slot(ResourceManager::get_mesh("Quad"));
+	m_sprite_texture = ResourceManager::get_texture("camera_icon.png");
+
+	m_camera_id = m_camera_num++;
+
 	// @TODO: Replace with struct payload instead of manual size
 	// 2 mat4's * 1 vec4 = 9 vec4's
-	if (is_editor_camera)
-	{
-		m_camera_data_ubo = make_unique<UniformBuffer>(VEC4_SIZE * 9, nullptr, 0, GL_DYNAMIC_DRAW);
-	}
+	m_camera_data_ubo = make_unique<UniformBuffer>(VEC4_SIZE * 9, nullptr, 0, GL_DYNAMIC_DRAW);
 
 	B3D_LOG_INFO("%s has been set up.", get_object_name().c_str());
 };
 
 void Camera::update(float dt)
 {
-	m_frustum = Frustum(get_view_projection_matrix());
-
 	// Only editor cameras touch input or the global camera UBO
 	if (m_is_editor_only)
 	{
 		update_editor_controls(dt);
-		upload_camera_data();
 	}
 
-	SceneObject::update(dt);
+	m_frustum = Frustum(get_view_projection_matrix());
+	upload_camera_data();
+
+	RenderableObject::update(dt);
+}
+
+void Camera::draw() const
+{
+	if (m_is_editor_only || !m_sprite_texture)
+	{
+		return;
+	}
+
+	(*m_material_slot)->set_vec4("diffuseColor", glm::vec4(1.0f));
+	(*m_material_slot)->set_float("icon_size_multiplier", GlobalSettings::get_global_setting_value<float>(GlobalSettingOption::EditorOverlayFlags_LightIconSize));
+	m_sprite_texture->bind(0);
+	RenderableObject::draw();
+	Texture2D::unbind();
 }
 
 void Camera::draw_debug_geometry() const
@@ -218,5 +236,5 @@ void Camera::upload_camera_data() const
 	m_camera_data_ubo->bind_buffer_sub_data(glm::value_ptr(get_view_matrix()), MAT4_SIZE, MAT4_SIZE);
 	m_camera_data_ubo->bind_buffer_sub_data(glm::value_ptr(glm::vec4(transform.get_local_position(), 1.0f)), VEC4_SIZE, 2 * MAT4_SIZE);
 	m_camera_data_ubo->unbind();
-	m_camera_data_ubo->bind_to_binding_point(0);
+	m_camera_data_ubo->bind_to_binding_point(m_camera_id);
 }

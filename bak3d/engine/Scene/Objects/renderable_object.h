@@ -49,7 +49,7 @@ protected:
 
     void apply_material() const { if (has_material()) (*m_material_slot)->apply(); }
 public:
-    RenderableObject(const MaterialRef& material, const glm::vec3 position, const std::string& name);
+    RenderableObject(const MaterialRef& material, const glm::vec3 position, const std::string& name, const bool is_editor_only = false);
     ~RenderableObject() override = default;
 
     void update(float dt) override;

@@ -40,7 +40,8 @@ private:
 	static GLFWwindow* r_window;
 
 	static std::unique_ptr<MultisampleFrameBuffer> r_msaa_fbo;
-	static std::unique_ptr<FrameBuffer> r_main_fbo;
+	static std::unique_ptr<FrameBuffer> r_viewport_fbo;
+	static std::unique_ptr<FrameBuffer> r_game_view_fbo;
 	static std::unique_ptr<FrameBuffer> r_dbo;
 	static std::unique_ptr<GBufferFrameBuffer> r_gbuffer_fbo;
 	static std::unique_ptr<WBOITFrameBuffer> r_wboit_fbo;
@@ -63,7 +64,7 @@ public:
 
 	static GLFWwindow* get_window() { return r_window; }
 	static MultisampleFrameBuffer* get_msaa_frame_buffer() { return r_msaa_fbo.get(); }
-	static FrameBuffer* get_main_frame_buffer() { return r_main_fbo.get(); }
+	static FrameBuffer* get_main_frame_buffer() { return r_viewport_fbo.get(); }
 	static FrameBuffer* get_preview_buffer() { return r_preview_fbo.get(); }
 	static FrameBuffer* get_debug_view_buffer() { return r_dbo.get(); }
 	static GBufferFrameBuffer* get_gbuffer() { return r_gbuffer_fbo.get(); }

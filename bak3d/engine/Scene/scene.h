@@ -142,11 +142,12 @@ public:
 
 	SceneObject* get_editor_root() const { return m_editor_root.get(); }
 	SceneObject* get_root() const { return m_root.get(); }
-	void set_current_camera(Camera* camera) { m_current_camera = camera; }
-	Camera* get_current_camera() const { return m_current_camera; }
+
+	void set_current_camera(Camera* camera) { m_current_editor_camera = camera; }
+	Camera* get_current_editor_camera() const { return m_current_editor_camera; }
+	
 	std::vector<SceneObject*> get_all_objects_of_type(SceneObjectType type);
 	SceneObject* get_object_in_scene(SceneObjectType type, int index = 0);
-
 	SceneObject* get_selected_scene_object() const { return m_selected_scene_object; }
 	void set_selected_scene_object(SceneObject* object) { m_selected_scene_object = object; }
 
@@ -184,7 +185,9 @@ private:
 
 	void delete_selected_object();
 	
-	Camera* m_current_camera = nullptr;
+	Camera* m_current_editor_camera = nullptr;
+	Camera* m_selected_game_camera = nullptr;
+	
 	SceneObject* m_selected_scene_object = nullptr;
 
 	std::unique_ptr<SceneObject> m_editor_root;
@@ -197,8 +200,6 @@ private:
 	std::vector<Mesh*> m_meshes;
 	std::vector<ParticleSystem*> m_particle_systems;
 	std::vector<AdvancedParticleSystem*> m_advanced_particle_systems;
-
-	bool m_is_asset_preview_scene = false;
 
 	SceneStats m_scene_stats = SceneStats();
 };
