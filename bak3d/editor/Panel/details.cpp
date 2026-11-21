@@ -310,7 +310,7 @@ void Details::draw_camera_section(Camera* camera)
             camera->set_near_plane(near_plane);
 
         float far_plane = camera->get_far_plane();
-        if (ImGuiB3D::PropertySliderFloat("Far Plane", &far_plane, 1.0f, 1000.0f, "%.1f", "Far clipping distance."))
+        if (ImGuiB3D::PropertySliderFloat("Far Plane", &far_plane, camera->get_near_plane() + 0.01f, 1000.0f, "%.1f", "Far clipping distance."))
             camera->set_far_plane(far_plane);
 
         float aspect = camera->get_aspect_ratio();

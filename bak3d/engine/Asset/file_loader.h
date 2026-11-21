@@ -38,6 +38,7 @@ enum class FileType
 	fs,
 	frag,
 	comp,
+	geom,
 	obj,
 	mtl,
 	fbx,

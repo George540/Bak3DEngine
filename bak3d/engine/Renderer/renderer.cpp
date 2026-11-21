@@ -394,8 +394,13 @@ void Renderer::query_gpu_limitations()
 	B3D_LOG_WARNING("Maximum size of a work group in Y dimension %d", max_compute_work_group_size[1]);
 	B3D_LOG_WARNING("Maximum size of a work group in Z dimension %d", max_compute_work_group_size[2]);
 
-	B3D_LOG_WARNING("Number of invocations in a single local work group\n"
-			     "that may be dispatched to a compute shader: %d", max_compute_work_group_invocations);
+	B3D_LOG_WARNING("Number of invocations in a single local work group\nthat may be dispatched to a compute shader: %d", max_compute_work_group_invocations);
+
+	int max_gs_vertices, max_gs_components, max_gs_invocations;
+	glGetIntegerv(GL_MAX_GEOMETRY_OUTPUT_VERTICES, &max_gs_vertices);
+	glGetIntegerv(GL_MAX_GEOMETRY_OUTPUT_COMPONENTS, &max_gs_components);
+	glGetIntegerv(GL_MAX_GEOMETRY_SHADER_INVOCATIONS, &max_gs_invocations);
+	B3D_LOG_WARNING("Geometry shader limits: %d max output vertices, %d max output components, %d max invocations", max_gs_vertices, max_gs_components, max_gs_invocations);
 
 	B3D_LOG_WARNING("----------OpenGL Limitations----------");
 }

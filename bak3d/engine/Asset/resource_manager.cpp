@@ -87,6 +87,7 @@ void ResourceManager::initialize_shaders()
     auto vertex_shader_files = FileLoader::get_files_by_type_with_path(directory, FileType::vert);
     auto fragment_shader_files = FileLoader::get_files_by_type_with_path(directory, FileType::frag);
     auto compute_shader_files = FileLoader::get_files_by_type_with_path(directory, FileType::comp);
+    auto geometry_shader_files = FileLoader::get_files_by_type_with_path(directory, FileType::geom);
 
     // Map shaders for lookup later
     unordered_map<string, string> vertex_shaders_map;
@@ -100,6 +101,12 @@ void ResourceManager::initialize_shaders()
     {
         string name = FileLoader::get_name_from_filename(file_name);
         fragment_shaders_map[name] = file_path;
+    }
+    unordered_map<string, string> geometry_shaders_map;
+    for (const auto& [file_name, file_path] : geometry_shader_files)
+    {
+        string name = FileLoader::get_name_from_filename(file_name);
+        geometry_shaders_map[name] = file_path;
     }
 
     unordered_map<string, string> shaders_to_match;
@@ -123,6 +130,14 @@ void ResourceManager::initialize_shaders()
             ShaderStageMap shader_stage_map;
             shader_stage_map.emplace(GL_VERTEX_SHADER, vert_path);
             shader_stage_map.emplace(GL_FRAGMENT_SHADER, frag_path);
+            shader_stage_map.emplace(GL_FRAGMENT_SHADER, frag_path);
+
+            // If there is also a geometry shader, add it to the shader stages
+            if (const auto geom_it = geometry_shaders_map.find(shader_name); geom_it != geometry_shaders_map.end())
+            {
+                shader_stage_map.emplace(GL_GEOMETRY_SHADER, geom_it->second);
+            }
+
             Shader* new_graphics_shader = new Shader(move(shader_stage_map), shader_name);
             add_shader(shader_name, new_graphics_shader);
         }

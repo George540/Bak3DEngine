@@ -300,6 +300,7 @@ string FileLoader::enum_to_string(const FileType type)
 		case FileType::jpg: return ".jpg";
 		case FileType::vs: return ".vert";
 		case FileType::vert: return ".vert";
+		case FileType::geom: return ".geom";
 		case FileType::fs: return ".fs";
 		case FileType::frag: return ".frag";
 		case FileType::comp: return ".comp";

@@ -61,6 +61,10 @@ void Environment::update()
 
     ImGuiB3D::SeparatorWithSpacing(1);
 
+    draw_rendering_settings();
+
+    ImGuiB3D::SeparatorWithSpacing(1);
+
     draw_shadow_settings();
 
     ImGuiB3D::SeparatorWithSpacing(1);
@@ -161,6 +165,34 @@ void Environment::draw_skybox_settings()
     }
 
     ImGui::EndDisabled();
+}
+
+void Environment::draw_rendering_settings()
+{
+    ImGui::SetNextItemOpen(true, ImGuiCond_Once);
+    if (ImGui::TreeNode("Editor Camera###EditorCameraNode"))
+    {
+        float near_plane = GlobalSettings::get_global_setting_value<float>(GlobalSettingOption::EditorCamera_NearPlane);
+        float far_plane = GlobalSettings::get_global_setting_value<float>(GlobalSettingOption::EditorCamera_FarPlane);
+
+        if (ImGuiB3D::PropertyDragFloat("Near Plane", &near_plane, 0.01f, 0.001f, 100.0f, "%.3f", "Near rendering distance."))
+        {
+            near_plane = glm::clamp(near_plane, 0.001f, far_plane - 0.01f);
+            GlobalSettings::set_global_setting<float>(GlobalSettingOption::EditorCamera_NearPlane, near_plane);
+        }
+        if (ImGuiB3D::PropertyDragFloat("Far Plane", &far_plane, 1.0f, 0.1f, 10000.0f, "%.1f", "Far rendering distance."))
+        {
+            far_plane = glm::max(far_plane, near_plane + 0.01f);
+            GlobalSettings::set_global_setting<float>(GlobalSettingOption::EditorCamera_FarPlane, far_plane);
+        }
+        if (ImGuiB3D::PropertyButton("Reset", "Reset Editor Camera", "Restore default near/far planes."))
+        {
+            GlobalSettings::set_global_setting<float>(GlobalSettingOption::EditorCamera_NearPlane, 0.1f);
+            GlobalSettings::set_global_setting<float>(GlobalSettingOption::EditorCamera_FarPlane, 100.0f);
+        }
+
+        ImGui::TreePop();
+    }
 }
 
 void Environment::draw_shadow_settings()

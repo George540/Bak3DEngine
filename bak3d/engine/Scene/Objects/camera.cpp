@@ -74,6 +74,10 @@ void Camera::update(float dt)
 	if (m_is_editor_only)
 	{
 		update_editor_controls(dt);
+
+		// Editor camera planes are driven by global settings
+		set_far_plane(GlobalSettings::get_global_setting_value<float>(GlobalSettingOption::EditorCamera_FarPlane));
+		set_near_plane(GlobalSettings::get_global_setting_value<float>(GlobalSettingOption::EditorCamera_NearPlane));
 	}
 
 	m_frustum = Frustum(get_view_projection_matrix());

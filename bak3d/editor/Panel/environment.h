@@ -36,6 +36,7 @@ public:
     void end_frame() override;
 private:
     static void draw_skybox_settings();
+    static void draw_rendering_settings();
     static void draw_shadow_settings();
     static void draw_post_processing_settings();
 

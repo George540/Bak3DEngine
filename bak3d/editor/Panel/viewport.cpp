@@ -569,7 +569,7 @@ void Viewport::draw_gpu_tools_popup()
         if (begin_stats_section("Tools", "GPUToolsTable"))
         {
             begin_tool_row("RenderDoc Capture", "Trigger GPU frame capture if RenderDoc app is available. Make sure it's installed locally first!");
-            if (ImGui::Button("Capture Frame"))
+            if (ImGui::Button("Capture"))
             {
                 RenderDocManager::trigger_capture();
             }

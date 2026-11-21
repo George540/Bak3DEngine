@@ -156,6 +156,8 @@ enum class GlobalSettingOption : uint32_t
     Skybox_Intensity,
     Skybox_Color,
     Skybox_Rotation,
+    EditorCamera_NearPlane,
+    EditorCamera_FarPlane,
     PostProcessing_Enabled,
     PostProcess_ColorGrading_Invert,
     PostProcess_ColorGrading_Grayscale,
@@ -360,9 +362,9 @@ inline const char* get_shader_stage_name_file_extension(GLenum stage)
     switch (stage)
     {
     case GL_VERTEX_SHADER:          return ".vert";
+    case GL_GEOMETRY_SHADER:        return ".geom";
     case GL_FRAGMENT_SHADER:        return ".frag";
     case GL_COMPUTE_SHADER:         return ".comp";
-    case GL_GEOMETRY_SHADER:        return ".geom";
     case GL_TESS_CONTROL_SHADER:    return ".tesc";
     case GL_TESS_EVALUATION_SHADER: return ".tese";
     default:                        return ".glsl";

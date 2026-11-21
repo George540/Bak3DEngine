@@ -42,6 +42,8 @@ const char* GlobalSettings::to_string(const GlobalSettingOption enum_setting)
         case GlobalSettingOption::Skybox_Intensity: return "Skybox Intensity";
         case GlobalSettingOption::Skybox_Color: return "Skybox Color";
         case GlobalSettingOption::Skybox_Rotation: return "Rotation";
+        case GlobalSettingOption::EditorCamera_NearPlane: return "Editor Camera Near";
+        case GlobalSettingOption::EditorCamera_FarPlane: return "Editor Camera Far";
         case GlobalSettingOption::PostProcessing_Enabled: return "Enabled";
         case GlobalSettingOption::PostProcess_ColorGrading_Invert: return "Invert";
         case GlobalSettingOption::PostProcess_ColorGrading_Brightness: return "Brightness";
@@ -74,6 +76,8 @@ void GlobalSettings::initialize()
     global_settings[GlobalSettingOption::Skybox_Intensity] = 1.0f;
     global_settings[GlobalSettingOption::Skybox_Color] = glm::vec3(1.0f);
     global_settings[GlobalSettingOption::Skybox_Rotation] = glm::vec3(0.0f, -135.0f, 0.0f);
+    global_settings[GlobalSettingOption::EditorCamera_NearPlane] = 0.1f;
+    global_settings[GlobalSettingOption::EditorCamera_FarPlane] = 1000.0f;
     global_settings[GlobalSettingOption::PostProcessing_Enabled] = false;
     global_settings[GlobalSettingOption::PostProcess_ColorGrading_Invert] = false;
     global_settings[GlobalSettingOption::PostProcess_ColorGrading_Grayscale] = false;
