@@ -76,8 +76,8 @@ void Camera::update(float dt)
 		update_editor_controls(dt);
 
 		// Editor camera planes are driven by global settings
-		set_far_plane(GlobalSettings::get_global_setting_value<float>(GlobalSettingOption::EditorCamera_FarPlane));
-		set_near_plane(GlobalSettings::get_global_setting_value<float>(GlobalSettingOption::EditorCamera_NearPlane));
+		set_far_plane(GlobalSettings::get_global_setting_value<float>(GlobalSettingOption::EditorSettings_FarPlane));
+		set_near_plane(GlobalSettings::get_global_setting_value<float>(GlobalSettingOption::EditorSettings_NearPlane));
 	}
 
 	m_frustum = Frustum(get_view_projection_matrix());
@@ -102,7 +102,7 @@ void Camera::draw() const
 
 void Camera::draw_debug_geometry() const
 {
-	const MaterialRef material = ResourceManager::get_material("grid");
+	const MaterialRef material = ResourceManager::get_material("line");
 	const MeshRef mesh = ResourceManager::get_mesh("FrustumDebug");
 	if (!material || !mesh)
 	{

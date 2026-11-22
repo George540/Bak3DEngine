@@ -170,25 +170,30 @@ void Environment::draw_skybox_settings()
 void Environment::draw_rendering_settings()
 {
     ImGui::SetNextItemOpen(true, ImGuiCond_Once);
-    if (ImGui::TreeNode("Editor Camera###EditorCameraNode"))
+    if (ImGui::TreeNode("Editor Settings###EditorSettingsNode"))
     {
-        float near_plane = GlobalSettings::get_global_setting_value<float>(GlobalSettingOption::EditorCamera_NearPlane);
-        float far_plane = GlobalSettings::get_global_setting_value<float>(GlobalSettingOption::EditorCamera_FarPlane);
+        float near_plane = GlobalSettings::get_global_setting_value<float>(GlobalSettingOption::EditorSettings_NearPlane);
+        float far_plane = GlobalSettings::get_global_setting_value<float>(GlobalSettingOption::EditorSettings_FarPlane);
+        float debug_geometry_thickness = GlobalSettings::get_global_setting_value<float>(GlobalSettingOption::EditorOverlayFlags_LineThickness);
 
         if (ImGuiB3D::PropertyDragFloat("Near Plane", &near_plane, 0.01f, 0.001f, 100.0f, "%.3f", "Near rendering distance."))
         {
             near_plane = glm::clamp(near_plane, 0.001f, far_plane - 0.01f);
-            GlobalSettings::set_global_setting<float>(GlobalSettingOption::EditorCamera_NearPlane, near_plane);
+            GlobalSettings::set_global_setting<float>(GlobalSettingOption::EditorSettings_NearPlane, near_plane);
         }
         if (ImGuiB3D::PropertyDragFloat("Far Plane", &far_plane, 1.0f, 0.1f, 10000.0f, "%.1f", "Far rendering distance."))
         {
             far_plane = glm::max(far_plane, near_plane + 0.01f);
-            GlobalSettings::set_global_setting<float>(GlobalSettingOption::EditorCamera_FarPlane, far_plane);
+            GlobalSettings::set_global_setting<float>(GlobalSettingOption::EditorSettings_FarPlane, far_plane);
         }
-        if (ImGuiB3D::PropertyButton("Reset", "Reset Editor Camera", "Restore default near/far planes."))
+        if (ImGuiB3D::PropertyButton("Reset", "Reset to Default", "Restore default near/far planes."))
         {
-            GlobalSettings::set_global_setting<float>(GlobalSettingOption::EditorCamera_NearPlane, 0.1f);
-            GlobalSettings::set_global_setting<float>(GlobalSettingOption::EditorCamera_FarPlane, 100.0f);
+            GlobalSettings::set_global_setting<float>(GlobalSettingOption::EditorSettings_NearPlane, 0.1f);
+            GlobalSettings::set_global_setting<float>(GlobalSettingOption::EditorSettings_FarPlane, 100.0f);
+        }
+        if (ImGuiB3D::PropertySliderFloat("Debug Geometry Thickness", &debug_geometry_thickness, 1.0f, 5.0f, "%.1f", "Thickness in pixels of all editor debug line geometry (lights, cameras, etc)."))
+        {
+            GlobalSettings::set_global_setting<float>(GlobalSettingOption::EditorOverlayFlags_LineThickness, debug_geometry_thickness);
         }
 
         ImGui::TreePop();

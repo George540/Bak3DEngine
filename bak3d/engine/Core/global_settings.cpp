@@ -35,6 +35,7 @@ const char* GlobalSettings::to_string(const GlobalSettingOption enum_setting)
         case GlobalSettingOption::Vsync: return "VSync";
         case GlobalSettingOption::EditorOverlayFlags: return "Editor Overlays";
         case GlobalSettingOption::EditorOverlayFlags_LightIconSize: return "Size";
+        case GlobalSettingOption::EditorOverlayFlags_LineThickness: return "Line Thickness";
         case GlobalSettingOption::ViewMode: return "View Mode";
         case GlobalSettingOption::Skybox_Enabled: return "Enabled";
         case GlobalSettingOption::Skybox_Mode: return "Skybox Mode";
@@ -42,8 +43,8 @@ const char* GlobalSettings::to_string(const GlobalSettingOption enum_setting)
         case GlobalSettingOption::Skybox_Intensity: return "Skybox Intensity";
         case GlobalSettingOption::Skybox_Color: return "Skybox Color";
         case GlobalSettingOption::Skybox_Rotation: return "Rotation";
-        case GlobalSettingOption::EditorCamera_NearPlane: return "Editor Camera Near";
-        case GlobalSettingOption::EditorCamera_FarPlane: return "Editor Camera Far";
+        case GlobalSettingOption::EditorSettings_NearPlane: return "Editor Camera Near";
+        case GlobalSettingOption::EditorSettings_FarPlane: return "Editor Camera Far";
         case GlobalSettingOption::PostProcessing_Enabled: return "Enabled";
         case GlobalSettingOption::PostProcess_ColorGrading_Invert: return "Invert";
         case GlobalSettingOption::PostProcess_ColorGrading_Brightness: return "Brightness";
@@ -69,6 +70,7 @@ void GlobalSettings::initialize()
     global_settings[GlobalSettingOption::Vsync] = false;
     global_settings[GlobalSettingOption::EditorOverlayFlags] = static_cast<uint32_t>(OverlaysFlags::LightIcons | OverlaysFlags::LightGeometry | OverlaysFlags::ObjectPreview | OverlaysFlags::CameraGeometry | OverlaysFlags::CameraIcons);
     global_settings[GlobalSettingOption::EditorOverlayFlags_LightIconSize] = 0.1f;
+    global_settings[GlobalSettingOption::EditorOverlayFlags_LineThickness] = 3.0f;
     global_settings[GlobalSettingOption::ViewMode] = 0;
     global_settings[GlobalSettingOption::Skybox_Enabled] = true;
     global_settings[GlobalSettingOption::Skybox_Mode] = static_cast<int>(SkyboxMode::Cubemap);
@@ -76,8 +78,8 @@ void GlobalSettings::initialize()
     global_settings[GlobalSettingOption::Skybox_Intensity] = 1.0f;
     global_settings[GlobalSettingOption::Skybox_Color] = glm::vec3(1.0f);
     global_settings[GlobalSettingOption::Skybox_Rotation] = glm::vec3(0.0f, -135.0f, 0.0f);
-    global_settings[GlobalSettingOption::EditorCamera_NearPlane] = 0.1f;
-    global_settings[GlobalSettingOption::EditorCamera_FarPlane] = 1000.0f;
+    global_settings[GlobalSettingOption::EditorSettings_NearPlane] = 0.1f;
+    global_settings[GlobalSettingOption::EditorSettings_FarPlane] = 1000.0f;
     global_settings[GlobalSettingOption::PostProcessing_Enabled] = false;
     global_settings[GlobalSettingOption::PostProcess_ColorGrading_Invert] = false;
     global_settings[GlobalSettingOption::PostProcess_ColorGrading_Grayscale] = false;

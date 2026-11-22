@@ -51,6 +51,18 @@ namespace
         const Camera* camera = SceneManager::get_current_scene()->get_current_editor_camera();
         return camera && camera->m_is_editor_only;
     }
+
+    void update_debug_line_material()
+    {
+        const MaterialRef material = ResourceManager::get_material("line");
+        const FrameBuffer* fbo = Renderer::get_main_frame_buffer();
+        if (!material || !fbo)
+        {
+            return;
+        }
+        material->set_float("line_width", GlobalSettings::get_global_setting_value<float>(GlobalSettingOption::EditorOverlayFlags_LineThickness));
+        material->set_vec2("viewport_size", glm::vec2(static_cast<float>(fbo->get_width()), static_cast<float>(fbo->get_height())));
+    }
 }
 
 void RendererPasses::render_pass_shadow_map()
@@ -140,6 +152,8 @@ void RendererPasses::render_pass_debug_geometry()
     {
         return;
     }
+
+    update_debug_line_material();
     
     DebugScopeGroup scope("Debug Geometry Pass");
 
@@ -364,6 +378,8 @@ void RendererPasses::render_pass_editor_overlays()
     {
         return;
     }
+
+    update_debug_line_material();
 
     const uint32_t flags = GlobalSettings::get_global_setting_value<uint32_t>(GlobalSettingOption::EditorOverlayFlags);
     const SceneObject* selected = SceneManager::get_current_scene()->get_selected_scene_object();

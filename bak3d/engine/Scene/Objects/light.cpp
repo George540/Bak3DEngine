@@ -35,6 +35,7 @@ THE SOFTWARE.
 #include "Asset/texture.h"
 #include "Core/global_settings.h"
 #include "Core/logger.h"
+#include "Input/event_manager.h"
 #include "Renderer/renderer.h"
 #include "Scene/scene.h"
 
@@ -93,7 +94,7 @@ void Light::draw() const
 
 void Light::draw_debug_geometry() const
 {
-	const MaterialRef material = ResourceManager::get_material("grid");
+	const MaterialRef material = ResourceManager::get_material("line");
 	if (!material)
 	{
 		return;
